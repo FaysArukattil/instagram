@@ -18,7 +18,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: ^0.10.0
+  flutter_launcher_icons: ^0.14.4
   flutter_lints: ^5.0.0
 
 flutter:
@@ -34,6 +34,7 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/images/icon.png"  # <-- path to your Instagram icon
-  adaptive_icon_background: "#FFFFFF"   # optional, only for Android adaptive icons
-  adaptive_icon_foreground: "assets/images/icon.png" # optional, for Android adaptive
+  image_path_android: "assets/images/icon.png"
+  image_path_ios: "assets/images/icon.png"
+  adaptive_icon_background: "#ffffff"   # Android only
+  adaptive_icon_foreground: "assets/images/icon.png" # Android only

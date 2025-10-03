@@ -3,12 +3,13 @@
 
     <!-- Theme applied while app is starting -->
     <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <!-- Use only a plain background (defined in launch_background.xml) -->
         <item name="android:windowBackground">@drawable/launch_background</item>
     </style>
 
     <!-- Theme applied after Flutter UI initializes -->
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
-        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/white</item>
     </style>
 
 </resources>
