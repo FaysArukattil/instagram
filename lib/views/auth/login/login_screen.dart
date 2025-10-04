@@ -4,6 +4,7 @@ import 'package:instagram/core/constants/app_images.dart';
 import 'package:instagram/views/Home/home_screen.dart';
 import 'package:instagram/views/auth/auth_widgets/auth_textfield_widget.dart';
 import 'package:instagram/views/auth/forgot/forgotscreen.dart';
+import 'package:instagram/views/auth/signup/signup_with_email.dart';
 import 'package:instagram/widgets/primary_button.dart';
 import 'package:instagram/widgets/secondary_button.dart';
 
@@ -323,7 +324,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(height: screenHeight * 0.15),
 
                 // Secondary button
-                SecondaryButton(text: 'Create new account', onPressed: () {}),
+                SecondaryButton(
+                  text: 'Create new account',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EmailAddressPage(),
+                      ),
+                    );
+                  },
+                ),
 
                 // Meta logo
                 Image.asset(AppImages.metalogo, width: 80, height: 80),
