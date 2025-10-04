@@ -27,6 +27,7 @@ flutter:
 
   assets:
     - assets/images/splashscreen_images/
+    - assets/images/
 
 # =======================
 # Flutter Launcher Icons
@@ -34,7 +35,6 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path_android: "assets/images/icon.png"
-  image_path_ios: "assets/images/icon.png"
-  adaptive_icon_background: "#ffffff"   # Android only
-  adaptive_icon_foreground: "assets/images/icon.png" # Android only
+  image_path_android: "assets/images/appicon.png"
+  image_path_ios: "assets/images/appicon.png"
+  adaptive_icon_foreground: "assets/images/appicon.png" # Android only
