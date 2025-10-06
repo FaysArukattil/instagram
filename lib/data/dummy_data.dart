@@ -4,173 +4,104 @@ import '../models/story_model.dart';
 import '../models/comment_model.dart';
 
 class DummyData {
-  // Add this to your DummyData class in dummy_data.dart
+  static final Map<String, List<Map<String, dynamic>>> chats = {
+    // Chat with user_1
+    "user_1": [
+      {
+        'text': "Hey, did you check the new reel I posted?",
+        'isMe': false,
+        'time': "Yesterday",
+      },
+      {
+        'text': "Yeah! 🔥🔥 that was awesome!",
+        'isMe': true,
+        'time': "Yesterday",
+        'seen': true,
+      },
+      {'text': "Thanks man 😄", 'isMe': false, 'time': "Yesterday"},
+      {'text': "When are we meeting?", 'isMe': false, 'time': "Today 1:15 pm"},
+    ],
 
-  static final Map<String, List<Map<String, dynamic>>> chatMessages = {
-    'user_3': [
+    // Chat with user_2
+    "user_2": [
       {
-        'text': 'Inganonnm avooleykm lle',
-        'isSent': false,
-        'time': '21 Jun, 11:39 pm',
-        'type': 'text',
-        'showTime': true,
+        'text': "Bro, are you coming to football today?",
+        'isMe': false,
+        'time': "Today 10:30 am",
       },
       {
-        'type': 'reel',
-        'username': 'tasty.treks_',
-        'time': 'Today 2:17 pm',
-        'isSent': false,
-        'imageUrl':
-            'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400',
-      },
-      {'text': 'Hi', 'isSent': true, 'time': 'Today 2:17 pm', 'type': 'text'},
-      {
-        'text': 'Hello',
-        'isSent': true,
-        'time': 'Today 2:17 pm',
-        'type': 'text',
+        'text': "Not sure yet, bit busy 🫠",
+        'isMe': true,
+        'time': "Today 10:32 am",
+        'seen': false,
       },
       {
-        'text': 'How are you',
-        'isSent': true,
-        'time': 'Today 2:17 pm',
-        'type': 'text',
-      },
-      {
-        'text': 'Xbsbbsbs',
-        'isSent': true,
-        'time': 'Today 2:18 pm',
-        'type': 'text',
-        'showHint': true,
-      },
-      {
-        'text': 'Abcd',
-        'isSent': false,
-        'time': 'Today 2:20 pm',
-        'type': 'text',
-      },
-      {'text': 'Efg', 'isSent': false, 'time': 'Today 2:20 pm', 'type': 'text'},
-    ],
-    'user_4': [
-      {
-        'text': 'Hello where you at?',
-        'isSent': false,
-        'time': '3d ago',
-        'type': 'text',
-        'showTime': true,
-      },
-      {
-        'text': 'I\'m at home',
-        'isSent': true,
-        'time': '3d ago',
-        'type': 'text',
-      },
-      {
-        'text': 'Coming to meet you',
-        'isSent': false,
-        'time': '3d ago',
-        'type': 'text',
+        'text': "Come on, we need you as goalie 😂",
+        'isMe': false,
+        'time': "Today 10:35 am",
       },
     ],
-    'user_2': [
+
+    // Chat with user_3
+    "user_3": [
       {
-        'text': 'Mentioned you in a story',
-        'isSent': false,
-        'time': '1w ago',
-        'type': 'text',
-        'showTime': true,
-      },
-      {'text': 'Thanks bro!', 'isSent': true, 'time': '1w ago', 'type': 'text'},
-    ],
-    'user_8': [
-      {
-        'text': 'Assignment submission date?',
-        'isSent': false,
-        'time': '4w ago',
-        'type': 'text',
-        'showTime': true,
-      },
-      {'text': 'Next Monday', 'isSent': true, 'time': '4w ago', 'type': 'text'},
-      {'text': 'Thanks!', 'isSent': false, 'time': '4w ago', 'type': 'text'},
-    ],
-    'user_7': [
-      {
-        'type': 'reel',
-        'username': 'kashmir_reels',
-        'time': '4w ago',
-        'isSent': false,
-        'imageUrl':
-            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-        'showTime': true,
+        'text': "Morning 🌞",
+        'isMe': true,
+        'time': "Today 8:15 am",
+        'seen': true,
       },
       {
-        'text': 'Beautiful place!',
-        'isSent': true,
-        'time': '4w ago',
-        'type': 'text',
+        'text': "Morning! Did you finish the assignment?",
+        'isMe': false,
+        'time': "Today 8:20 am",
+      },
+      {
+        'text': "Almost, will send it tonight.",
+        'isMe': true,
+        'time': "Today 8:45 am",
+        'seen': false,
       },
     ],
-    'user_12': [
+
+    // Chat with user_4
+    "user_4": [
       {
-        'type': 'reel',
-        'username': 'fitness_freak',
-        'time': '4w ago',
-        'isSent': false,
-        'imageUrl':
-            'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400',
-        'showTime': true,
+        'text': "Happy Birthday 🥳🎂🎉",
+        'isMe': true,
+        'time': "2 days ago",
+        'seen': true,
       },
+      {'text': "Thank you so much ❤️", 'isMe': false, 'time': "2 days ago"},
       {
-        'text': 'Great workout tips!',
-        'isSent': true,
-        'time': '4w ago',
-        'type': 'text',
-      },
-    ],
-    'user_9': [
-      {
-        'text': 'Hey, long time!',
-        'isSent': false,
-        'time': '6w ago',
-        'type': 'text',
-        'showTime': true,
-      },
-      {
-        'text': 'Yeah! How have you been?',
-        'isSent': true,
-        'time': '6w ago',
-        'type': 'text',
+        'text': "Did you like the surprise gift?",
+        'isMe': true,
+        'time': "Yesterday",
+        'seen': false,
       },
     ],
-    'user_5': [
+
+    // Chat with user_5
+    "user_5": [
       {
-        'text': 'Check this post',
-        'isSent': false,
-        'time': '8w ago',
-        'type': 'text',
-        'showTime': true,
+        'text': "Let’s plan a trip next weekend ✈️",
+        'isMe': false,
+        'time': "Monday",
       },
       {
-        'text': 'Will check it out',
-        'isSent': true,
-        'time': '8w ago',
-        'type': 'text',
+        'text': "I’m in! Where are we going?",
+        'isMe': true,
+        'time': "Monday",
+        'seen': true,
       },
-    ],
-    'user_11': [
+      {'text': "Maybe Manali or Goa 😎", 'isMe': false, 'time': "Monday"},
       {
-        'text': 'Hi! I love your travel content',
-        'isSent': false,
-        'time': '2w ago',
-        'type': 'text',
-        'showTime': true,
+        'text': "Goa sounds perfect! 🏖️",
+        'isMe': true,
+        'time': "Monday",
+        'seen': false,
       },
     ],
   };
-
-  static List<Map<String, dynamic>> getChatMessages(String userId) {
-    return chatMessages[userId] ?? [];
-  }
 
   static final UserModel currentUser = UserModel(
     id: 'user_1',

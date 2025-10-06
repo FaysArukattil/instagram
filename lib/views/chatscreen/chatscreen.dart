@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/data/dummy_data.dart';
 
 class ChatScreen extends StatefulWidget {
   final dynamic user;
@@ -12,19 +13,14 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  final List<Map<String, dynamic>> messages = [
-    {
-      'text': 'Inganonnm avooleykm lle',
-      'isMe': true,
-      'time': '21 Jun, 11:39 pm',
-      'seen': true,
-    },
-    {'text': 'Hi', 'isMe': false, 'time': 'Today 2:17 pm'},
-    {'text': 'Hello', 'isMe': false, 'time': ''},
-    {'text': 'How are you', 'isMe': false, 'time': ''},
-    {'text': 'Abcd', 'isMe': true, 'time': '', 'seen': false},
-    {'text': 'Efg', 'isMe': true, 'time': '', 'seen': false},
-  ];
+  late List<Map<String, dynamic>> messages;
+
+  @override
+  void initState() {
+    super.initState();
+    // load chat messages for this user
+    messages = DummyData.chats[widget.user.id] ?? [];
+  }
 
   void _sendMessage() {
     if (_messageController.text.trim().isEmpty) return;
@@ -33,12 +29,11 @@ class _ChatScreenState extends State<ChatScreen> {
         'text': _messageController.text.trim(),
         'isMe': true,
         'time': 'Now',
-        'seen': false, // new messages default to Delivered
+        'seen': false,
       });
       _messageController.clear();
     });
 
-    // auto scroll to bottom after sending
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -60,7 +55,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      // AppBar same as before ...
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
@@ -113,9 +108,10 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
+
       body: Column(
         children: [
-          // Chat messages
+          // messages list
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
@@ -155,8 +151,6 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     ),
-
-                    // Seen / Delivered indicator for last sent message
                     if (msg['isMe'] && isLastMessage)
                       Padding(
                         padding: const EdgeInsets.only(top: 2, right: 6),
@@ -174,7 +168,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
-          // Input field
+          // input field
           SafeArea(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
