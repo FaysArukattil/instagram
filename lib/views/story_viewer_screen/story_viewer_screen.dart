@@ -305,8 +305,8 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                                 child: LinearProgressIndicator(
                                   minHeight: 3,
                                   value: value,
-                                  backgroundColor: Colors.white.withOpacity(
-                                    0.25,
+                                  backgroundColor: Colors.white.withValues(
+                                    alpha: 0.25,
                                   ),
                                   valueColor:
                                       const AlwaysStoppedAnimation<Color>(
@@ -347,7 +347,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                                 Text(
                                   pageStory.timeAgo,
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: .8),
                                     fontSize: 12,
                                   ),
                                 ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/views/messenger_screen/messenger_screen.dart';
+import 'package:instagram/views/my_story_screen/my_story_screen.dart';
 import 'package:instagram/views/notifications_screen/notifications_screen.dart';
 import 'package:instagram/views/profile_screen/profile_screen.dart';
 import 'package:instagram/views/story_viewer_screen/story_viewer_screen.dart';
@@ -35,7 +36,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openStory(String userId) {
-    // find the index of the tapped user's story
     final index = DummyData.stories.indexWhere((s) => s.userId == userId);
     if (index != -1) {
       Navigator.push(
@@ -61,9 +61,17 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _refreshPosts() async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    setState(() {
+      posts.shuffle();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -120,65 +128,92 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: posts.length + 1,
-        itemBuilder: (context, index) {
-          // story section
-          if (index == 0) {
-            return Column(
-              children: [
-                SizedBox(
-                  height: 110,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.all(8),
-                    itemCount:
-                        1 +
-                        DummyData.users
-                            .where((u) => u.hasStory)
-                            .length, // current user + others
-                    itemBuilder: (context, storyIndex) {
-                      if (storyIndex == 0) {
-                        return StoryAvatar(
-                          user: DummyData.currentUser,
-                          hasStory: DummyData.currentUser.hasStory,
-                          isCurrentUser: true,
-                          onTap: () {
-                            if (DummyData.currentUser.hasStory) {
-                              _openStory(DummyData.currentUser.id);
-                            }
-                          },
-                        );
-                      }
-
-                      final storiesUsers = DummyData.users
-                          .where((u) => u.hasStory)
-                          .toList();
-                      final user = storiesUsers[storyIndex - 1];
-
-                      return Padding(
-                        padding: const EdgeInsets.only(left: 12),
-                        child: StoryAvatar(
-                          user: user,
-                          hasStory: true,
-                          onTap: () => _openStory(user.id),
-                        ),
+      body: RefreshIndicator(
+        onRefresh: _refreshPosts,
+        displacement: 60,
+        edgeOffset: 10,
+        color: Colors.grey[700],
+        backgroundColor: Colors.white,
+        strokeWidth: 2.2,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            // Stories Section
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 110,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.all(8),
+                  itemCount:
+                      1 + DummyData.users.where((u) => u.hasStory).length,
+                  itemBuilder: (context, storyIndex) {
+                    if (storyIndex == 0) {
+                      // Your Story avatar fully tappable
+                      return StoryAvatar(
+                        user: DummyData.currentUser,
+                        hasStory: DummyData.currentUser.hasStory,
+                        isCurrentUser: true,
+                        onTap: () {
+                          final index = DummyData.stories.indexWhere(
+                            (s) => s.userId == DummyData.currentUser.id,
+                          );
+                          if (index != -1) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => StoryViewerScreen(
+                                  stories: DummyData.stories,
+                                  initialIndex: index,
+                                ),
+                              ),
+                            );
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const MyStoryScreen(),
+                              ),
+                            );
+                          }
+                        },
                       );
-                    },
-                  ),
-                ),
-                const Divider(height: 1),
-              ],
-            );
-          }
+                    }
 
-          // posts
-          return PostWidget(
-            post: posts[index - 1],
-            onLike: _handleLike,
-            onProfileTap: _openProfile,
-          );
-        },
+                    final storiesUsers = DummyData.users
+                        .where((u) => u.hasStory)
+                        .toList();
+                    final user = storiesUsers[storyIndex - 1];
+
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: StoryAvatar(
+                        user: user,
+                        hasStory: true,
+                        onTap: () => _openStory(user.id),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: Divider(height: 1)),
+
+            // Posts Section
+            SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                return PostWidget(
+                  post: posts[index],
+                  onLike: _handleLike,
+                  onProfileTap: _openProfile,
+                );
+              }, childCount: posts.length),
+            ),
+          ],
+        ),
       ),
     );
   }
