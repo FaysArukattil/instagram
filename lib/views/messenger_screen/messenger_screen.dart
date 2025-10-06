@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
+import 'package:instagram/models/user_model.dart';
 
 class MessengerScreen extends StatefulWidget {
   const MessengerScreen({super.key});
@@ -11,91 +12,47 @@ class MessengerScreen extends StatefulWidget {
 class _MessengerScreenState extends State<MessengerScreen> {
   String selectedTab = 'Primary';
 
-  final Map<String, List<Map<String, dynamic>>> tabMessages = {
-    'Primary': [
-      {
-        'userIndex': 1,
-        'username': 'Priyanka',
-        'message': 'Hii 😊',
-        'time': '3d',
-        'isOnline': true,
-        'hasUnread': true,
-      },
-      {
-        'userIndex': 2,
-        'username': 'Prasanth',
-        'message': 'Hello where you at?',
-        'time': '3d',
-        'isOnline': true,
-        'hasUnread': true,
-      },
-      {
-        'userIndex': 3,
-        'username': 'صهیب',
-        'message': 'Mentioned you in ...',
-        'time': '1w',
-        'hasUnread': true,
-        'isMuted': true,
-        'showCamera': true,
-      },
-      {
-        'userIndex': 7,
-        'username': 'CS_2K19_21',
-        'message': '4+ new messages',
-        'time': '4w',
-        'hasUnread': true,
-        'showCamera': true,
-      },
-      {
-        'userIndex': 6,
-        'username': 'KASHMIR REELS',
-        'message': 'Sent a reel by __dev...',
-        'time': '4w',
-        'hasUnread': true,
-        'showCamera': true,
-      },
-      {
-        'userIndex': 11,
-        'username': 'Irfan',
-        'message': 'Sent a reel by _Irfan_hmd',
-        'time': '4w',
-        'hasUnread': true,
-        'showCamera': true,
-      },
-    ],
-    'General': [
-      {
-        'userIndex': 8,
-        'username': 'CSE A',
-        'message': '4+ new messa...',
-        'time': '113w',
-        'showPlay': true,
-      },
-      {
-        'userIndex': 9,
-        'username': '_shbl___',
-        'message': '4+ new messages',
-        'time': '6w',
-        'hasUnread': true,
-        'showCamera': true,
-      },
-      {
-        'userIndex': 4,
-        'username': '_gopeesh_007',
-        'message': 'Sent you a post',
-        'time': '8w',
-        'showCamera': true,
-      },
-    ],
-    'Requests': [
-      {
-        'userIndex': 10,
-        'username': 'travel_diaries',
-        'message': 'Wants to send you a message',
-        'time': '2w',
-      },
-    ],
-  };
+  // Step 2: Generate messages dynamically from DummyData
+  List<Map<String, dynamic>> getMessagesForTab(String tab) {
+    switch (tab) {
+      case 'Primary':
+        return DummyData.users.take(6).map((user) {
+          return {
+            'user': user,
+            'username': user.username,
+            'message': 'Hey there! 👋',
+            'time': '1d',
+            'isOnline': user.isOnline,
+            'hasUnread': true,
+          };
+        }).toList();
+
+      case 'General':
+        return DummyData.users.skip(6).take(3).map((user) {
+          return {
+            'user': user,
+            'username': user.username,
+            'message': 'Check this out!',
+            'time': '2d',
+            'isOnline': user.isOnline,
+            'showCamera': true,
+          };
+        }).toList();
+
+      case 'Requests':
+        return DummyData.users.skip(9).take(1).map((user) {
+          return {
+            'user': user,
+            'username': user.username,
+            'message': 'Wants to send you a message',
+            'time': '3d',
+          };
+        }).toList();
+
+      default:
+        return [];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -208,20 +165,13 @@ class _MessengerScreenState extends State<MessengerScreen> {
                     label: 'Your note',
                     noteText: 'Weekend\nplans?',
                   ),
-                  _buildStoryItem(
-                    image: DummyData.users[0].profileImage,
-                    label: 'Hamna Nazar',
-                    noteText: 'Blabla...\npt829!',
-                  ),
-                  _buildStoryItem(
-                    image: DummyData.users[1].profileImage,
-                    label: 'Priyanka',
-                    isOnline: true,
-                  ),
-                  _buildStoryItem(
-                    image: DummyData.users[2].profileImage,
-                    label: 'Fuhad',
-                  ),
+                  ...DummyData.users.take(4).map((user) {
+                    return _buildStoryItem(
+                      image: user.profileImage,
+                      label: user.username,
+                      isOnline: user.isOnline,
+                    );
+                  }),
                 ],
               ),
             ),
@@ -247,9 +197,8 @@ class _MessengerScreenState extends State<MessengerScreen> {
             const SizedBox(height: 8),
 
             // Messages list
-            ...List.generate(tabMessages[selectedTab]?.length ?? 0, (index) {
-              final messageData = tabMessages[selectedTab]![index];
-              final user = DummyData.users[messageData['userIndex']];
+            ...getMessagesForTab(selectedTab).map((messageData) {
+              final user = messageData['user'] as UserModel;
 
               return _buildMessageItem(
                 user: user,
@@ -385,7 +334,6 @@ class _MessengerScreenState extends State<MessengerScreen> {
   Widget _buildStoryItem({
     required String image,
     required String label,
-    String? noteText,
     bool isOnline = false,
   }) {
     return Padding(
@@ -399,32 +347,6 @@ class _MessengerScreenState extends State<MessengerScreen> {
               clipBehavior: Clip.none,
               children: [
                 CircleAvatar(radius: 32, backgroundImage: NetworkImage(image)),
-                if (noteText != null)
-                  Positioned(
-                    top: -18,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        noteText,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w500,
-                          height: 1.2,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
                 if (isOnline)
                   Positioned(
                     bottom: 0,
@@ -459,7 +381,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
   }
 
   Widget _buildMessageItem({
-    required user,
+    required UserModel user,
     String? username,
     required String message,
     required String time,
