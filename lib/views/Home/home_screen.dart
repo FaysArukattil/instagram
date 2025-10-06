@@ -35,14 +35,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openStory(String userId) {
+    // find the index of the tapped user's story
     final index = DummyData.stories.indexWhere((s) => s.userId == userId);
     if (index != -1) {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => StoryViewerScreen(
-            stories: DummyData.stories, // full list
-            initialIndex: index, // open at tapped story
+            stories: DummyData.stories,
+            initialIndex: index,
           ),
         ),
       );
@@ -66,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        automaticallyImplyLeading: false, // This removes the back button
+        automaticallyImplyLeading: false,
         title: const Text(
           'Instagram',
           style: TextStyle(
@@ -81,7 +82,9 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => NotificationsScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsScreen(),
+                ),
               );
             },
           ),
@@ -92,7 +95,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MessengerScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const MessengerScreen(),
+                    ),
                   );
                 },
               ),
@@ -116,9 +121,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: ListView.builder(
-        itemCount: posts.length + 1, // +1 for story section
+        itemCount: posts.length + 1,
         itemBuilder: (context, index) {
-          // First item is the story section
+          // story section
           if (index == 0) {
             return Column(
               children: [
@@ -128,14 +133,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.all(8),
                     itemCount:
-                        1 + DummyData.users.where((u) => u.hasStory).length,
+                        1 +
+                        DummyData.users
+                            .where((u) => u.hasStory)
+                            .length, // current user + others
                     itemBuilder: (context, storyIndex) {
                       if (storyIndex == 0) {
                         return StoryAvatar(
                           user: DummyData.currentUser,
                           hasStory: DummyData.currentUser.hasStory,
                           isCurrentUser: true,
-                          onTap: () {},
+                          onTap: () {
+                            if (DummyData.currentUser.hasStory) {
+                              _openStory(DummyData.currentUser.id);
+                            }
+                          },
                         );
                       }
 
@@ -160,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
 
-          // Rest are posts
+          // posts
           return PostWidget(
             post: posts[index - 1],
             onLike: _handleLike,
