@@ -35,11 +35,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openStory(String userId) {
-    final story = DummyData.stories.firstWhere((s) => s.userId == userId);
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => StoryViewerScreen(story: story)),
-    );
+    final index = DummyData.stories.indexWhere((s) => s.userId == userId);
+    if (index != -1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => StoryViewerScreen(
+            stories: DummyData.stories, // full list
+            initialIndex: index, // open at tapped story
+          ),
+        ),
+      );
+    }
   }
 
   void _openProfile(String userId) {
