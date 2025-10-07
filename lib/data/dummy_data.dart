@@ -553,7 +553,7 @@ class DummyData {
     ),
   ];
 
-  static final List<StoryModel> stories = [
+  static List<StoryModel> stories = [
     StoryModel(
       id: 'story_1',
       userId: 'user_2',

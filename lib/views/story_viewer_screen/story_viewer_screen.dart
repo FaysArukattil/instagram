@@ -1,9 +1,9 @@
 // lib/views/story_viewer_screen/story_viewer_screen.dart
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/story_model.dart';
-import 'package:instagram/models/user_model.dart';
 
 class StoryViewerScreen extends StatefulWidget {
   final List<StoryModel> stories;
@@ -25,28 +25,28 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   late int _currentUserIndex;
   int _currentImageIndex = 0;
 
-  // Controls the "fill" of the current top indicator (0.0..1.0)
   late AnimationController _progressController;
   static const Duration storyDuration = Duration(seconds: 5);
 
-  // vertical drag for interactive dismiss
+  // prevent double transitions/taps
+  bool _isTransitioning = false;
+  bool _tapLock = false;
+
+  // vertical drag for dismiss
   double _verticalDrag = 0.0;
   bool _isDismissing = false;
-
-  // prevent double transitions
-  bool _isTransitioning = false;
 
   @override
   void initState() {
     super.initState();
+
     _currentUserIndex = widget.initialIndex.clamp(0, widget.stories.length - 1);
     _pageController = PageController(initialPage: _currentUserIndex);
 
     _progressController =
         AnimationController(vsync: this, duration: storyDuration)
           ..addListener(() {
-            // redraw progress bars
-            setState(() {});
+            if (mounted) setState(() {});
           })
           ..addStatusListener((status) {
             if (status == AnimationStatus.completed) {
@@ -58,34 +58,99 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   }
 
   void _startProgress() {
-    // restart the progress for the current image
-    if (mounted) {
-      _progressController.stop();
-      _progressController.reset();
-      _progressController.forward();
+    if (!mounted) return;
+    _progressController.stop();
+    _progressController.reset();
+
+    final images = _currentStoryImages;
+    if (images == null || images.isEmpty) {
+      // no images: advance to next user (tiny delay to let UI settle)
+      Future.microtask(() => _goToNextUserOrClose());
+      return;
     }
+
+    _progressController.forward();
   }
 
   void _pauseProgress() {
-    _progressController.stop();
+    if (_progressController.isAnimating) _progressController.stop();
   }
 
   void _resumeProgress() {
-    if (!_progressController.isAnimating) {
-      _progressController.forward();
+    if (!_progressController.isAnimating) _progressController.forward();
+  }
+
+  List<String>? get _currentStoryImages {
+    if (_currentUserIndex < 0 || _currentUserIndex >= widget.stories.length) {
+      return null;
     }
+    return widget.stories[_currentUserIndex].images;
   }
 
   void _onProgressComplete() {
-    // advance to next image or next user
-    final story = widget.stories[_currentUserIndex];
-    if (_currentImageIndex < story.images.length - 1) {
-      setState(() {
-        _currentImageIndex++;
-      });
-      _startProgress();
-    } else {
-      _goToNextUserOrClose();
+    try {
+      final images = _currentStoryImages;
+      if (images == null || images.isEmpty) {
+        _goToNextUserOrClose();
+        return;
+      }
+
+      if (_currentImageIndex < images.length - 1) {
+        setState(() {
+          _currentImageIndex = (_currentImageIndex + 1).clamp(
+            0,
+            images.length - 1,
+          );
+        });
+        _startProgress();
+      } else {
+        _goToNextUserOrClose();
+      }
+    } catch (_) {
+      // swallow race conditions
+    }
+  }
+
+  void _onTapAtPosition(Offset localPosition, BuildContext context) {
+    if (_tapLock || _isTransitioning) return;
+    _tapLock = true;
+    Future.delayed(const Duration(milliseconds: 120), () {
+      _tapLock = false;
+    });
+
+    final width = MediaQuery.of(context).size.width;
+    final images = _currentStoryImages;
+
+    try {
+      if (localPosition.dx < width / 2) {
+        // left -> previous image or previous user
+        if (images != null && _currentImageIndex > 0) {
+          setState(() {
+            _currentImageIndex = (_currentImageIndex - 1).clamp(
+              0,
+              images.length - 1,
+            );
+          });
+          _startProgress();
+        } else {
+          _goToPreviousUserOrClose();
+        }
+      } else {
+        // right -> next image or next user
+        if (images != null && _currentImageIndex < images.length - 1) {
+          setState(() {
+            _currentImageIndex = (_currentImageIndex + 1).clamp(
+              0,
+              images.length - 1,
+            );
+          });
+          _startProgress();
+        } else {
+          _goToNextUserOrClose();
+        }
+      }
+    } catch (_) {
+      // swallow race conditions
     }
   }
 
@@ -99,11 +164,10 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
             curve: Curves.easeOut,
           )
           .whenComplete(() {
-            // onPageChanged will reset indices and progress
             _isTransitioning = false;
           });
     } else {
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
     }
   }
 
@@ -120,31 +184,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
             _isTransitioning = false;
           });
     } else {
-      Navigator.pop(context);
-    }
-  }
-
-  // Tap handlers (instant image navigation)
-  void _onTapAtPosition(Offset localPosition, BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    if (localPosition.dx < width / 2) {
-      // left side tap
-      if (_currentImageIndex > 0) {
-        setState(() => _currentImageIndex--);
-        _startProgress();
-      } else {
-        // go to previous user
-        _goToPreviousUserOrClose();
-      }
-    } else {
-      // right side tap
-      final story = widget.stories[_currentUserIndex];
-      if (_currentImageIndex < story.images.length - 1) {
-        setState(() => _currentImageIndex++);
-        _startProgress();
-      } else {
-        _goToNextUserOrClose();
-      }
+      if (mounted) Navigator.pop(context);
     }
   }
 
@@ -155,11 +195,9 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     super.dispose();
   }
 
-  // Interactive vertical dismiss animation helper
   Future<void> _performDismissAnimation(double screenHeight) async {
     if (_isDismissing) return;
     _isDismissing = true;
-    // animate the container off-screen downwards
     setState(() {
       _verticalDrag = screenHeight;
     });
@@ -167,111 +205,126 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     if (mounted) Navigator.pop(context);
   }
 
+  bool _isNetworkPath(String path) {
+    try {
+      final uri = Uri.tryParse(path);
+      return uri != null &&
+          uri.hasScheme &&
+          (uri.scheme == 'http' || uri.scheme == 'https');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  ImageProvider? _avatarImageFor(StoryModel pageStory) {
+    final user = DummyData.getUserById(pageStory.userId);
+    final candidate = (pageStory.profileImageUrl.isNotEmpty)
+        ? pageStory.profileImageUrl
+        : (user?.profileImage ?? '');
+    if (candidate.isEmpty) return null;
+    if (_isNetworkPath(candidate)) return NetworkImage(candidate);
+    return FileImage(File(candidate));
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final story = widget.stories[_currentUserIndex];
-    final UserModel? user = DummyData.getUserById(story.userId);
-
-    // compute opacity during vertical drag: 1 -> 0.5 approx
-    final double opacity = (1 - (_verticalDrag.abs() / (screenHeight * 0.9)))
-        .clamp(0.0, 1.0);
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
-
-        // Taps left/right for image navigation (instant)
         onTapUp: (details) => _onTapAtPosition(details.localPosition, context),
-
-        // long press to pause/resume
-        onLongPressStart: (_) {
-          _pauseProgress();
-        },
-        onLongPressEnd: (_) {
-          _resumeProgress();
-        },
-
-        // vertical drag for dismiss
+        onLongPressStart: (_) => _pauseProgress(),
+        onLongPressEnd: (_) => _resumeProgress(),
         onVerticalDragUpdate: (details) {
-          // only allow downward drag
           if (details.delta.dy > 0) {
             _pauseProgress();
             setState(() {
               _verticalDrag += details.delta.dy;
-              // cap to screen height
               if (_verticalDrag > screenHeight) _verticalDrag = screenHeight;
             });
           }
         },
         onVerticalDragEnd: (details) {
           if (_verticalDrag > 140) {
-            // dismiss with animation
             _performDismissAnimation(screenHeight);
           } else {
-            // bounce back
             setState(() {
               _verticalDrag = 0;
             });
             _resumeProgress();
           }
         },
-
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           transform: Matrix4.translationValues(0, _verticalDrag, 0),
-          child: Opacity(
-            opacity: opacity,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: widget.stories.length,
-              onPageChanged: (int newIndex) {
-                // reset indices when page changes
-                setState(() {
-                  _currentUserIndex = newIndex;
-                  _currentImageIndex = 0;
-                });
-                // restart progress for new page
-                _progressController.reset();
-                _startProgress();
-              },
-              itemBuilder: (context, pageIndex) {
-                final StoryModel pageStory = widget.stories[pageIndex];
-                final images = pageStory.images;
-                // If this page is the active one use _currentImageIndex, else show first image
-                final int displayImageIndex = (pageIndex == _currentUserIndex)
-                    ? _currentImageIndex.clamp(0, images.length - 1)
-                    : 0;
-                final String imageUrl = images[displayImageIndex];
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: widget.stories.length,
+            onPageChanged: (int newIndex) {
+              if (!mounted) return;
+              setState(() {
+                _currentUserIndex = newIndex.clamp(
+                  0,
+                  widget.stories.length - 1,
+                );
+                _currentImageIndex = 0;
+              });
+              _progressController.reset();
+              _startProgress();
+            },
+            itemBuilder: (context, pageIndex) {
+              final StoryModel pageStory = widget.stories[pageIndex];
+              final images = pageStory.images;
+              final bool hasImages = images.isNotEmpty;
 
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // image (cover entire screen)
-                    Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return const Center(
-                          child: CircularProgressIndicator(color: Colors.white),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.black,
-                          child: const Center(
-                            child: Icon(
-                              Icons.broken_image,
-                              color: Colors.white,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+              final int displayImageIndex = hasImages
+                  ? ((pageIndex == _currentUserIndex)
+                        ? _currentImageIndex.clamp(0, images.length - 1)
+                        : 0)
+                  : 0;
 
-                    // top indicators (animated)
+              final String? imageUrl = hasImages
+                  ? images[displayImageIndex]
+                  : null;
+
+              final user = DummyData.getUserById(pageStory.userId);
+              final avatarImage = _avatarImageFor(pageStory);
+
+              Widget imageWidget;
+              if (imageUrl == null) {
+                imageWidget = Container(color: Colors.black);
+              } else if (_isNetworkPath(imageUrl)) {
+                imageWidget = Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    );
+                  },
+                  errorBuilder: (_, __, ___) => const Center(
+                    child: Icon(Icons.broken_image, color: Colors.white),
+                  ),
+                );
+              } else {
+                imageWidget = Image.file(
+                  File(imageUrl),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const Center(
+                    child: Icon(Icons.broken_image, color: Colors.white),
+                  ),
+                );
+              }
+
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  imageWidget,
+
+                  if (hasImages)
                     Positioned(
                       top: 40,
                       left: 8,
@@ -280,20 +333,14 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                         children: List.generate(images.length, (i) {
                           double value;
                           if (pageIndex != _currentUserIndex) {
-                            // other pages show no progress (or 0)
-                            value = (i == 0)
-                                ? 1.0
-                                : 0.0; // show first filled for inactive? choose 0 for all if you prefer
-                            // We'll show 0 for all so they look empty when not active:
                             value = 0.0;
                           } else {
-                            if (i < _currentImageIndex) {
+                            if (i < _currentImageIndex)
                               value = 1.0;
-                            } else if (i == _currentImageIndex) {
+                            else if (i == _currentImageIndex)
                               value = _progressController.value;
-                            } else {
+                            else
                               value = 0.0;
-                            }
                           }
                           return Expanded(
                             child: Padding(
@@ -305,8 +352,8 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                                 child: LinearProgressIndicator(
                                   minHeight: 3,
                                   value: value,
-                                  backgroundColor: Colors.white.withValues(
-                                    alpha: 0.25,
+                                  backgroundColor: Colors.white.withOpacity(
+                                    0.25,
                                   ),
                                   valueColor:
                                       const AlwaysStoppedAnimation<Color>(
@@ -320,54 +367,52 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                       ),
                     ),
 
-                    // user info (avatar, name, time)
-                    if (user != null)
-                      Positioned(
-                        top: 52,
-                        left: 16,
-                        right: 16,
-                        child: Row(
+                  Positioned(
+                    top: 52,
+                    left: 16,
+                    right: 16,
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundImage: avatarImage,
+                          backgroundColor: Colors.grey[400],
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            CircleAvatar(
-                              radius: 20,
-                              backgroundImage: NetworkImage(user.profileImage),
-                            ),
-                            const SizedBox(width: 8),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  user.username,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  pageStory.timeAgo,
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: .8),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.more_vert,
+                            Text(
+                              user?.username ?? pageStory.username,
+                              style: const TextStyle(
                                 color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
                               ),
-                              onPressed: () {},
+                            ),
+                            Text(
+                              pageStory.timeAgo,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(.8),
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                  ],
-                );
-              },
-            ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.more_vert,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {},
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),

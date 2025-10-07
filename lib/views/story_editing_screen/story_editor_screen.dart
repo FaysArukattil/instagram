@@ -1,3 +1,4 @@
+// lib/views/story_editing_screen/story_editor_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
@@ -48,6 +49,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
       _showTextField = !_showTextField;
       if (_showTextField) {
         Future.delayed(const Duration(milliseconds: 100), () {
+          // ignore: use_build_context_synchronously
           FocusScope.of(context).requestFocus(FocusNode());
         });
       }
@@ -57,7 +59,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
   void _addText() {
     if (_textController.text.trim().isNotEmpty) {
       setState(() {
-        _textContent = _textController.text;
+        _textContent = _textController.text.trim();
         _showTextField = false;
         _textController.clear();
       });
@@ -65,17 +67,18 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
   }
 
   void _postStory() {
+    if (widget.imagePath.isEmpty) return;
+
     // Find or create user's story
     final userStoryIndex = DummyData.stories.indexWhere(
       (s) => s.userId == DummyData.currentUser.id,
     );
 
     if (userStoryIndex != -1) {
-      // User already has stories, add to existing at the END
-      // This ensures new stories appear after viewing old ones
+      // Append to existing story images
       DummyData.stories[userStoryIndex].images.add(widget.imagePath);
 
-      // Update timeAgo to "Just now" for the story collection
+      // Update timeAgo
       final existingStory = DummyData.stories[userStoryIndex];
       final updatedStory = StoryModel(
         id: existingStory.id,
@@ -87,7 +90,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
       );
       DummyData.stories[userStoryIndex] = updatedStory;
     } else {
-      // Create new story for user and insert at the BEGINNING (after current user position)
+      // Create a new story (single image)
       final newStory = StoryModel(
         id: 'story_${DateTime.now().millisecondsSinceEpoch}',
         userId: DummyData.currentUser.id,
@@ -97,7 +100,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
         timeAgo: 'Just now',
       );
 
-      // Insert at position 0 or 1 depending on if there are other stories
       if (DummyData.stories.isEmpty) {
         DummyData.stories.add(newStory);
       } else {
@@ -105,19 +107,16 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
       }
     }
 
-    // Show success message
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Story posted successfully!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Story posted successfully!'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
 
-      // Go back to home screen (pop twice: editor + my_story_screen)
-      Navigator.of(context).popUntil((route) => route.isFirst);
-    }
+    // Go back to Home screen (pop until first)
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
@@ -128,7 +127,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Image Preview
           Positioned.fill(
             child: widget.isNetwork
                 ? Image.network(
@@ -153,7 +151,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                   ),
           ),
 
-          // Text overlay (draggable)
           if (_textContent.isNotEmpty)
             Positioned(
               left: _textPosition.dx * size.width - 100,
@@ -190,7 +187,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
               ),
             ),
 
-          // Top Bar
           Positioned(
             top: 0,
             left: 0,
@@ -217,32 +213,25 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.draw, color: Colors.white),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Draw feature coming soon!'),
-                          duration: Duration(seconds: 1),
-                        ),
-                      );
-                    },
+                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Draw feature coming soon!'),
+                      ),
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.music_note, color: Colors.white),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Music feature coming soon!'),
-                          duration: Duration(seconds: 1),
-                        ),
-                      );
-                    },
+                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Music feature coming soon!'),
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
 
-          // Text Input Field
           if (_showTextField)
             Positioned(
               bottom: 0,
@@ -259,7 +248,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Color picker
                     SizedBox(
                       height: 40,
                       child: ListView.builder(
@@ -267,11 +255,8 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                         itemCount: _colors.length,
                         itemBuilder: (context, index) {
                           return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _textColor = _colors[index];
-                              });
-                            },
+                            onTap: () =>
+                                setState(() => _textColor = _colors[index]),
                             child: Container(
                               width: 40,
                               height: 40,
@@ -289,7 +274,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Text input
                     Row(
                       children: [
                         Expanded(
@@ -306,15 +290,9 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(25),
-                                borderSide: const BorderSide(
-                                  color: Colors.white,
-                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(25),
-                                borderSide: const BorderSide(
-                                  color: Colors.white,
-                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(25),
@@ -333,7 +311,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // Size slider
                     Row(
                       children: [
                         const Text(
@@ -346,11 +323,8 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                             min: 16,
                             max: 40,
                             activeColor: Colors.white,
-                            onChanged: (value) {
-                              setState(() {
-                                _textSize = value;
-                              });
-                            },
+                            onChanged: (value) =>
+                                setState(() => _textSize = value),
                           ),
                         ),
                         const Text(
@@ -364,7 +338,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
               ),
             ),
 
-          // Bottom Bar
           if (!_showTextField)
             Positioned(
               bottom: 0,
@@ -386,33 +359,38 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                 ),
                 child: Row(
                   children: [
-                    // Save to device button
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
+                    GestureDetector(
+                      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Save to device coming soon!'),
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.download, color: Colors.white),
-                          SizedBox(width: 8),
-                          Text(
-                            'Save',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.download, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text(
+                              'Save',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     const Spacer(),
-                    // Post button
                     GestureDetector(
                       onTap: _postStory,
                       child: Container(

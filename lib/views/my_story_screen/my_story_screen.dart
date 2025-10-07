@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:instagram/data/dummy_data.dart';
+import 'package:instagram/models/story_model.dart';
 import 'package:instagram/views/story_editing_screen/story_editor_screen.dart';
 
 class MyStoryScreen extends StatefulWidget {
@@ -11,17 +13,6 @@ class MyStoryScreen extends StatefulWidget {
 
 class _MyStoryScreenState extends State<MyStoryScreen> {
   final ImagePicker _picker = ImagePicker();
-  final List<String> dummyImages = [
-    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-    'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400',
-    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400',
-    'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400',
-    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400',
-    'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400',
-    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400',
-    'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400',
-    'https://images.unsplash.com/photo-1503264116251-35a269479413?w=400',
-  ];
 
   Future<void> _pickFromCamera() async {
     try {
@@ -30,6 +21,7 @@ class _MyStoryScreenState extends State<MyStoryScreen> {
         imageQuality: 85,
       );
       if (image != null && mounted) {
+        // open editor for camera image (single image)
         _navigateToEditor(image.path, isNetwork: false);
       }
     } catch (e) {
@@ -39,15 +31,50 @@ class _MyStoryScreenState extends State<MyStoryScreen> {
 
   Future<void> _pickFromGallery() async {
     try {
-      final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-      );
-      if (image != null && mounted) {
-        _navigateToEditor(image.path, isNetwork: false);
+      // allow multi-select from gallery
+      final List<XFile> images = await _picker.pickMultiImage(imageQuality: 85);
+      // ignore: unnecessary_null_comparison
+      if (images != null && images.isNotEmpty) {
+        // Group all selected images into a single story (append if exists)
+        final List<String> paths = images.map((x) => x.path).toList();
+
+        final myStoryIndex = DummyData.stories.indexWhere(
+          (s) => s.userId == DummyData.currentUser.id,
+        );
+
+        if (myStoryIndex != -1) {
+          // append to existing story's images
+          DummyData.stories[myStoryIndex].images.addAll(paths);
+          // update timeAgo
+          final existing = DummyData.stories[myStoryIndex];
+          DummyData.stories[myStoryIndex] = StoryModel(
+            id: existing.id,
+            userId: existing.userId,
+            username: existing.username,
+            profileImageUrl: existing.profileImageUrl,
+            images: existing.images,
+            timeAgo: 'Just now',
+          );
+        } else {
+          // create new story with all selected images
+          DummyData.stories.insert(
+            0,
+            StoryModel(
+              id: 'story_${DateTime.now().millisecondsSinceEpoch}',
+              userId: DummyData.currentUser.id,
+              username: DummyData.currentUser.username,
+              profileImageUrl: DummyData.currentUser.profileImage,
+              images: paths,
+              timeAgo: 'Just now',
+            ),
+          );
+        }
+
+        // return to Home (so story appears immediately)
+        if (mounted) Navigator.of(context).pop();
       }
     } catch (e) {
-      _showErrorSnackbar('Failed to pick image: $e');
+      _showErrorSnackbar('Failed to pick image(s): $e');
     }
   }
 
@@ -62,6 +89,7 @@ class _MyStoryScreenState extends State<MyStoryScreen> {
   }
 
   void _showErrorSnackbar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -98,7 +126,7 @@ class _MyStoryScreenState extends State<MyStoryScreen> {
               ListTile(
                 leading: const Icon(Icons.photo_library, color: Colors.white),
                 title: const Text(
-                  'Gallery',
+                  'Gallery (multi-select)',
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
                 onTap: () {
@@ -115,6 +143,18 @@ class _MyStoryScreenState extends State<MyStoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final dummyImages = [
+      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
+      'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400',
+      'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400',
+      'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400',
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400',
+      'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400',
+      'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400',
+      'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400',
+      'https://images.unsplash.com/photo-1503264116251-35a269479413?w=400',
+    ];
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -144,12 +184,18 @@ class _MyStoryScreenState extends State<MyStoryScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
               children: [
-                _storyCard("Templates", "Add yours", Colors.pink, () {
-                  _showErrorSnackbar('Templates feature coming soon!');
-                }),
-                _storyCard("AI images", "NEW", Colors.blue, () {
-                  _showErrorSnackbar('AI images feature coming soon!');
-                }),
+                _storyCard(
+                  "Templates",
+                  "Add yours",
+                  Colors.pink,
+                  () => _showErrorSnackbar('Templates feature coming soon!'),
+                ),
+                _storyCard(
+                  "AI images",
+                  "NEW",
+                  Colors.blue,
+                  () => _showErrorSnackbar('AI images feature coming soon!'),
+                ),
               ],
             ),
           ),
@@ -165,9 +211,9 @@ class _MyStoryScreenState extends State<MyStoryScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
                 TextButton(
-                  onPressed: () {
-                    _showErrorSnackbar('Multi-select coming soon!');
-                  },
+                  onPressed: () => _showErrorSnackbar(
+                    'Multi-select available via Gallery option',
+                  ),
                   child: const Text(
                     'Select',
                     style: TextStyle(color: Colors.white),
@@ -189,7 +235,6 @@ class _MyStoryScreenState extends State<MyStoryScreen> {
               itemCount: dummyImages.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
-                  // Camera Tile
                   return GestureDetector(
                     onTap: _showImageSourceDialog,
                     child: Container(
@@ -268,13 +313,9 @@ class _MyStoryScreenState extends State<MyStoryScreen> {
               Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.image, color: Colors.white, size: 26),
-                    const SizedBox(height: 5),
-                    Text(
-                      title,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                    ),
+                  children: const [
+                    Icon(Icons.image, color: Colors.white, size: 26),
+                    SizedBox(height: 5),
                   ],
                 ),
               ),

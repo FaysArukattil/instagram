@@ -35,9 +35,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _openStory(String userId) {
-    final index = DummyData.stories.indexWhere((s) => s.userId == userId);
-    if (index != -1) {
+  /// Opens StoryViewerScreen for the story at [index] within DummyData.stories
+  void _openStoryAtIndex(int index) {
+    if (index >= 0 && index < DummyData.stories.length) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -46,51 +46,30 @@ class _HomeScreenState extends State<HomeScreen> {
             initialIndex: index,
           ),
         ),
-      ).then((_) {
-        // Refresh when coming back from story viewer
-        setState(() {});
-      });
+      ).then((_) => setState(() {}));
     }
   }
 
   void _openMyStory() {
-    // Check if current user has story
-    final userStoryIndex = DummyData.stories.indexWhere(
+    final myStoryIndex = DummyData.stories.indexWhere(
       (s) => s.userId == DummyData.currentUser.id,
     );
 
-    if (userStoryIndex != -1) {
-      // User has story, open viewer
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => StoryViewerScreen(
-            stories: DummyData.stories,
-            initialIndex: userStoryIndex,
-          ),
-        ),
-      ).then((_) {
-        setState(() {}); // Refresh after viewing
-      });
+    if (myStoryIndex != -1) {
+      _openStoryAtIndex(myStoryIndex);
     } else {
-      // User has no story, open creation screen
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const MyStoryScreen()),
-      ).then((_) {
-        setState(() {}); // Refresh after creating story
-      });
+      ).then((_) => setState(() {}));
     }
   }
 
   void _addToStory() {
-    // Always open creation screen when tapping plus icon
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const MyStoryScreen()),
-    ).then((_) {
-      setState(() {}); // Refresh after adding to story
-    });
+    ).then((_) => setState(() {}));
   }
 
   void _openProfile(String userId) {
@@ -113,10 +92,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Check if current user has story (dynamically)
     final currentUserHasStory = DummyData.stories.any(
       (s) => s.userId == DummyData.currentUser.id,
     );
+
+    // Build list of other users' stories (exclude current user's)
+    final otherStories = DummyData.stories
+        .where((s) => s.userId != DummyData.currentUser.id)
+        .toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -208,10 +191,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     horizontal: 4,
                     vertical: 8,
                   ),
-                  itemCount:
-                      1 + DummyData.users.where((u) => u.hasStory).length,
-                  itemBuilder: (context, storyIndex) {
-                    if (storyIndex == 0) {
+                  itemCount: 1 + otherStories.length,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
                       // Current user's story avatar
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -225,18 +207,26 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     }
 
-                    // Other users' stories
-                    final storiesUsers = DummyData.users
-                        .where((u) => u.hasStory)
-                        .toList();
-                    final user = storiesUsers[storyIndex - 1];
+                    final story = otherStories[index - 1];
+                    final user = DummyData.getUserById(story.userId);
+
+                    if (user == null) return const SizedBox();
+
+                    // find story's index in the main stories list
+                    final storyIndex = DummyData.stories.indexWhere(
+                      (s) => s.id == story.id,
+                    );
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: StoryAvatar(
                         user: user,
                         hasStory: true,
-                        onTap: () => _openStory(user.id),
+                        onTap: () {
+                          if (storyIndex != -1) {
+                            _openStoryAtIndex(storyIndex);
+                          }
+                        },
                       ),
                     );
                   },
