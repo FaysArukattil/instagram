@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/story_model.dart';
+import 'package:instagram/views/bottomnavbarscreens/bottomnavbarscreen.dart';
 
 class StoryEditorScreen extends StatefulWidget {
   final String imagePath;
@@ -59,7 +60,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
   void _addText() {
     if (_textController.text.trim().isNotEmpty) {
       setState(() {
-        _textContent = _textController.text.trim();
+        _textContent = _textController.text;
         _showTextField = false;
         _textController.clear();
       });
@@ -67,18 +68,17 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
   }
 
   void _postStory() {
-    if (widget.imagePath.isEmpty) return;
-
     // Find or create user's story
     final userStoryIndex = DummyData.stories.indexWhere(
       (s) => s.userId == DummyData.currentUser.id,
     );
 
     if (userStoryIndex != -1) {
-      // Append to existing story images
+      // User already has stories, add to existing at the END
+      // This ensures new stories appear after viewing old ones
       DummyData.stories[userStoryIndex].images.add(widget.imagePath);
 
-      // Update timeAgo
+      // Update timeAgo to "Just now" for the story collection
       final existingStory = DummyData.stories[userStoryIndex];
       final updatedStory = StoryModel(
         id: existingStory.id,
@@ -90,7 +90,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
       );
       DummyData.stories[userStoryIndex] = updatedStory;
     } else {
-      // Create a new story (single image)
+      // Create new story for user and insert at the BEGINNING (after current user position)
       final newStory = StoryModel(
         id: 'story_${DateTime.now().millisecondsSinceEpoch}',
         userId: DummyData.currentUser.id,
@@ -100,6 +100,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
         timeAgo: 'Just now',
       );
 
+      // Insert at position 0 or 1 depending on if there are other stories
       if (DummyData.stories.isEmpty) {
         DummyData.stories.add(newStory);
       } else {
@@ -107,16 +108,22 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
       }
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Story posted successfully!'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
+    // Show success message
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Story posted successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
 
-    // Go back to Home screen (pop until first)
-    Navigator.of(context).popUntil((route) => route.isFirst);
+      // Go back to home screen (pop twice: editor + my_story_screen)
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
+      );
+    }
   }
 
   @override
@@ -127,6 +134,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
+          // Image Preview
           Positioned.fill(
             child: widget.isNetwork
                 ? Image.network(
@@ -151,6 +159,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                   ),
           ),
 
+          // Text overlay (draggable)
           if (_textContent.isNotEmpty)
             Positioned(
               left: _textPosition.dx * size.width - 100,
@@ -172,7 +181,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: .5),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -187,6 +196,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
               ),
             ),
 
+          // Top Bar
           Positioned(
             top: 0,
             left: 0,
@@ -197,7 +207,10 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.black.withOpacity(0.5), Colors.transparent],
+                  colors: [
+                    Colors.black.withValues(alpha: 0.5),
+                    Colors.transparent,
+                  ],
                 ),
               ),
               child: Row(
@@ -213,25 +226,32 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.draw, color: Colors.white),
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Draw feature coming soon!'),
-                      ),
-                    ),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Draw feature coming soon!'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                    },
                   ),
                   IconButton(
                     icon: const Icon(Icons.music_note, color: Colors.white),
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Music feature coming soon!'),
-                      ),
-                    ),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Music feature coming soon!'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
             ),
           ),
 
+          // Text Input Field
           if (_showTextField)
             Positioned(
               bottom: 0,
@@ -240,7 +260,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.8),
+                  color: Colors.black.withValues(alpha: 0.8),
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(20),
                   ),
@@ -248,6 +268,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Color picker
                     SizedBox(
                       height: 40,
                       child: ListView.builder(
@@ -255,8 +276,11 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                         itemCount: _colors.length,
                         itemBuilder: (context, index) {
                           return GestureDetector(
-                            onTap: () =>
-                                setState(() => _textColor = _colors[index]),
+                            onTap: () {
+                              setState(() {
+                                _textColor = _colors[index];
+                              });
+                            },
                             child: Container(
                               width: 40,
                               height: 40,
@@ -274,6 +298,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
+                    // Text input
                     Row(
                       children: [
                         Expanded(
@@ -286,13 +311,19 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                             decoration: InputDecoration(
                               hintText: 'Type something...',
                               hintStyle: TextStyle(
-                                color: Colors.white.withOpacity(0.5),
+                                color: Colors.white.withValues(alpha: 0.5),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(25),
+                                borderSide: const BorderSide(
+                                  color: Colors.white,
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(25),
+                                borderSide: const BorderSide(
+                                  color: Colors.white,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(25),
@@ -311,6 +342,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
+                    // Size slider
                     Row(
                       children: [
                         const Text(
@@ -323,8 +355,11 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                             min: 16,
                             max: 40,
                             activeColor: Colors.white,
-                            onChanged: (value) =>
-                                setState(() => _textSize = value),
+                            onChanged: (value) {
+                              setState(() {
+                                _textSize = value;
+                              });
+                            },
                           ),
                         ),
                         const Text(
@@ -338,6 +373,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
               ),
             ),
 
+          // Bottom Bar
           if (!_showTextField)
             Positioned(
               bottom: 0,
@@ -354,43 +390,41 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
-                    colors: [Colors.black.withOpacity(0.5), Colors.transparent],
+                    colors: [
+                      Colors.black.withValues(alpha: 0.5),
+                      Colors.transparent,
+                    ],
                   ),
                 ),
                 child: Row(
                   children: [
-                    GestureDetector(
-                      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Save to device coming soon!'),
-                        ),
+                    // Save to device button
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
                       ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.download, color: Colors.white),
-                            SizedBox(width: 8),
-                            Text(
-                              'Save',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.download, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text(
+                            'Save',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                     const Spacer(),
+                    // Post button
                     GestureDetector(
                       onTap: _postStory,
                       child: Container(

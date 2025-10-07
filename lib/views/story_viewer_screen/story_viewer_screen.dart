@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/story_model.dart';
+import 'package:instagram/models/user_model.dart';
 
 class StoryViewerScreen extends StatefulWidget {
   final List<StoryModel> stories;
@@ -28,11 +29,11 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   late AnimationController _progressController;
   static const Duration storyDuration = Duration(seconds: 5);
 
-  // prevent double transitions/taps
+  // prevent concurrent page transitions / double taps
   bool _isTransitioning = false;
   bool _tapLock = false;
 
-  // vertical drag for dismiss
+  // vertical drag dismiss
   double _verticalDrag = 0.0;
   bool _isDismissing = false;
 
@@ -50,7 +51,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
           })
           ..addStatusListener((status) {
             if (status == AnimationStatus.completed) {
-              _onProgressComplete();
+              _onProgressCompleteSafe();
             }
           });
 
@@ -61,14 +62,13 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     if (!mounted) return;
     _progressController.stop();
     _progressController.reset();
-
+    // if current story has no images, advance to next user
     final images = _currentStoryImages;
     if (images == null || images.isEmpty) {
-      // no images: advance to next user (tiny delay to let UI settle)
+      // small delay so UI can update
       Future.microtask(() => _goToNextUserOrClose());
       return;
     }
-
     _progressController.forward();
   }
 
@@ -87,14 +87,13 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     return widget.stories[_currentUserIndex].images;
   }
 
-  void _onProgressComplete() {
+  void _onProgressCompleteSafe() {
     try {
       final images = _currentStoryImages;
       if (images == null || images.isEmpty) {
         _goToNextUserOrClose();
         return;
       }
-
       if (_currentImageIndex < images.length - 1) {
         setState(() {
           _currentImageIndex = (_currentImageIndex + 1).clamp(
@@ -107,10 +106,11 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
         _goToNextUserOrClose();
       }
     } catch (_) {
-      // swallow race conditions
+      // ignore race conditions
     }
   }
 
+  // Tap handlers
   void _onTapAtPosition(Offset localPosition, BuildContext context) {
     if (_tapLock || _isTransitioning) return;
     _tapLock = true;
@@ -123,7 +123,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
 
     try {
       if (localPosition.dx < width / 2) {
-        // left -> previous image or previous user
+        // left half -> previous image or previous user
         if (images != null && _currentImageIndex > 0) {
           setState(() {
             _currentImageIndex = (_currentImageIndex - 1).clamp(
@@ -136,7 +136,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
           _goToPreviousUserOrClose();
         }
       } else {
-        // right -> next image or next user
+        // right half -> next image or next user
         if (images != null && _currentImageIndex < images.length - 1) {
           setState(() {
             _currentImageIndex = (_currentImageIndex + 1).clamp(
@@ -150,7 +150,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
         }
       }
     } catch (_) {
-      // swallow race conditions
+      // swallow race errors
     }
   }
 
@@ -164,6 +164,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
             curve: Curves.easeOut,
           )
           .whenComplete(() {
+            // onPageChanged will handle reset
             _isTransitioning = false;
           });
     } else {
@@ -205,27 +206,6 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     if (mounted) Navigator.pop(context);
   }
 
-  bool _isNetworkPath(String path) {
-    try {
-      final uri = Uri.tryParse(path);
-      return uri != null &&
-          uri.hasScheme &&
-          (uri.scheme == 'http' || uri.scheme == 'https');
-    } catch (_) {
-      return false;
-    }
-  }
-
-  ImageProvider? _avatarImageFor(StoryModel pageStory) {
-    final user = DummyData.getUserById(pageStory.userId);
-    final candidate = (pageStory.profileImageUrl.isNotEmpty)
-        ? pageStory.profileImageUrl
-        : (user?.profileImage ?? '');
-    if (candidate.isEmpty) return null;
-    if (_isNetworkPath(candidate)) return NetworkImage(candidate);
-    return FileImage(File(candidate));
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -234,28 +214,36 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
       backgroundColor: Colors.black,
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
+
         onTapUp: (details) => _onTapAtPosition(details.localPosition, context),
+
         onLongPressStart: (_) => _pauseProgress(),
         onLongPressEnd: (_) => _resumeProgress(),
+
         onVerticalDragUpdate: (details) {
+          // only allow downward drag
           if (details.delta.dy > 0) {
             _pauseProgress();
             setState(() {
               _verticalDrag += details.delta.dy;
+              // cap to screen height
               if (_verticalDrag > screenHeight) _verticalDrag = screenHeight;
             });
           }
         },
         onVerticalDragEnd: (details) {
           if (_verticalDrag > 140) {
+            // dismiss with animation
             _performDismissAnimation(screenHeight);
           } else {
+            // bounce back
             setState(() {
               _verticalDrag = 0;
             });
             _resumeProgress();
           }
         },
+
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           transform: Matrix4.translationValues(0, _verticalDrag, 0),
@@ -277,96 +265,94 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
             itemBuilder: (context, pageIndex) {
               final StoryModel pageStory = widget.stories[pageIndex];
               final images = pageStory.images;
-              final bool hasImages = images.isNotEmpty;
-
-              final int displayImageIndex = hasImages
-                  ? ((pageIndex == _currentUserIndex)
-                        ? _currentImageIndex.clamp(0, images.length - 1)
-                        : 0)
+              final int displayImageIndex = (pageIndex == _currentUserIndex)
+                  ? _currentImageIndex.clamp(
+                      0,
+                      (images.isEmpty ? 0 : images.length - 1),
+                    )
                   : 0;
+              final String? imageUrl = images.isEmpty
+                  ? null
+                  : images[displayImageIndex];
 
-              final String? imageUrl = hasImages
-                  ? images[displayImageIndex]
-                  : null;
-
-              final user = DummyData.getUserById(pageStory.userId);
-              final avatarImage = _avatarImageFor(pageStory);
-
-              Widget imageWidget;
-              if (imageUrl == null) {
-                imageWidget = Container(color: Colors.black);
-              } else if (_isNetworkPath(imageUrl)) {
-                imageWidget = Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    );
-                  },
-                  errorBuilder: (_, __, ___) => const Center(
-                    child: Icon(Icons.broken_image, color: Colors.white),
-                  ),
-                );
-              } else {
-                imageWidget = Image.file(
-                  File(imageUrl),
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Center(
-                    child: Icon(Icons.broken_image, color: Colors.white),
-                  ),
-                );
-              }
+              final UserModel? user = DummyData.getUserById(pageStory.userId);
 
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  imageWidget,
-
-                  if (hasImages)
-                    Positioned(
-                      top: 40,
-                      left: 8,
-                      right: 8,
-                      child: Row(
-                        children: List.generate(images.length, (i) {
-                          double value;
-                          if (pageIndex != _currentUserIndex) {
-                            value = 0.0;
-                          } else {
-                            if (i < _currentImageIndex)
-                              value = 1.0;
-                            else if (i == _currentImageIndex)
-                              value = _progressController.value;
-                            else
-                              value = 0.0;
-                          }
-                          return Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 2,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  minHeight: 3,
-                                  value: value,
-                                  backgroundColor: Colors.white.withOpacity(
-                                    0.25,
-                                  ),
-                                  valueColor:
-                                      const AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
+                  // Image / placeholder
+                  if (imageUrl == null)
+                    Container(
+                      color: Colors.black,
+                      child: const Center(
+                        child: Icon(Icons.broken_image, color: Colors.white),
+                      ),
+                    )
+                  else if (imageUrl.startsWith('http'))
+                    Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (ctx, child, prog) {
+                        if (prog == null) return child;
+                        return const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        );
+                      },
+                      errorBuilder: (ctx, e, st) => const Center(
+                        child: Icon(Icons.broken_image, color: Colors.white),
+                      ),
+                    )
+                  else
+                    Image.file(
+                      File(imageUrl),
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, e, st) => const Center(
+                        child: Icon(Icons.broken_image, color: Colors.white),
                       ),
                     ),
 
+                  // Top progress bars
+                  Positioned(
+                    top: 40,
+                    left: 8,
+                    right: 8,
+                    child: Row(
+                      children: List.generate(images.length, (i) {
+                        double value;
+                        if (pageIndex != _currentUserIndex) {
+                          value = 0.0;
+                        } else {
+                          if (i < _currentImageIndex) {
+                            value = 1.0;
+                          } else if (i == _currentImageIndex) {
+                            value = _progressController.value;
+                          } else {
+                            value = 0.0;
+                          }
+                        }
+                        return Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                minHeight: 3,
+                                value: value,
+                                backgroundColor: Colors.white.withValues(
+                                  alpha: 0.25,
+                                ),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+
+                  // user info (avatar, name, time)
                   Positioned(
                     top: 52,
                     left: 16,
@@ -375,8 +361,11 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundImage: avatarImage,
-                          backgroundColor: Colors.grey[400],
+                          backgroundImage:
+                              pageStory.profileImageUrl.startsWith('http')
+                              ? NetworkImage(pageStory.profileImageUrl)
+                              : FileImage(File(pageStory.profileImageUrl))
+                                    as ImageProvider,
                         ),
                         const SizedBox(width: 8),
                         Column(
@@ -393,7 +382,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                             Text(
                               pageStory.timeAgo,
                               style: TextStyle(
-                                color: Colors.white.withOpacity(.8),
+                                color: Colors.white.withValues(alpha: .8),
                                 fontSize: 12,
                               ),
                             ),
