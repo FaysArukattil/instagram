@@ -3,6 +3,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/views/profile_screen/profile_screen.dart';
+import 'package:instagram/views/post_screen/post_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -86,7 +87,6 @@ class _SearchScreenState extends State<SearchScreen> {
                   child: Column(
                     children: [
                       SizedBox(height: 30),
-
                       TextField(
                         controller: _searchController,
                         decoration: InputDecoration(
@@ -171,8 +171,20 @@ class _SearchScreenState extends State<SearchScreen> {
 
   // Explore grid as a sliver
   Widget _buildExploreGridSliver() {
-    final allImages = DummyData.posts.expand((p) => p.images).toList();
-    if (allImages.isEmpty) {
+    // Create a map to track which post each image belongs to
+    final List<Map<String, dynamic>> imageData = [];
+
+    for (var post in DummyData.posts) {
+      for (int i = 0; i < post.images.length; i++) {
+        imageData.add({
+          'imageUrl': post.images[i],
+          'userId': post.userId,
+          'postId': post.id,
+        });
+      }
+    }
+
+    if (imageData.isEmpty) {
       return const SliverFillRemaining(
         child: Center(child: Text('No posts yet')),
       );
@@ -195,8 +207,8 @@ class _SearchScreenState extends State<SearchScreen> {
           ],
         ),
         delegate: SliverChildBuilderDelegate(
-          (context, index) => _buildImageTile(allImages[index]),
-          childCount: allImages.length,
+          (context, index) => _buildImageTile(imageData[index]),
+          childCount: imageData.length,
         ),
       ),
     );
@@ -214,42 +226,42 @@ class _SearchScreenState extends State<SearchScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
-            Stack(
-              children: [
-                if (user.hasStory)
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFFF58529),
-                          Color(0xFFDD2A7B),
-                          Color(0xFF8134AF),
-                        ],
-                      ),
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 50,
-                        height: 50,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+            SizedBox(
+              width: 54,
+              height: 54,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  if (user.hasStory)
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFFF58529),
+                            Color(0xFFDD2A7B),
+                            Color(0xFF8134AF),
+                          ],
                         ),
                       ),
                     ),
+                  Container(
+                    width: user.hasStory ? 48 : 54,
+                    height: user.hasStory ? 48 : 54,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: CircleAvatar(
+                      backgroundImage: NetworkImage(user.profileImage),
+                      backgroundColor: Colors.grey[300],
+                    ),
                   ),
-                Container(
-                  margin: EdgeInsets.all(user.hasStory ? 2 : 0),
-                  child: CircleAvatar(
-                    radius: user.hasStory ? 23 : 25,
-                    backgroundImage: NetworkImage(user.profileImage),
-                    backgroundColor: Colors.grey[300],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -298,28 +310,48 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildImageTile(String imageUrl) {
-    return Container(
-      decoration: BoxDecoration(color: Colors.grey[300]),
-      child: Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return Center(
-            child: CircularProgressIndicator(
-              value: progress.expectedTotalBytes != null
-                  ? progress.cumulativeBytesLoaded /
-                        progress.expectedTotalBytes!
-                  : null,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[400]!),
-              strokeWidth: 2,
+  Widget _buildImageTile(Map<String, dynamic> data) {
+    final String imageUrl = data['imageUrl'];
+    final String userId = data['userId'];
+
+    // Find the index of this post among all posts by this user
+    final userPosts = DummyData.posts.where((p) => p.userId == userId).toList();
+    final postIndex = userPosts.indexWhere((p) => p.images.contains(imageUrl));
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PostScreen(
+              userId: userId,
+              initialIndex: postIndex >= 0 ? postIndex : 0,
             ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) => Container(
-          color: Colors.grey[300],
-          child: Icon(Icons.broken_image, color: Colors.grey[500]),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(color: Colors.grey[300]),
+        child: Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, progress) {
+            if (progress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                value: progress.expectedTotalBytes != null
+                    ? progress.cumulativeBytesLoaded /
+                          progress.expectedTotalBytes!
+                    : null,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[400]!),
+                strokeWidth: 2,
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: Colors.grey[300],
+            child: Icon(Icons.broken_image, color: Colors.grey[500]),
+          ),
         ),
       ),
     );
