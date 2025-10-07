@@ -46,8 +46,51 @@ class _HomeScreenState extends State<HomeScreen> {
             initialIndex: index,
           ),
         ),
-      );
+      ).then((_) {
+        // Refresh when coming back from story viewer
+        setState(() {});
+      });
     }
+  }
+
+  void _openMyStory() {
+    // Check if current user has story
+    final userStoryIndex = DummyData.stories.indexWhere(
+      (s) => s.userId == DummyData.currentUser.id,
+    );
+
+    if (userStoryIndex != -1) {
+      // User has story, open viewer
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => StoryViewerScreen(
+            stories: DummyData.stories,
+            initialIndex: userStoryIndex,
+          ),
+        ),
+      ).then((_) {
+        setState(() {}); // Refresh after viewing
+      });
+    } else {
+      // User has no story, open creation screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const MyStoryScreen()),
+      ).then((_) {
+        setState(() {}); // Refresh after creating story
+      });
+    }
+  }
+
+  void _addToStory() {
+    // Always open creation screen when tapping plus icon
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MyStoryScreen()),
+    ).then((_) {
+      setState(() {}); // Refresh after adding to story
+    });
   }
 
   void _openProfile(String userId) {
@@ -70,6 +113,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if current user has story (dynamically)
+    final currentUserHasStory = DummyData.stories.any(
+      (s) => s.userId == DummyData.currentUser.id,
+    );
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -80,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
           'Instagram',
           style: TextStyle(
             fontFamily: 'Billabong',
-            fontSize: 20,
+            fontSize: 32,
             color: Colors.black,
           ),
         ),
@@ -118,9 +166,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.red,
                     shape: BoxShape.circle,
                   ),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
                   child: const Text(
                     '15',
-                    style: TextStyle(color: Colors.white, fontSize: 10),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -142,53 +199,40 @@ class _HomeScreenState extends State<HomeScreen> {
           slivers: [
             // Stories Section
             SliverToBoxAdapter(
-              child: SizedBox(
+              child: Container(
                 height: 110,
+                margin: const EdgeInsets.only(bottom: 2),
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 8,
+                  ),
                   itemCount:
                       1 + DummyData.users.where((u) => u.hasStory).length,
                   itemBuilder: (context, storyIndex) {
                     if (storyIndex == 0) {
-                      // Your Story avatar fully tappable
-                      return StoryAvatar(
-                        user: DummyData.currentUser,
-                        hasStory: DummyData.currentUser.hasStory,
-                        isCurrentUser: true,
-                        onTap: () {
-                          final index = DummyData.stories.indexWhere(
-                            (s) => s.userId == DummyData.currentUser.id,
-                          );
-                          if (index != -1) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => StoryViewerScreen(
-                                  stories: DummyData.stories,
-                                  initialIndex: index,
-                                ),
-                              ),
-                            );
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const MyStoryScreen(),
-                              ),
-                            );
-                          }
-                        },
+                      // Current user's story avatar
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: StoryAvatar(
+                          user: DummyData.currentUser,
+                          hasStory: currentUserHasStory,
+                          isCurrentUser: true,
+                          onTap: _openMyStory,
+                          onAddStory: _addToStory,
+                        ),
                       );
                     }
 
+                    // Other users' stories
                     final storiesUsers = DummyData.users
                         .where((u) => u.hasStory)
                         .toList();
                     final user = storiesUsers[storyIndex - 1];
 
                     return Padding(
-                      padding: const EdgeInsets.only(left: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: StoryAvatar(
                         user: user,
                         hasStory: true,
@@ -200,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SliverToBoxAdapter(child: Divider(height: 1)),
+            const SliverToBoxAdapter(child: Divider(height: 1, thickness: 0.5)),
 
             // Posts Section
             SliverList(

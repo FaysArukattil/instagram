@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../models/user_model.dart';
+import 'package:instagram/models/user_model.dart';
 
 class StoryAvatar extends StatelessWidget {
   final UserModel user;
   final bool hasStory;
   final bool isCurrentUser;
   final VoidCallback onTap;
+  final VoidCallback? onAddStory; // For adding more stories
 
   const StoryAvatar({
     super.key,
@@ -13,81 +14,90 @@ class StoryAvatar extends StatelessWidget {
     required this.hasStory,
     this.isCurrentUser = false,
     required this.onTap,
+    this.onAddStory,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap, // entire avatar + icon is tappable
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      onTap: onTap,
+      child: SizedBox(
+        width: 70, // Fixed width to prevent overflow
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Stack(
+              clipBehavior: Clip.none,
               children: [
-                // Avatar circle
+                // Story ring gradient (if has story)
+                if (hasStory && !isCurrentUser)
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFF58529),
+                          Color(0xFFDD2A7B),
+                          Color(0xFF8134AF),
+                        ],
+                        begin: Alignment.topRight,
+                        end: Alignment.bottomLeft,
+                      ),
+                    ),
+                  ),
+
+                // White border
                 Container(
                   width: 70,
                   height: 70,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: hasStory
-                        ? const LinearGradient(
-                            colors: [
-                              Colors.purple,
-                              Colors.orange,
-                              Colors.yellow,
-                            ],
-                            begin: Alignment.topRight,
-                            end: Alignment.bottomLeft,
-                          )
-                        : null,
+                    color: Colors.white,
+                    border: hasStory && !isCurrentUser
+                        ? null
+                        : Border.all(color: Colors.grey.shade300, width: 1),
                   ),
-                  padding: const EdgeInsets.all(2),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                      image: DecorationImage(
-                        image: NetworkImage(user.profileImage),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                  padding: const EdgeInsets.all(2.5),
+                  child: CircleAvatar(
+                    backgroundImage: NetworkImage(user.profileImage),
+                    backgroundColor: Colors.grey[300],
                   ),
                 ),
 
-                // + icon for current user
+                // Plus icon for current user (to add story)
                 if (isCurrentUser)
                   Positioned(
-                    bottom: -2,
-                    right: -2,
-                    child: Container(
-                      width: 26, // slightly bigger for easier tap
-                      height: 26,
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: const Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 16,
+                    right: 0,
+                    bottom: 0,
+                    child: GestureDetector(
+                      onTap: onAddStory ?? onTap,
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0095F6),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ),
               ],
             ),
             const SizedBox(height: 4),
-            SizedBox(
-              width: 70,
-              child: Text(
-                isCurrentUser ? 'Your story' : user.username,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12),
-              ),
+            Text(
+              isCurrentUser ? 'Your story' : user.username,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, color: Colors.black),
             ),
           ],
         ),
