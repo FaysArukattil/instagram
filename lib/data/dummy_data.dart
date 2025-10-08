@@ -2,8 +2,162 @@ import '../models/user_model.dart';
 import '../models/post_model.dart';
 import '../models/story_model.dart';
 import '../models/comment_model.dart';
+import '../models/reel_model.dart';
 
 class DummyData {
+  static final List<ReelModel> reels = [
+    ReelModel(
+      id: 'reel_1',
+      userId: 'user_2',
+      videoUrl:
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
+      caption: 'Beautiful sunset views 🌅 #nature #sunset',
+      likes: 15234,
+      comments: 234,
+      shares: 45,
+      timeAgo: '2h',
+      location: 'Thamarasseri Churam',
+    ),
+    ReelModel(
+      id: 'reel_2',
+      userId: 'user_3',
+      videoUrl:
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800',
+      caption: 'Trying new recipes today! 🍕🔥',
+      likes: 8923,
+      comments: 156,
+      shares: 89,
+      timeAgo: '5h',
+    ),
+    ReelModel(
+      id: 'reel_3',
+      userId: 'user_11',
+      videoUrl:
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800',
+      caption: 'Travel vibes ✈️ #wanderlust',
+      likes: 23456,
+      comments: 567,
+      shares: 234,
+      timeAgo: '8h',
+      location: 'Dubai, UAE',
+    ),
+    ReelModel(
+      id: 'reel_4',
+      userId: 'user_12',
+      videoUrl:
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800',
+      caption: 'Workout motivation 💪 #fitness #gym',
+      likes: 34567,
+      comments: 892,
+      shares: 156,
+      timeAgo: '12h',
+    ),
+    ReelModel(
+      id: 'reel_5',
+      userId: 'user_7',
+      videoUrl:
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+      caption: 'Kashmir beauty 🏔️❄️',
+      likes: 45678,
+      comments: 1234,
+      shares: 567,
+      timeAgo: '1d',
+      location: 'Gulmarg, Kashmir',
+    ),
+    ReelModel(
+      id: 'reel_6',
+      userId: 'user_13',
+      videoUrl:
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800',
+      caption: 'Coding life 💻 #developer',
+      likes: 12345,
+      comments: 234,
+      shares: 78,
+      timeAgo: '1d',
+    ),
+    ReelModel(
+      id: 'reel_7',
+      userId: 'user_14',
+      videoUrl:
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800',
+      caption: 'Nature therapy 🌲🌿',
+      likes: 56789,
+      comments: 1567,
+      shares: 345,
+      timeAgo: '2d',
+    ),
+    ReelModel(
+      id: 'reel_8',
+      userId: 'user_15',
+      videoUrl:
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800',
+      caption: 'Art in motion 🎨✨',
+      likes: 23456,
+      comments: 678,
+      shares: 123,
+      timeAgo: '2d',
+    ),
+    ReelModel(
+      id: 'reel_9',
+      userId: 'user_4',
+      videoUrl:
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
+      caption: 'Beach life 🌊☀️',
+      likes: 34567,
+      comments: 891,
+      shares: 234,
+      timeAgo: '3d',
+      location: 'Kovalam Beach',
+    ),
+    ReelModel(
+      id: 'reel_10',
+      userId: 'user_5',
+      videoUrl:
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800',
+      caption: 'Living my best life 😎',
+      likes: 45678,
+      comments: 1234,
+      shares: 456,
+      timeAgo: '3d',
+    ),
+  ];
+
+  // Add helper methods
+  static List<ReelModel> getReelsForUser(String userId) {
+    return reels.where((reel) => reel.userId == userId).toList();
+  }
+
+  static void addRepost(String reelId, String currentUserId) {
+    final reelIndex = reels.indexWhere((r) => r.id == reelId);
+    if (reelIndex != -1) {
+      reels[reelIndex].isReposted = true;
+      reels[reelIndex].shares++;
+
+      // Create a reposted reel entry for current user
+      // You can implement this based on your requirements
+    }
+  }
+
   static final Map<String, List<Map<String, dynamic>>> chats = {
     // Chat with user_1
     "user_1": [
