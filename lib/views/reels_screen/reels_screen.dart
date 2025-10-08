@@ -45,26 +45,7 @@ class _ReelsScreenState extends State<ReelsScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          'Reels',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
-            onPressed: () {
-              // Open camera for reel creation
-            },
-          ),
-        ],
-      ),
+
       body: PageView.builder(
         controller: _pageController,
         scrollDirection: Axis.vertical,
