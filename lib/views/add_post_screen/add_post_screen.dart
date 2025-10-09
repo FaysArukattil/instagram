@@ -26,7 +26,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
   @override
   void dispose() {
     _modeController.dispose();
-    _clearSelection(); // Clear all selections on dispose
+    _clearSelection();
     super.dispose();
   }
 
@@ -34,32 +34,27 @@ class _AddPostScreenState extends State<AddPostScreen> {
     _selectedImages?.clear();
     _selectedImages = null;
     _selectedVideo = null;
-    // Clear image cache to free memory
     imageCache.clear();
     imageCache.clearLiveImages();
   }
 
   Future<void> _pickImagesFromGallery() async {
     try {
-      _clearSelection(); // Clear previous selections
+      _clearSelection();
 
       if (_currentMode == 2) {
-        // For REEL, pick video
         final XFile? video = await _picker.pickVideo(
           source: ImageSource.gallery,
-          maxDuration: const Duration(seconds: 60), // Limit duration
+          maxDuration: const Duration(seconds: 60),
         );
         if (video != null && mounted) {
           setState(() {
             _selectedVideo = video;
           });
-          // Navigate immediately for reels
           _navigateToReelEditor();
         }
       } else {
-        // For POST and STORY, pick images
         if (_currentMode == 1) {
-          // Story - single image only
           final XFile? image = await _picker.pickImage(
             source: ImageSource.gallery,
             maxWidth: 1800,
@@ -67,10 +62,12 @@ class _AddPostScreenState extends State<AddPostScreen> {
             imageQuality: 85,
           );
           if (image != null && mounted) {
+            setState(() {
+              _selectedImages = [image];
+            });
             _navigateToStoryEditor(image);
           }
         } else {
-          // Post - can pick multiple
           final List<XFile> images = await _picker.pickMultiImage(
             maxWidth: 1800,
             maxHeight: 1800,
@@ -80,7 +77,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
             setState(() {
               _selectedImages = images;
             });
-            // Navigate immediately for single image posts
             if (images.length == 1) {
               _navigateToPostEditor(images[0]);
             }
@@ -101,10 +97,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
   Future<void> _pickFromCamera() async {
     try {
-      _clearSelection(); // Clear previous selections
+      _clearSelection();
 
       if (_currentMode == 2) {
-        // For REEL, record video
         final XFile? video = await _picker.pickVideo(
           source: ImageSource.camera,
           maxDuration: const Duration(seconds: 60),
@@ -116,7 +111,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
           _navigateToReelEditor();
         }
       } else {
-        // For POST and STORY, take photo
         final XFile? image = await _picker.pickImage(
           source: ImageSource.camera,
           maxWidth: 1800,
@@ -125,6 +119,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
           preferredCameraDevice: CameraDevice.rear,
         );
         if (image != null && mounted) {
+          setState(() {
+            _selectedImages = [image];
+          });
           if (_currentMode == 0) {
             _navigateToPostEditor(image);
           } else if (_currentMode == 1) {
@@ -153,7 +150,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
     ).then((_) {
       _clearSelection();
       if (mounted) {
-        Navigator.pop(context); // Return to main screen after posting
+        Navigator.pop(context);
       }
     });
   }
@@ -204,19 +201,19 @@ class _AddPostScreenState extends State<AddPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white, // Light theme
       body: SafeArea(
         child: Column(
           children: [
             // Top Bar
             Container(
-              color: Colors.black,
+              color: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
+                    icon: const Icon(Icons.close, color: Colors.black),
                     onPressed: () {
                       _clearSelection();
                       Navigator.pop(context);
@@ -225,7 +222,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                   const Text(
                     'New post',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -256,8 +253,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 ],
               ),
             ),
-
-            // Mode Selector (Swipeable)
+            // Mode Selector
             SizedBox(
               height: 60,
               child: PageView.builder(
@@ -265,7 +261,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 onPageChanged: (index) {
                   setState(() {
                     _currentMode = index;
-                    _clearSelection(); // Clear when switching modes
+                    _clearSelection();
                   });
                 },
                 itemCount: _modes.length,
@@ -275,7 +271,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                       _modes[index],
                       style: TextStyle(
                         color: _currentMode == index
-                            ? Colors.white
+                            ? Colors.black
                             : Colors.grey,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -285,8 +281,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 },
               ),
             ),
-
-            // Mode indicators
+            // Indicators
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
@@ -297,26 +292,23 @@ class _AddPostScreenState extends State<AddPostScreen> {
                   height: 8,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _currentMode == index ? Colors.white : Colors.grey,
+                    color: _currentMode == index ? Colors.black : Colors.grey,
                   ),
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
             // Preview Area
             Expanded(
               child: Container(
                 margin: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[900],
+                  color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: _buildPreviewArea(),
               ),
             ),
-
             // Action Buttons
             Padding(
               padding: const EdgeInsets.all(16),
@@ -349,7 +341,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         child: Image.file(
           File(_selectedImages![0].path),
           fit: BoxFit.cover,
-          cacheWidth: 800, // Limit cache size
+          cacheWidth: 800,
           cacheHeight: 800,
           errorBuilder: (context, error, stackTrace) {
             return Center(
@@ -360,7 +352,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'Error loading image',
-                    style: TextStyle(color: Colors.grey[400]),
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -373,9 +365,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.videocam, size: 64, color: Colors.white),
+            const Icon(Icons.videocam, size: 64, color: Colors.black),
             const SizedBox(height: 16),
-            Text('Video selected', style: TextStyle(color: Colors.grey[400])),
+            Text('Video selected', style: TextStyle(color: Colors.grey[600])),
           ],
         ),
       );
@@ -425,16 +417,16 @@ class _AddPostScreenState extends State<AddPostScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withOpacity(0.3),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           children: [
-            Icon(icon, color: Colors.white, size: 32),
+            Icon(icon, color: Colors.black, size: 32),
             const SizedBox(height: 8),
             Text(
               label,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              style: const TextStyle(color: Colors.black, fontSize: 14),
             ),
           ],
         ),
@@ -443,10 +435,9 @@ class _AddPostScreenState extends State<AddPostScreen> {
   }
 }
 
-// Post Editor Screen
+// ---------------- Post Editor ----------------
 class PostEditorScreen extends StatefulWidget {
   final String imagePath;
-
   const PostEditorScreen({super.key, required this.imagePath});
 
   @override
@@ -476,10 +467,7 @@ class _PostEditorScreenState extends State<PostEditorScreen> {
       isLiked: false,
     );
 
-    // Add to beginning of posts list
     DummyData.posts.insert(0, newPost);
-
-    // Update user's post count
     DummyData.currentUser.posts++;
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -525,17 +513,12 @@ class _PostEditorScreenState extends State<PostEditorScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Image Preview
             Image.file(
               File(widget.imagePath),
               width: double.infinity,
               height: 400,
               fit: BoxFit.cover,
-              cacheWidth: 1200,
-              cacheHeight: 1200,
             ),
-
-            // Caption
             Padding(
               padding: const EdgeInsets.all(16),
               child: TextField(
@@ -547,18 +530,11 @@ class _PostEditorScreenState extends State<PostEditorScreen> {
                 ),
               ),
             ),
-
-            // Add Location
             ListTile(
               leading: const Icon(Icons.location_on),
               title: Text(_location ?? 'Add location'),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // Add location picker logic
-                setState(() {
-                  _location = 'Sample Location';
-                });
-              },
+              onTap: () => setState(() => _location = 'Sample Location'),
             ),
           ],
         ),
@@ -567,10 +543,9 @@ class _PostEditorScreenState extends State<PostEditorScreen> {
   }
 }
 
-// Reel Editor Screen
+// ---------------- Reel Editor ----------------
 class ReelEditorScreen extends StatefulWidget {
   final String videoPath;
-
   const ReelEditorScreen({super.key, required this.videoPath});
 
   @override
@@ -615,14 +590,14 @@ class _ReelEditorScreenState extends State<ReelEditorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('New reel', style: TextStyle(color: Colors.white)),
+        title: const Text('New reel', style: TextStyle(color: Colors.black)),
         actions: [
           TextButton(
             onPressed: _shareReel,
@@ -640,25 +615,20 @@ class _ReelEditorScreenState extends State<ReelEditorScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.videocam, size: 100, color: Colors.white),
+                  const Icon(Icons.videocam, size: 100, color: Colors.black),
                   const SizedBox(height: 16),
-                  Text(
-                    'Video: ${widget.videoPath.split('/').last}',
-                    style: const TextStyle(color: Colors.white),
-                  ),
+                  Text('Video: ${widget.videoPath.split('/').last}'),
                 ],
               ),
             ),
           ),
           Container(
-            color: Colors.grey[900],
+            color: Colors.grey[200],
             padding: const EdgeInsets.all(16),
             child: TextField(
               controller: _captionController,
-              style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 hintText: 'Add a caption...',
-                hintStyle: TextStyle(color: Colors.grey),
                 border: InputBorder.none,
               ),
             ),
