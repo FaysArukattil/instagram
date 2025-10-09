@@ -121,7 +121,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
       // Go back to home screen (pop twice: editor + my_story_screen)
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
+        MaterialPageRoute(builder: (context) => const BottomNavBarScreen()),
       );
     }
   }

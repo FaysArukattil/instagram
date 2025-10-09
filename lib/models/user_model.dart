@@ -6,7 +6,7 @@ class UserModel {
   final bool hasStory;
   final int followers;
   final int following;
-  final int posts;
+  int posts;
   final String bio;
   final bool isVerified;
   bool isFollowing;
