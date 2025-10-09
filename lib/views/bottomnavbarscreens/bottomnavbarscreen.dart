@@ -110,7 +110,9 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   Widget _buildProfileNavItem({required int index}) {
     final isSelected = _currentIndex == index;
     return GestureDetector(
-      onTap: () => _onTabTapped(index),
+      onTap: () {
+        _onTabTapped(index);
+      },
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(8.0),
