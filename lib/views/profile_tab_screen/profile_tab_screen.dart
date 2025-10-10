@@ -1,8 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
+import 'package:instagram/views/add_post_screen/add_post_screen.dart';
+import 'package:instagram/views/follower_screen/follower_screen.dart';
 import 'package:instagram/views/post_screen/post_screen.dart';
 import 'package:instagram/views/reels_screen/reels_screen.dart';
+import 'package:instagram/widgets/universal_image.dart';
 
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
@@ -47,6 +49,24 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
     _refreshData();
   }
 
+  void _openFollowers() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FollowersScreen(userId: DummyData.currentUser.id),
+      ),
+    ).then((_) => setState(() {}));
+  }
+
+  void _openFollowing() {
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => FollowingScreen(userId: DummyData.currentUser.id),
+    //   ),
+    // ).then((_) => setState(() {}));
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = DummyData.currentUser;
@@ -77,7 +97,15 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
         actions: [
           IconButton(
             icon: const Icon(Icons.add_box_outlined, color: Colors.black),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddPostScreen(),
+                  fullscreenDialog: true,
+                ),
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.menu, color: Colors.black),
@@ -137,14 +165,20 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              _buildStatColumn('${userPosts.length}', 'Posts'),
+                              _buildStatColumn(
+                                '${userPosts.length}',
+                                'Posts',
+                                null,
+                              ),
                               _buildStatColumn(
                                 '${user.followers}',
                                 'Followers',
+                                _openFollowers,
                               ),
                               _buildStatColumn(
                                 '${user.following}',
                                 'Following',
+                                _openFollowing,
                               ),
                             ],
                           ),
@@ -259,7 +293,9 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
       itemCount: userPosts.length,
       itemBuilder: (context, index) {
         final post = userPosts[index];
-        return GestureDetector(
+        return GridThumbnail(
+          imagePath: post.images[0],
+          hasMultipleImages: post.images.length > 1,
           onTap: () {
             Navigator.push(
               context,
@@ -269,18 +305,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
               ),
             );
           },
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              _buildImageWidget(post.images[0]),
-              if (post.images.length > 1)
-                const Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Icon(Icons.collections, color: Colors.white, size: 20),
-                ),
-            ],
-          ),
         );
       },
     );
@@ -318,7 +342,10 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
           (r) => r.id == reel.id,
         );
 
-        return GestureDetector(
+        return GridThumbnail(
+          imagePath: reel.thumbnailUrl,
+          isVideo: true,
+          playCount: reel.likes,
           onTap: () {
             Navigator.push(
               context,
@@ -329,33 +356,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
               ),
             );
           },
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              _buildImageWidget(reel.thumbnailUrl, isVideo: true),
-              const Center(
-                child: Icon(Icons.play_arrow, color: Colors.white, size: 40),
-              ),
-              Positioned(
-                bottom: 8,
-                left: 8,
-                child: Row(
-                  children: [
-                    const Icon(Icons.play_arrow, color: Colors.white, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatCount(reel.likes),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         );
       },
     );
@@ -377,54 +377,22 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
     );
   }
 
-  Widget _buildStatColumn(String count, String label) {
-    return Column(
-      children: [
-        Text(
-          count,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-      ],
+  Widget _buildStatColumn(String count, String label, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        children: [
+          Text(
+            count,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+        ],
+      ),
     );
   }
-
-  String _formatCount(int count) {
-    if (count >= 1000000) {
-      return '${(count / 1000000).toStringAsFixed(1)}M';
-    } else if (count >= 1000) {
-      return '${(count / 1000).toStringAsFixed(1)}K';
-    }
-    return count.toString();
-  }
-
-  Widget _buildImageWidget(String imagePath, {bool isVideo = false}) {
-    final isLocalFile = !imagePath.startsWith('http');
-    if (isLocalFile) {
-      final file = File(imagePath);
-      if (file.existsSync()) {
-        return Image.file(file, fit: BoxFit.cover);
-      } else {
-        return _placeholder(isVideo);
-      }
-    } else {
-      return Image.network(
-        imagePath,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _placeholder(isVideo),
-      );
-    }
-  }
-
-  Widget _placeholder(bool isVideo) => Container(
-    color: isVideo ? Colors.grey[800] : Colors.grey[300],
-    child: Icon(
-      isVideo ? Icons.play_circle_outline : Icons.image,
-      size: 50,
-      color: isVideo ? Colors.white : Colors.grey,
-    ),
-  );
 }
 
 class _TabBarDelegate extends SliverPersistentHeaderDelegate {

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
+import 'package:instagram/models/user_model.dart';
 
 class ChatScreen extends StatefulWidget {
-  final dynamic user;
+  final UserModel user;
+
   const ChatScreen({super.key, required this.user});
 
   @override
@@ -12,29 +14,51 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-
-  late List<Map<String, dynamic>> messages;
+  List<Map<String, dynamic>> messages = [];
 
   @override
   void initState() {
     super.initState();
-    // load chat messages for this user
-    messages = DummyData.chats[widget.user.id] ?? [];
+    _loadMessages();
+  }
+
+  void _loadMessages() {
+    // Load existing messages for this user
+    setState(() {
+      messages = DummyData.chats[widget.user.id] ?? [];
+    });
+
+    // Scroll to bottom after loading
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
+    });
   }
 
   void _sendMessage() {
     if (_messageController.text.trim().isEmpty) return;
+
     setState(() {
-      messages.add({
+      final newMessage = {
         'text': _messageController.text.trim(),
         'isMe': true,
-        'time': 'Now',
+        'time': 'Just now',
         'seen': false,
-      });
+      };
+
+      if (DummyData.chats.containsKey(widget.user.id)) {
+        DummyData.chats[widget.user.id]!.add(newMessage);
+      } else {
+        DummyData.chats[widget.user.id] = [newMessage];
+      }
+
+      messages = DummyData.chats[widget.user.id]!;
       _messageController.clear();
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Scroll to bottom
+    Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -47,15 +71,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
-    _scrollController.dispose();
     _messageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // AppBar same as before ...
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
@@ -63,13 +87,14 @@ class _ChatScreenState extends State<ChatScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
+        leadingWidth: 40,
         title: Row(
           children: [
             CircleAvatar(
-              radius: 16,
+              radius: 18,
               backgroundImage: NetworkImage(widget.user.profileImage),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,16 +103,20 @@ class _ChatScreenState extends State<ChatScreen> {
                     widget.user.username,
                     style: const TextStyle(
                       color: Colors.black,
-                      fontWeight: FontWeight.bold,
                       fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    widget.user.name,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  if (widget.user.isOnline)
+                    const Text(
+                      'Active now',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    )
+                  else if (widget.user.lastSeen != null)
+                    Text(
+                      'Active ${widget.user.lastSeen} ago',
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
                 ],
               ),
             ),
@@ -95,11 +124,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.call, color: Colors.black),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.videocam, color: Colors.black),
+            icon: const Icon(Icons.videocam_outlined, color: Colors.black),
             onPressed: () {},
           ),
           IconButton(
@@ -108,113 +133,150 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-
       body: Column(
         children: [
-          // messages list
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final msg = messages[index];
-                final isLastMessage = index == messages.length - 1;
-
-                return Column(
-                  crossAxisAlignment: msg['isMe']
-                      ? CrossAxisAlignment.end
-                      : CrossAxisAlignment.start,
-                  children: [
-                    Align(
-                      alignment: msg['isMe']
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: msg['isMe']
-                              ? Colors.blue[600]
-                              : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: Text(
-                          msg['text'],
-                          style: TextStyle(
-                            color: msg['isMe'] ? Colors.white : Colors.black,
-                            fontSize: 15,
+            child: messages.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundImage: NetworkImage(
+                            widget.user.profileImage,
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 16),
+                        Text(
+                          widget.user.username,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.user.name,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Say hi to start the conversation',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
                     ),
-                    if (msg['isMe'] && isLastMessage)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2, right: 6),
-                        child: Text(
-                          msg['seen'] == true ? "Seen" : "Delivered",
-                          style: TextStyle(
-                            color: Colors.grey[500],
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
+                  )
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) {
+                      final message = messages[index];
+                      final isMe = message['isMe'] ?? false;
+                      final showTime =
+                          index == 0 ||
+                          messages[index - 1]['time'] != message['time'];
+
+                      return Column(
+                        children: [
+                          if (showTime)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Text(
+                                message['time'],
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          _buildMessageBubble(message, isMe),
+                        ],
+                      );
+                    },
+                  ),
           ),
+          _buildMessageInput(),
+        ],
+      ),
+    );
+  }
 
-          // input field
-          SafeArea(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.camera_alt_outlined,
-                      color: Colors.grey,
-                    ),
-                    onPressed: () {},
+  Widget _buildMessageBubble(Map<String, dynamic> message, bool isMe) {
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isMe ? Colors.blue : Colors.grey[200],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.7,
+        ),
+        child: Text(
+          message['text'],
+          style: TextStyle(
+            color: isMe ? Colors.white : Colors.black,
+            fontSize: 15,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageInput() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.grey.shade300)),
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.camera_alt, color: Colors.black),
+              onPressed: () {},
+            ),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: TextField(
+                  controller: _messageController,
+                  decoration: const InputDecoration(
+                    hintText: 'Message...',
+                    border: InputBorder.none,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.image_outlined, color: Colors.grey),
-                    onPressed: () {},
-                  ),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: TextField(
-                        controller: _messageController,
-                        decoration: const InputDecoration(
-                          hintText: 'Message...',
-                          border: InputBorder.none,
-                          isDense: true,
-                        ),
-                        onSubmitted: (_) => _sendMessage(),
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.send, color: Colors.blue),
-                    onPressed: _sendMessage,
-                  ),
-                ],
+                  maxLines: null,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.mic, color: Colors.black),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.send,
+                color: _messageController.text.isEmpty
+                    ? Colors.grey
+                    : Colors.blue,
+              ),
+              onPressed: _sendMessage,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:instagram/views/commentscreen/commentscreen.dart';
-import 'package:instagram/views/share_bottom_sheet/share_bottom_sheet.dart';
-import '../models/post_model.dart';
-import '../models/user_model.dart';
-import '../data/dummy_data.dart';
+import 'package:instagram/data/dummy_data.dart';
+import 'package:instagram/models/post_model.dart';
+// Import the helper widget
+import 'package:instagram/widgets/universal_image.dart';
 
 class PostWidget extends StatefulWidget {
   final PostModel post;
@@ -21,322 +20,224 @@ class PostWidget extends StatefulWidget {
   State<PostWidget> createState() => _PostWidgetState();
 }
 
-class _PostWidgetState extends State<PostWidget>
-    with SingleTickerProviderStateMixin {
-  int currentImageIndex = 0;
+class _PostWidgetState extends State<PostWidget> {
   final PageController _pageController = PageController();
-  bool _showHeart = false;
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _opacityAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-
-    _scaleAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 0.5,
-          end: 1.2,
-        ).chain(CurveTween(curve: Curves.easeOut)),
-        weight: 50,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(
-          begin: 1.2,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.easeIn)),
-        weight: 50,
-      ),
-    ]).animate(_animationController);
-
-    _opacityAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 20),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 60),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.0), weight: 20),
-    ]).animate(_animationController);
-
-    _animationController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        setState(() {
-          _showHeart = false;
-        });
-        _animationController.reset();
-      }
-    });
-  }
+  int _currentPage = 0;
 
   @override
   void dispose() {
-    _animationController.dispose();
     _pageController.dispose();
     super.dispose();
-  }
-
-  void _handleDoubleTap() {
-    // Only like if not already liked
-    if (!widget.post.isLiked) {
-      widget.onLike(widget.post.id);
-    }
-
-    // Show heart animation
-    setState(() {
-      _showHeart = true;
-    });
-    _animationController.forward();
   }
 
   @override
   Widget build(BuildContext context) {
     final user = DummyData.getUserById(widget.post.userId);
-    if (user == null) return const SizedBox();
+    if (user == null) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildPostHeader(user),
-        _buildPostImages(),
-        _buildPostActions(user),
-        const Divider(height: 1),
-      ],
-    );
-  }
-
-  Widget _buildPostHeader(UserModel user) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => widget.onProfileTap(user.id),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundImage: NetworkImage(user.profileImage),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => widget.onProfileTap(user.id),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
+        // Header
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () => widget.onProfileTap(widget.post.userId),
+                child: CircleAvatar(
+                  radius: 16,
+                  backgroundImage: NetworkImage(user.profileImage),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => widget.onProfileTap(widget.post.userId),
+                          child: Text(
+                            user.username,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        if (widget.post.isSponsored) ...[
+                          const SizedBox(width: 4),
+                          const Text(
+                            '• Sponsored',
+                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (widget.post.location != null)
                       Text(
-                        user.username,
+                        widget.post.location!,
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 11,
+                          color: Colors.grey,
                         ),
                       ),
-                      if (user.isVerified) ...[
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.verified,
-                          color: Colors.blue,
-                          size: 14,
-                        ),
-                      ],
-                    ],
-                  ),
-                  if (widget.post.location != null)
-                    Text(
-                      widget.post.location!,
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
-                    ),
-                  if (widget.post.isSponsored)
-                    const Text(
-                      'Sponsored',
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ),
-          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPostImages() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        GestureDetector(
-          onDoubleTap: _handleDoubleTap,
-          child: SizedBox(
-            height: 400,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: widget.post.images.length,
-              onPageChanged: (index) {
-                setState(() {
-                  currentImageIndex = index;
-                });
-              },
-              itemBuilder: (context, index) {
-                return Image.network(
-                  widget.post.images[index],
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                );
-              },
-            ),
+              IconButton(
+                icon: const Icon(Icons.more_vert, size: 20),
+                onPressed: () {},
+              ),
+            ],
           ),
         ),
-        if (_showHeart)
-          AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return Opacity(
-                opacity: _opacityAnimation.value,
-                child: Transform.scale(
-                  scale: _scaleAnimation.value,
-                  child: const Icon(
-                    Icons.favorite,
-                    color: Colors.white,
-                    size: 120,
-                    shadows: [Shadow(blurRadius: 10, color: Colors.black45)],
+
+        // Image carousel
+        SizedBox(
+          height: 400,
+          child: Stack(
+            children: [
+              PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() => _currentPage = index);
+                },
+                itemCount: widget.post.images.length,
+                itemBuilder: (context, index) {
+                  return UniversalImage(
+                    imagePath: widget.post.images[index],
+                    width: double.infinity,
+                    height: 400,
+                    fit: BoxFit.cover,
+                    cacheWidth: 800,
+                    cacheHeight: 800,
+                  );
+                },
+              ),
+              if (widget.post.images.length > 1)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${_currentPage + 1}/${widget.post.images.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
-              );
-            },
+            ],
           ),
+        ),
+
+        // Page indicators (dots)
         if (widget.post.images.length > 1)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${currentImageIndex + 1}/${widget.post.images.length}',
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            ),
-          ),
-        if (widget.post.images.length > 1)
-          Positioned(
-            bottom: 8,
-            left: 0,
-            right: 0,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 widget.post.images.length,
                 (index) => Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
                   width: 6,
                   height: 6,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: currentImageIndex == index
+                    color: _currentPage == index
                         ? Colors.blue
-                        : Colors.grey,
+                        : Colors.grey[300],
                   ),
                 ),
               ),
             ),
           ),
-      ],
-    );
-  }
 
-  Widget _buildPostActions(UserModel user) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        // Action buttons
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
             children: [
-              GestureDetector(
-                onTap: () => widget.onLike(widget.post.id),
-                child: Icon(
+              IconButton(
+                icon: Icon(
                   widget.post.isLiked ? Icons.favorite : Icons.favorite_border,
                   color: widget.post.isLiked ? Colors.red : Colors.black,
                   size: 28,
                 ),
+                onPressed: () => widget.onLike(widget.post.id),
               ),
-              const SizedBox(width: 16),
-              GestureDetector(
-                onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => CommentsScreen(post: widget.post),
-                  );
-                },
-                child: const Icon(Icons.chat_bubble_outline, size: 26),
+              IconButton(
+                icon: const Icon(Icons.chat_bubble_outline, size: 26),
+                onPressed: () {},
               ),
-              const SizedBox(width: 16),
-              GestureDetector(
-                onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => ShareBottomSheet(post: widget.post),
-                  );
-                },
-                child: const Icon(Icons.send, size: 26),
+              IconButton(
+                icon: const Icon(Icons.send_outlined, size: 26),
+                onPressed: () {},
               ),
               const Spacer(),
-              const Icon(Icons.bookmark_border, size: 26),
+              IconButton(
+                icon: const Icon(Icons.bookmark_border, size: 26),
+                onPressed: () {},
+              ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            '${widget.post.likes} likes',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          RichText(
-            text: TextSpan(
-              style: const TextStyle(color: Colors.black),
-              children: [
-                TextSpan(
-                  text: user.username,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                TextSpan(text: ' ${widget.post.caption}'),
-              ],
-            ),
-          ),
-          if (widget.post.comments > 0) ...[
-            const SizedBox(height: 4),
-            GestureDetector(
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => CommentsScreen(post: widget.post),
-                );
-              },
-              child: Text(
-                'View all ${widget.post.comments} comments',
-                style: const TextStyle(color: Colors.grey),
+        ),
+
+        // Likes and caption
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${widget.post.likes} likes',
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
-          const SizedBox(height: 4),
-          Text(
-            widget.post.timeAgo,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
+              const SizedBox(height: 4),
+              if (widget.post.caption.isNotEmpty)
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(color: Colors.black, fontSize: 14),
+                    children: [
+                      TextSpan(
+                        text: '${user.username} ',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      TextSpan(text: widget.post.caption),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 4),
+              if (widget.post.comments > 0)
+                Text(
+                  'View all ${widget.post.comments} comments',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+              const SizedBox(height: 4),
+              Text(
+                widget.post.timeAgo,
+                style: TextStyle(color: Colors.grey[600], fontSize: 11),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 12),
+        const Divider(height: 1, thickness: 0.5),
+      ],
     );
   }
 }

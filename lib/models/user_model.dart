@@ -4,8 +4,8 @@ class UserModel {
   final String name;
   final String profileImage;
   final bool hasStory;
-  final int followers;
-  final int following;
+  int followers;
+  int following;
   int posts;
   final String bio;
   final bool isVerified;
