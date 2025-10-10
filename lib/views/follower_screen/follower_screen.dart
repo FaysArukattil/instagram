@@ -6,176 +6,248 @@ import 'package:instagram/views/profile_screen/profile_screen.dart';
 
 class FollowersScreen extends StatefulWidget {
   final String userId;
+  final int initialTabIndex;
 
-  const FollowersScreen({super.key, required this.userId});
+  const FollowersScreen({
+    super.key,
+    required this.userId,
+    this.initialTabIndex = 0,
+  });
 
   @override
   State<FollowersScreen> createState() => _FollowersScreenState();
 }
 
-class _FollowersScreenState extends State<FollowersScreen> {
+class _FollowersScreenState extends State<FollowersScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final TextEditingController _searchController = TextEditingController();
+
   List<UserModel> followers = [];
-  bool isLoading = true;
+  List<UserModel> following = [];
+  List<UserModel> friends = [];
+  List<UserModel> filteredList = [];
 
   @override
   void initState() {
     super.initState();
-    _loadFollowers();
-  }
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTabIndex,
+    );
+    _tabController.addListener(_onTabChanged);
+    _loadData();
 
-  void _loadFollowers() {
-    // Simulate loading followers
-    // In real app, this would fetch from backend
-    Future.delayed(const Duration(milliseconds: 500), () {
-      setState(() {
-        // Get followers who are following this user
-        followers = DummyData.users.where((user) => user.isFollowing).toList();
-        isLoading = false;
-      });
+    _searchController.addListener(() {
+      _filterSearchResults(_searchController.text);
     });
   }
 
-  void _handleFollowToggle(UserModel user) {
-    setState(() {
-      final userIndex = DummyData.users.indexWhere((u) => u.id == user.id);
-      if (userIndex != -1) {
-        DummyData.users[userIndex].isFollowing =
-            !DummyData.users[userIndex].isFollowing;
+  void _loadData() {
+    final allUsers = DummyData.users;
 
-        // Update current user's following count
-        if (DummyData.users[userIndex].isFollowing) {
-          DummyData.currentUser.following++;
-        } else {
-          DummyData.currentUser.following--;
-        }
+    followers = allUsers.where((u) => u.isFollowing).toList();
+    following = allUsers.where((u) => u.isFollowing).toList();
+    friends = allUsers
+        .where((u) => u.isFollowing && DummyData.currentUser.isFollowing)
+        .toList();
+
+    filteredList = _getActiveList();
+  }
+
+  void _filterSearchResults(String query) {
+    final activeList = _getActiveList();
+    if (query.isEmpty) {
+      setState(() => filteredList = activeList);
+    } else {
+      setState(() {
+        filteredList = activeList
+            .where(
+              (user) =>
+                  user.username.toLowerCase().contains(query.toLowerCase()) ||
+                  user.name.toLowerCase().contains(query.toLowerCase()),
+            )
+            .toList();
+      });
+    }
+  }
+
+  List<UserModel> _getActiveList() {
+    switch (_tabController.index) {
+      case 1:
+        return following;
+      case 2:
+        return friends;
+      default:
+        return followers;
+    }
+  }
+
+  void _onTabChanged() {
+    setState(() {
+      filteredList = _getActiveList();
+      _filterSearchResults(_searchController.text);
+    });
+  }
+
+  void _toggleFollow(UserModel user) {
+    setState(() {
+      user.isFollowing = !user.isFollowing;
+      if (user.isFollowing) {
+        DummyData.currentUser.following++;
+      } else {
+        DummyData.currentUser.following--;
       }
     });
-  }
-
-  void _handleRemoveFollower(UserModel user) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Remove ${user.username}?'),
-        content: Text(
-          'Instagram won\'t tell ${user.username} they were removed from your followers.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                followers.removeWhere((f) => f.id == user.id);
-                DummyData.currentUser.followers--;
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Remove', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
   }
 
   void _openChat(UserModel user) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ChatScreen(user: user)),
+      MaterialPageRoute(builder: (_) => ChatScreen(user: user)),
     );
   }
 
   void _openProfile(UserModel user) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
+      MaterialPageRoute(builder: (_) => UserProfileScreen(user: user)),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
-    final isCurrentUser = widget.userId == DummyData.currentUser.id;
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 3,
+      initialIndex: widget.initialTabIndex,
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          isCurrentUser ? DummyData.currentUser.username : 'Followers',
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            SliverAppBar(
+              backgroundColor: Colors.white,
+              floating: true,
+              snap: true,
+              pinned: true,
+              elevation: 0.5,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.pop(context),
+              ),
+              title: Text(
+                DummyData.currentUser.username,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(88),
+                child: Column(
+                  children: [
+                    // Tabs
+                    TabBar(
+                      controller: _tabController,
+                      labelColor: Colors.black,
+                      unselectedLabelColor: Colors.grey,
+                      indicatorColor: Colors.black,
+                      indicatorWeight: 2,
+                      tabs: const [
+                        Tab(text: "Followers"),
+                        Tab(text: "Following"),
+                        Tab(text: "Friends"),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Search Bar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      child: Container(
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: const InputDecoration(
+                            hintText: 'Search',
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Colors.grey,
+                              size: 20,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 10,
+                              horizontal: 0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildUserList(followers),
+              _buildUserList(following),
+              _buildUserList(friends),
+            ],
           ),
         ),
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.grey))
-          : followers.isEmpty
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.people_outline, size: 80, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'No followers yet',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              itemCount: followers.length,
-              itemBuilder: (context, index) {
-                final user = followers[index];
-                return _buildFollowerItem(user, isCurrentUser);
-              },
-            ),
     );
   }
 
-  Widget _buildFollowerItem(UserModel user, bool isCurrentUser) {
-    return ListTile(
-      onTap: () => _openProfile(user),
-      leading: CircleAvatar(
-        radius: 28,
-        backgroundImage: NetworkImage(user.profileImage),
-      ),
-      title: Text(
-        user.username,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-      subtitle: Text(user.name),
-      trailing: SizedBox(
-        width: isCurrentUser ? 140 : 110,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            if (isCurrentUser)
-              OutlinedButton(
-                onPressed: () => _handleRemoveFollower(user),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  side: const BorderSide(color: Colors.grey),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'Remove',
-                  style: TextStyle(color: Colors.black, fontSize: 13),
-                ),
-              )
-            else
+  Widget _buildUserList(List<UserModel> users) {
+    final list = filteredList;
+
+    if (list.isEmpty) {
+      return const Center(
+        child: Text(
+          'No users found',
+          style: TextStyle(color: Colors.grey, fontSize: 16),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(),
+      itemCount: list.length,
+      itemBuilder: (context, index) {
+        final user = list[index];
+        return ListTile(
+          onTap: () => _openProfile(user),
+          leading: CircleAvatar(
+            radius: 26,
+            backgroundImage: NetworkImage(user.profileImage),
+          ),
+          title: Text(
+            user.username,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(user.name),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               ElevatedButton(
-                onPressed: () => _handleFollowToggle(user),
+                onPressed: () => _toggleFollow(user),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: user.isFollowing
                       ? Colors.grey[200]
@@ -184,7 +256,7 @@ class _FollowersScreenState extends State<FollowersScreen> {
                       ? Colors.black
                       : Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -192,20 +264,20 @@ class _FollowersScreenState extends State<FollowersScreen> {
                 child: Text(
                   user.isFollowing ? 'Following' : 'Follow',
                   style: const TextStyle(
-                    fontSize: 13,
                     fontWeight: FontWeight.bold,
+                    fontSize: 13,
                   ),
                 ),
               ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.more_vert),
-              onPressed: () => _openChat(user),
-              iconSize: 20,
-            ),
-          ],
-        ),
-      ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.message_outlined, color: Colors.grey),
+                onPressed: () => _openChat(user),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

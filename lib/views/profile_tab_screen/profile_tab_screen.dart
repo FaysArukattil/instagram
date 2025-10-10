@@ -59,12 +59,12 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
   }
 
   void _openFollowing() {
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (context) => FollowingScreen(userId: DummyData.currentUser.id),
-    //   ),
-    // ).then((_) => setState(() {}));
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FollowersScreen(userId: DummyData.currentUser.id),
+      ),
+    ).then((_) => setState(() {}));
   }
 
   @override
