@@ -257,7 +257,7 @@ class DummyData {
     ],
   };
 
-  static final UserModel currentUser = UserModel(
+  static UserModel currentUser = UserModel(
     id: 'user_1',
     username: 'FaysAruka',
     name: 'Fays Arukattil',
@@ -268,6 +268,43 @@ class DummyData {
     following: 432,
     posts: 78,
   );
+
+  // Add these maps to track actual followers/following relationships
+  static Map<String, List<String>> followersMap = {
+    'user_1': [],
+    'user_2': ['user_1'],
+    'user_3': [],
+    'user_4': [],
+    'user_5': [],
+    'user_6': [],
+    'user_7': [],
+    'user_8': [],
+    'user_9': [],
+    'user_10': [],
+    'user_11': [],
+    'user_12': [],
+    'user_13': [],
+    'user_14': [],
+    'user_15': [],
+  };
+
+  static Map<String, List<String>> followingMap = {
+    'user_1': ['user_2'],
+    'user_2': [],
+    'user_3': [],
+    'user_4': [],
+    'user_5': [],
+    'user_6': [],
+    'user_7': [],
+    'user_8': [],
+    'user_9': [],
+    'user_10': [],
+    'user_11': [],
+    'user_12': [],
+    'user_13': [],
+    'user_14': [],
+    'user_15': [],
+  };
 
   static final List<UserModel> users = [
     UserModel(
@@ -446,6 +483,18 @@ class DummyData {
       bio: 'Art is life 🎨',
     ),
   ];
+  static void toggleFollow(String currentUserId, String targetUserId) {
+    final user = users.firstWhere((u) => u.id == targetUserId);
+    final currentUser = users.firstWhere((u) => u.id == currentUserId);
+
+    user.isFollowing = !user.isFollowing;
+
+    if (user.isFollowing) {
+      currentUser.following++;
+    } else {
+      currentUser.following--;
+    }
+  }
 
   static final List<PostModel> posts = [
     PostModel(

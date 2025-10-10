@@ -100,7 +100,9 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
-      );
+      ).then((_) {
+        setState(() {}); // refresh HomeScreen after returning from profile
+      });
     }
   }
 

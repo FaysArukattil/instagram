@@ -86,6 +86,12 @@ class _FollowersScreenState extends State<FollowersScreen>
 
   void _onTabChanged() {
     setState(() {
+      followers = DummyData.users.where((u) => u.isFollowing).toList();
+      following = DummyData.users.where((u) => u.isFollowing).toList();
+      friends = DummyData.users
+          .where((u) => u.isFollowing && DummyData.currentUser.isFollowing)
+          .toList();
+
       filteredList = _getActiveList();
       _filterSearchResults(_searchController.text);
     });
@@ -94,11 +100,44 @@ class _FollowersScreenState extends State<FollowersScreen>
   void _toggleFollow(UserModel user) {
     setState(() {
       user.isFollowing = !user.isFollowing;
+
+      // Ensure current user entry exists in followingMap
+      DummyData.followingMap.putIfAbsent(DummyData.currentUser.id, () => []);
+      DummyData.followingMap.putIfAbsent(user.id, () => []);
+
       if (user.isFollowing) {
+        // Add user to currentUser's following list
+        if (!DummyData.followingMap[DummyData.currentUser.id]!.contains(
+          user.id,
+        )) {
+          DummyData.followingMap[DummyData.currentUser.id]!.add(user.id);
+        }
+
+        // Add currentUser to the user's followers list
+        if (!DummyData.followingMap[user.id]!.contains(
+          DummyData.currentUser.id,
+        )) {
+          DummyData.followingMap[user.id]!.add(DummyData.currentUser.id);
+        }
+
+        // Update follower/following counts
         DummyData.currentUser.following++;
+        user.followers++;
       } else {
+        // Remove user from currentUser's following list
+        DummyData.followingMap[DummyData.currentUser.id]!.remove(user.id);
+
+        // Remove currentUser from user's followers list
+        DummyData.followingMap[user.id]!.remove(DummyData.currentUser.id);
+
+        // Update follower/following counts
         DummyData.currentUser.following--;
+        user.followers--;
       }
+
+      // Refresh the filtered list to reflect changes in tabs
+      filteredList = _getActiveList();
+      _filterSearchResults(_searchController.text);
     });
   }
 
@@ -153,7 +192,6 @@ class _FollowersScreenState extends State<FollowersScreen>
                 preferredSize: const Size.fromHeight(88),
                 child: Column(
                   children: [
-                    // Tabs
                     TabBar(
                       controller: _tabController,
                       labelColor: Colors.black,
@@ -167,7 +205,6 @@ class _FollowersScreenState extends State<FollowersScreen>
                       ],
                     ),
                     const SizedBox(height: 6),
-                    // Search Bar
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
