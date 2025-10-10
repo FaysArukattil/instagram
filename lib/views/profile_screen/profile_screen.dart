@@ -1,14 +1,11 @@
-// ========================================
-// FILE: lib/screens/user_profile_screen.dart
-// ========================================
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/models/reel_model.dart';
 import 'package:instagram/models/user_model.dart';
-import 'package:instagram/views/commentscreen/commentscreen.dart';
 import 'package:instagram/views/follower_screen/follower_screen.dart';
 import 'package:instagram/views/reels_screen/reels_screen.dart';
+import 'package:instagram/views/post_screen/post_screen.dart';
 import 'package:instagram/views/chatscreen/chatscreen.dart';
 
 class UserProfileScreen extends StatefulWidget {
@@ -36,7 +33,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     setState(() {
       isFollowing = !isFollowing;
       widget.user.isFollowing = isFollowing;
-
       if (isFollowing) {
         widget.user.followers += 1;
       } else {
@@ -70,10 +66,22 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     );
   }
 
-  void _openComments(PostModel post) {
+  void _openPostScreen(List<PostModel> posts, int initialIndex) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => CommentsScreen(post: post)),
+      MaterialPageRoute(
+        builder: (_) =>
+            PostScreen(userId: widget.user.id, initialIndex: initialIndex),
+      ),
+    );
+  }
+
+  void _openReelsScreen(List<ReelModel> reels, int initialIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReelsScreen(initialIndex: initialIndex),
+      ),
     );
   }
 
@@ -259,9 +267,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       itemBuilder: (context, index) {
         final post = posts[index];
         return GestureDetector(
-          onTap: () {
-            _openComments(post); // Open CommentsScreen
-          },
+          onTap: () => _openPostScreen(posts, index),
           child: Image.network(post.images[0], fit: BoxFit.cover),
         );
       },
@@ -290,15 +296,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
             final fullReelIndex = DummyData.reels.indexWhere(
               (r) => r.id == reel.id,
             );
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ReelsScreen(
-                  initialIndex: fullReelIndex >= 0 ? fullReelIndex : 0,
-                ),
-              ),
-            );
+            _openReelsScreen(reels, fullReelIndex >= 0 ? fullReelIndex : 0);
           },
           child: Stack(
             alignment: Alignment.center,
