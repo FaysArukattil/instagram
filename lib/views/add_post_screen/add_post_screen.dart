@@ -145,6 +145,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         ),
       ).then((_) {
         _clearSelection();
+        // ignore: use_build_context_synchronously
         Navigator.pop(context);
       });
     } else if (_currentPage == 1) {
@@ -158,6 +159,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
       ).then((_) {
         _clearSelection();
         Navigator.pushReplacement(
+          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
         );
@@ -172,6 +174,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         ),
       ).then((_) {
         _clearSelection();
+        // ignore: use_build_context_synchronously
         Navigator.pop(context);
       });
     } else if (_currentPage == 3) {
@@ -300,7 +303,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
   Widget _buildPreviewArea() {
     if (_selectedMedia != null) {
       final isVideo = _currentPage == 2;
-      if (isVideo)
+      if (isVideo) {
         return Container(
           color: Colors.black,
           child: Center(
@@ -317,12 +320,13 @@ class _AddPostScreenState extends State<AddPostScreen> {
             ),
           ),
         );
-      else
+      } else {
         return Image.file(
           File(_selectedMedia!.path),
           fit: BoxFit.contain,
           errorBuilder: (_, __, ___) => _buildEmptyState(),
         );
+      }
     }
 
     return _buildEmptyState();
