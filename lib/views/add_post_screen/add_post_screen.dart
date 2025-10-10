@@ -145,7 +145,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
         ),
       ).then((_) {
         _clearSelection();
-        // ignore: use_build_context_synchronously
         Navigator.pop(context);
       });
     } else if (_currentPage == 1) {
@@ -159,7 +158,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
       ).then((_) {
         _clearSelection();
         Navigator.pushReplacement(
-          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
         );
@@ -174,7 +172,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
         ),
       ).then((_) {
         _clearSelection();
-        // ignore: use_build_context_synchronously
         Navigator.pop(context);
       });
     } else if (_currentPage == 3) {
@@ -197,16 +194,65 @@ class _AddPostScreenState extends State<AddPostScreen> {
             // Top bar
             _buildTopBar(),
 
-            // Main preview area
-            Expanded(child: _buildPreviewArea()),
+            // Main swipable content area
+            Expanded(
+              child: Stack(
+                children: [
+                  // Swipable content
+                  PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                        _clearSelection();
+                      });
+                    },
+                    itemCount: _modes.length,
+                    itemBuilder: (context, index) {
+                      return Column(
+                        children: [
+                          // Preview area for each mode
+                          Expanded(child: _buildPreviewArea()),
 
-            // Gallery thumbnails (for Post mode with multiple images)
-            if (_currentPage == 0 &&
-                _galleryImages != null &&
-                _galleryImages!.length > 1)
-              _buildGalleryThumbnails(),
+                          // Gallery thumbnails (for Post mode with multiple images)
+                          if (index == 0 &&
+                              _galleryImages != null &&
+                              _galleryImages!.length > 1)
+                            _buildGalleryThumbnails(),
+                        ],
+                      );
+                    },
+                  ),
 
-            // Bottom menu slider
+                  // Fixed Camera/Gallery buttons overlay
+                  Positioned(
+                    bottom: 20,
+                    left: 0,
+                    right: 0,
+                    child: IgnorePointer(
+                      ignoring: false,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildCameraButton(
+                            Icons.photo_library,
+                            'Gallery',
+                            _pickFromGallery,
+                          ),
+                          _buildCameraButton(
+                            Icons.camera_alt,
+                            'Camera',
+                            _pickFromCamera,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Bottom menu indicator
             _buildBottomMenu(),
           ],
         ),
@@ -254,52 +300,29 @@ class _AddPostScreenState extends State<AddPostScreen> {
   Widget _buildPreviewArea() {
     if (_selectedMedia != null) {
       final isVideo = _currentPage == 2;
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          if (isVideo)
-            Container(
-              color: Colors.black,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.videocam, size: 80, color: Colors.white54),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Video selected',
-                      style: TextStyle(color: Colors.white54, fontSize: 16),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else
-            Image.file(
-              File(_selectedMedia!.path),
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => _buildEmptyState(),
-            ),
-
-          // Camera/Gallery buttons overlay
-          Positioned(
-            bottom: 80,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      if (isVideo)
+        return Container(
+          color: Colors.black,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildCameraButton(
-                  Icons.photo_library,
-                  'Gallery',
-                  _pickFromGallery,
+                const Icon(Icons.videocam, size: 80, color: Colors.white54),
+                const SizedBox(height: 16),
+                Text(
+                  'Video selected',
+                  style: TextStyle(color: Colors.white54, fontSize: 16),
                 ),
-                _buildCameraButton(Icons.camera_alt, 'Camera', _pickFromCamera),
               ],
             ),
           ),
-        ],
-      );
+        );
+      else
+        return Image.file(
+          File(_selectedMedia!.path),
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => _buildEmptyState(),
+        );
     }
 
     return _buildEmptyState();
@@ -308,45 +331,23 @@ class _AddPostScreenState extends State<AddPostScreen> {
   Widget _buildEmptyState() {
     return Container(
       color: Colors.black,
-      child: Stack(
-        children: [
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  _currentPage == 2 ? Icons.videocam : Icons.photo_camera,
-                  size: 80,
-                  color: Colors.white38,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  _getEmptyStateText(),
-                  style: const TextStyle(color: Colors.white54, fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              _currentPage == 2 ? Icons.videocam : Icons.photo_camera,
+              size: 80,
+              color: Colors.white38,
             ),
-          ),
-
-          // Camera/Gallery buttons
-          Positioned(
-            bottom: 80,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildCameraButton(
-                  Icons.photo_library,
-                  'Gallery',
-                  _pickFromGallery,
-                ),
-                _buildCameraButton(Icons.camera_alt, 'Camera', _pickFromCamera),
-              ],
+            const SizedBox(height: 16),
+            Text(
+              _getEmptyStateText(),
+              style: const TextStyle(color: Colors.white54, fontSize: 16),
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -422,9 +423,10 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
   Widget _buildBottomMenu() {
     return Container(
-      height: 100,
+      height: 80,
       color: Colors.black,
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Mode indicators
           Row(
@@ -445,34 +447,14 @@ class _AddPostScreenState extends State<AddPostScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Scrollable mode selector
-          SizedBox(
-            height: 50,
-            child: PageView.builder(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentPage = index;
-                  _clearSelection();
-                });
-              },
-              itemCount: _modes.length,
-              itemBuilder: (context, index) {
-                final isSelected = _currentPage == index;
-                return Center(
-                  child: Text(
-                    _modes[index].toUpperCase(),
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white54,
-                      fontSize: isSelected ? 17 : 15,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w400,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                );
-              },
+          // Current mode label
+          Text(
+            _modes[_currentPage].toUpperCase(),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
             ),
           ),
         ],
