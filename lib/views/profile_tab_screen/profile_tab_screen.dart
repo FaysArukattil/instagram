@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
+import 'package:instagram/models/post_model.dart';
 import 'package:instagram/views/add_post_screen/add_post_screen.dart';
 import 'package:instagram/views/follower_screen/follower_screen.dart';
 import 'package:instagram/views/post_screen/post_screen.dart';
@@ -265,7 +266,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
     );
   }
 
-  Widget _buildPostsGrid(List userPosts, String userId) {
+  Widget _buildPostsGrid(List<PostModel> userPosts, String userId) {
     if (userPosts.isEmpty) {
       return const Center(
         child: Column(
@@ -303,7 +304,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                 builder: (context) =>
                     PostScreen(userId: userId, initialIndex: index),
               ),
-            );
+            ).then((_) => setState(() {}));
           },
         );
       },
@@ -354,7 +355,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                   initialIndex: fullReelIndex >= 0 ? fullReelIndex : 0,
                 ),
               ),
-            );
+            ).then((_) => setState(() {}));
           },
         );
       },

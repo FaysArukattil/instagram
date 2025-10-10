@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
+import 'package:instagram/views/commentscreen/commentscreen.dart';
 import 'package:instagram/views/messenger_screen/messenger_screen.dart';
 import 'package:instagram/views/my_story_screen/my_story_screen.dart';
 import 'package:instagram/views/notifications_screen/notifications_screen.dart';
 import 'package:instagram/views/profile_screen/profile_screen.dart';
+import 'package:instagram/views/share_bottom_sheet/share_bottom_sheet.dart';
 import 'package:instagram/views/story_viewer_screen/story_viewer_screen.dart';
 import 'package:instagram/widgets/post_widget.dart';
 import 'package:instagram/widgets/story_avatar.dart';
@@ -35,6 +37,24 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _openComments(PostModel post) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CommentsScreen(post: post),
+    ).then((_) => setState(() {}));
+  }
+
+  void _openShare(PostModel post) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ShareBottomSheet(post: post),
+    );
+  }
+
   void _openStory(String userId) {
     final index = DummyData.stories.indexWhere((s) => s.userId == userId);
     if (index != -1) {
@@ -47,20 +67,17 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ).then((_) {
-        // Refresh when coming back from story viewer
         setState(() {});
       });
     }
   }
 
   void _openMyStory() {
-    // Check if current user has story
     final userStoryIndex = DummyData.stories.indexWhere(
       (s) => s.userId == DummyData.currentUser.id,
     );
 
     if (userStoryIndex != -1) {
-      // User has story, open viewer
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -70,26 +87,24 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ).then((_) {
-        setState(() {}); // Refresh after viewing
+        setState(() {});
       });
     } else {
-      // User has no story, open creation screen
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const MyStoryScreen()),
       ).then((_) {
-        setState(() {}); // Refresh after creating story
+        setState(() {});
       });
     }
   }
 
   void _addToStory() {
-    // Always open creation screen when tapping plus icon
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const MyStoryScreen()),
     ).then((_) {
-      setState(() {}); // Refresh after adding to story
+      setState(() {});
     });
   }
 
@@ -101,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
         context,
         MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
       ).then((_) {
-        setState(() {}); // refresh HomeScreen after returning from profile
+        setState(() {});
       });
     }
   }
@@ -115,7 +130,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Check if current user has story (dynamically)
     final currentUserHasStory = DummyData.stories.any(
       (s) => s.userId == DummyData.currentUser.id,
     );
@@ -214,7 +228,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       1 + DummyData.users.where((u) => u.hasStory).length,
                   itemBuilder: (context, storyIndex) {
                     if (storyIndex == 0) {
-                      // Current user's story avatar
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: StoryAvatar(
@@ -227,7 +240,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     }
 
-                    // Other users' stories
                     final storiesUsers = DummyData.users
                         .where((u) => u.hasStory)
                         .toList();
@@ -255,6 +267,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   post: posts[index],
                   onLike: _handleLike,
                   onProfileTap: _openProfile,
+                  onComment: _openComments,
+                  onShare: _openShare,
                 );
               }, childCount: posts.length),
             ),

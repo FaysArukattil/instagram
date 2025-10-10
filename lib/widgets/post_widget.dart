@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
-// Import the helper widget
 import 'package:instagram/widgets/universal_image.dart';
 
 class PostWidget extends StatefulWidget {
   final PostModel post;
   final Function(String) onLike;
   final Function(String) onProfileTap;
+  final Function(PostModel)? onComment;
+  final Function(PostModel)? onShare;
 
   const PostWidget({
     super.key,
     required this.post,
     required this.onLike,
     required this.onProfileTap,
+    this.onComment,
+    this.onShare,
   });
 
   @override
@@ -95,9 +98,9 @@ class _PostWidgetState extends State<PostWidget> {
           ),
         ),
 
-        // Image carousel
-        SizedBox(
-          height: 400,
+        // Image carousel with proper aspect ratio
+        AspectRatio(
+          aspectRatio: 1.0, // Square aspect ratio like Instagram
           child: Stack(
             children: [
               PageView.builder(
@@ -110,7 +113,6 @@ class _PostWidgetState extends State<PostWidget> {
                   return UniversalImage(
                     imagePath: widget.post.images[index],
                     width: double.infinity,
-                    height: 400,
                     fit: BoxFit.cover,
                     cacheWidth: 800,
                     cacheHeight: 800,
@@ -182,11 +184,19 @@ class _PostWidgetState extends State<PostWidget> {
               ),
               IconButton(
                 icon: const Icon(Icons.chat_bubble_outline, size: 26),
-                onPressed: () {},
+                onPressed: () {
+                  if (widget.onComment != null) {
+                    widget.onComment!(widget.post);
+                  }
+                },
               ),
               IconButton(
                 icon: const Icon(Icons.send_outlined, size: 26),
-                onPressed: () {},
+                onPressed: () {
+                  if (widget.onShare != null) {
+                    widget.onShare!(widget.post);
+                  }
+                },
               ),
               const Spacer(),
               IconButton(
@@ -223,9 +233,16 @@ class _PostWidgetState extends State<PostWidget> {
                 ),
               const SizedBox(height: 4),
               if (widget.post.comments > 0)
-                Text(
-                  'View all ${widget.post.comments} comments',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                GestureDetector(
+                  onTap: () {
+                    if (widget.onComment != null) {
+                      widget.onComment!(widget.post);
+                    }
+                  },
+                  child: Text(
+                    'View all ${widget.post.comments} comments',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
                 ),
               const SizedBox(height: 4),
               Text(
