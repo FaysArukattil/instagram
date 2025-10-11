@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:instagram/models/user_model.dart';
+import 'package:instagram/widgets/universal_image.dart'; // ✅ Import your UniversalImage
 
 class StoryAvatar extends StatelessWidget {
   final UserModel user;
@@ -48,7 +49,7 @@ class StoryAvatar extends StatelessWidget {
                     ),
                   ),
 
-                // White border
+                // White border + profile image
                 Container(
                   width: 70,
                   height: 70,
@@ -60,9 +61,16 @@ class StoryAvatar extends StatelessWidget {
                         : Border.all(color: Colors.grey.shade300, width: 1),
                   ),
                   padding: const EdgeInsets.all(2.5),
-                  child: CircleAvatar(
-                    backgroundImage: NetworkImage(user.profileImage),
-                    backgroundColor: Colors.grey[300],
+                  child: ClipOval(
+                    child: UniversalImage(
+                      imagePath:
+                          user.profileImage, // ✅ Works for both local/network
+                      fit: BoxFit.cover,
+                      errorWidget: Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.person, color: Colors.grey),
+                      ),
+                    ),
                   ),
                 ),
 
@@ -93,7 +101,7 @@ class StoryAvatar extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              isCurrentUser ? 'Your story' : user.username,
+              user.username, // ✅ Always shows the user's name now
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,

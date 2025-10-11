@@ -83,7 +83,7 @@ class _PostWidgetState extends State<PostWidget>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
+        // Header with UniversalImage for profile picture
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
@@ -92,7 +92,15 @@ class _PostWidgetState extends State<PostWidget>
                 onTap: () => widget.onProfileTap(widget.post.userId),
                 child: CircleAvatar(
                   radius: 16,
-                  backgroundImage: NetworkImage(user.profileImage),
+                  backgroundColor: Colors.grey[300],
+                  child: ClipOval(
+                    child: UniversalImage(
+                      imagePath: user.profileImage,
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -140,11 +148,11 @@ class _PostWidgetState extends State<PostWidget>
           ),
         ),
 
-        // Image carousel with double tap
+        // Image carousel with double tap - Matching PostScreen's EXACT approach
         GestureDetector(
           onDoubleTap: _handleDoubleTap,
-          child: AspectRatio(
-            aspectRatio: 1.0,
+          child: SizedBox(
+            height: MediaQuery.of(context).size.width,
             child: Stack(
               children: [
                 PageView.builder(
@@ -157,9 +165,8 @@ class _PostWidgetState extends State<PostWidget>
                     return UniversalImage(
                       imagePath: widget.post.images[index],
                       width: double.infinity,
+                      height: MediaQuery.of(context).size.width,
                       fit: BoxFit.cover,
-                      cacheWidth: 800,
-                      cacheHeight: 800,
                     );
                   },
                 ),

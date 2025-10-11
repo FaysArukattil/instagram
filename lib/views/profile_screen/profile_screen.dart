@@ -7,6 +7,7 @@ import 'package:instagram/views/follower_screen/follower_screen.dart';
 import 'package:instagram/views/reels_screen/reels_screen.dart';
 import 'package:instagram/views/post_screen/post_screen.dart';
 import 'package:instagram/views/chatscreen/chatscreen.dart';
+import 'package:instagram/widgets/universal_image.dart'; // ✅ Added import
 
 class UserProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -123,9 +124,14 @@ class _UserProfileScreenState extends State<UserProfileScreen>
               children: [
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundImage: NetworkImage(widget.user.profileImage),
+                    /// ✅ Changed to UniversalImage (CircleAvatar replaced)
+                    ClipOval(
+                      child: UniversalImage(
+                        imagePath: widget.user.profileImage,
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     const SizedBox(width: 24),
                     Expanded(
@@ -268,7 +274,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         final post = posts[index];
         return GestureDetector(
           onTap: () => _openPostScreen(posts, index),
-          child: Image.network(post.images[0], fit: BoxFit.cover),
+
+          /// ✅ Replaced Image.network → UniversalImage
+          child: UniversalImage(imagePath: post.images[0], fit: BoxFit.cover),
         );
       },
     );
@@ -301,7 +309,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Image.network(reel.thumbnailUrl, fit: BoxFit.cover),
+              /// ✅ Replaced Image.network → UniversalImage
+              UniversalImage(imagePath: reel.thumbnailUrl, fit: BoxFit.cover),
               const Icon(
                 Icons.play_circle_outline,
                 color: Colors.white,

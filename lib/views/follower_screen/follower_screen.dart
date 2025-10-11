@@ -313,7 +313,7 @@ class _FollowersScreenState extends State<FollowersScreen>
 
     final currentUserId = DummyData.currentUser.id;
 
-    // People who don't follow backr
+    // People who don't follow back
     final notFollowingBackList = following.where((u) {
       final userFollowingList = DummyData.followingMap[u.id] ?? [];
       return !userFollowingList.contains(currentUserId);

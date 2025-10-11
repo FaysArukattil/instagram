@@ -210,6 +210,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
+  /// ✅ Fixed User Tile (UniversalImage used for both local + network images)
   Widget _buildUserTile(UserModel user) {
     return InkWell(
       onTap: () {
@@ -251,9 +252,13 @@ class _SearchScreenState extends State<SearchScreen> {
                       shape: BoxShape.circle,
                     ),
                     padding: const EdgeInsets.all(2),
-                    child: CircleAvatar(
-                      backgroundImage: NetworkImage(user.profileImage),
-                      backgroundColor: Colors.grey[300],
+                    child: ClipOval(
+                      child: UniversalImage(
+                        imagePath: user.profileImage,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                      ),
                     ),
                   ),
                 ],

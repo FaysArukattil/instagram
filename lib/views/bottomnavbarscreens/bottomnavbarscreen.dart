@@ -5,6 +5,7 @@ import 'package:instagram/views/add_post_screen/add_post_screen.dart';
 import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
 import 'package:instagram/views/reels_screen/reels_screen.dart';
 import 'package:instagram/views/search_screen/searchscreen.dart';
+import 'package:instagram/widgets/universal_image.dart'; // ✅ Added import
 
 class BottomNavBarScreen extends StatefulWidget {
   const BottomNavBarScreen({super.key});
@@ -21,7 +22,7 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
     const SearchScreen(),
     const SizedBox(), // Placeholder for Add Post
     const ReelsScreen(),
-    const ProfileTabScreen(),
+    ProfileTabScreen(),
   ];
 
   void _onTabTapped(int index) {
@@ -125,10 +126,13 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
                 ? Border.all(color: Colors.black, width: 2)
                 : null,
           ),
-          child: Padding(
-            padding: EdgeInsets.all(isSelected ? 2.0 : 0),
-            child: CircleAvatar(
-              backgroundImage: NetworkImage(DummyData.currentUser.profileImage),
+          child: ClipOval(
+            child: UniversalImage(
+              // ✅ Replaced CircleAvatar with UniversalImage
+              imagePath: DummyData.currentUser.profileImage,
+              fit: BoxFit.cover,
+              width: 26,
+              height: 26,
             ),
           ),
         ),

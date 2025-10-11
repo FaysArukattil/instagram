@@ -33,6 +33,13 @@ class _HomeScreenState extends State<HomeScreen> {
       if (index != -1) {
         posts[index].isLiked = !posts[index].isLiked;
         posts[index].likes += posts[index].isLiked ? 1 : -1;
+
+        // Update in main DummyData
+        final mainIndex = DummyData.posts.indexWhere((p) => p.id == postId);
+        if (mainIndex != -1) {
+          DummyData.posts[mainIndex].isLiked = posts[index].isLiked;
+          DummyData.posts[mainIndex].likes = posts[index].likes;
+        }
       }
     });
   }
@@ -48,6 +55,12 @@ class _HomeScreenState extends State<HomeScreen> {
         final index = posts.indexWhere((p) => p.id == post.id);
         if (index != -1) {
           posts[index].comments = DummyData.getCommentsForPost(post.id).length;
+
+          // Update in main DummyData
+          final mainIndex = DummyData.posts.indexWhere((p) => p.id == post.id);
+          if (mainIndex != -1) {
+            DummyData.posts[mainIndex].comments = posts[index].comments;
+          }
         }
       });
     });
@@ -73,7 +86,9 @@ class _HomeScreenState extends State<HomeScreen> {
             initialIndex: index,
           ),
         ),
-      ).then((_) => setState(() {}));
+      ).then((_) {
+        setState(() {});
+      });
     }
   }
 
@@ -91,12 +106,16 @@ class _HomeScreenState extends State<HomeScreen> {
             initialIndex: userStoryIndex,
           ),
         ),
-      ).then((_) => setState(() {}));
+      ).then((_) {
+        setState(() {});
+      });
     } else {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const MyStoryScreen()),
-      ).then((_) => setState(() {}));
+      ).then((_) {
+        setState(() {});
+      });
     }
   }
 
@@ -104,7 +123,9 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const MyStoryScreen()),
-    ).then((_) => setState(() {}));
+    ).then((_) {
+      setState(() {});
+    });
   }
 
   void _openProfile(String userId) {
@@ -114,21 +135,21 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
-      ).then((_) => setState(() {}));
+      ).then((_) {
+        setState(() {});
+      });
     }
   }
 
   Future<void> _refreshPosts() async {
     await Future.delayed(const Duration(milliseconds: 800));
     setState(() {
-      posts.shuffle();
+      posts = List.from(DummyData.posts);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    setState(() {}); // refresh images when profile changes
-
     final currentUserHasStory = DummyData.stories.any(
       (s) => s.userId == DummyData.currentUser.id,
     );
@@ -202,6 +223,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _refreshPosts,
+        displacement: 60,
+        edgeOffset: 10,
         color: Colors.grey[700],
         backgroundColor: Colors.white,
         strokeWidth: 2.2,
@@ -210,6 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           slivers: [
+            // Stories Section
             SliverToBoxAdapter(
               child: Container(
                 height: 110,
@@ -253,7 +277,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+
             const SliverToBoxAdapter(child: Divider(height: 1, thickness: 0.5)),
+
+            // Posts Section
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 return PostWidget(
