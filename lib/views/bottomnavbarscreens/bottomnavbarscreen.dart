@@ -5,7 +5,7 @@ import 'package:instagram/views/add_post_screen/add_post_screen.dart';
 import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
 import 'package:instagram/views/reels_screen/reels_screen.dart';
 import 'package:instagram/views/search_screen/searchscreen.dart';
-import 'package:instagram/widgets/universal_image.dart'; // ✅ Added import
+import 'package:instagram/widgets/universal_image.dart';
 
 class BottomNavBarScreen extends StatefulWidget {
   const BottomNavBarScreen({super.key});
@@ -16,14 +16,17 @@ class BottomNavBarScreen extends StatefulWidget {
 
 class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   int _currentIndex = 0;
+  int _homeRefreshKey = 0; // Add a refresh counter for home screen
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const SearchScreen(),
-    const SizedBox(), // Placeholder for Add Post
-    const ReelsScreen(),
-    ProfileTabScreen(),
-  ];
+  List<Widget> _getScreens() {
+    return [
+      HomeScreen(key: ValueKey('home_$_homeRefreshKey')), // Dynamic key
+      const SearchScreen(),
+      const SizedBox(), // Placeholder for Add Post
+      const ReelsScreen(),
+      const ProfileTabScreen(),
+    ];
+  }
 
   void _onTabTapped(int index) {
     if (index == 2) {
@@ -34,9 +37,18 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
           builder: (context) => const AddPostScreen(),
           fullscreenDialog: true,
         ),
-      );
+      ).then((_) {
+        // Refresh home screen after returning from add post
+        setState(() {
+          _homeRefreshKey++; // Increment to force HomeScreen rebuild
+        });
+      });
     } else {
       setState(() {
+        // If switching to home tab, increment key to force refresh
+        if (index == 0 && _currentIndex != 0) {
+          _homeRefreshKey++;
+        }
         _currentIndex = index;
       });
     }
@@ -45,7 +57,7 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: IndexedStack(index: _currentIndex, children: _getScreens()),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -128,7 +140,6 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
           ),
           child: ClipOval(
             child: UniversalImage(
-              // ✅ Replaced CircleAvatar with UniversalImage
               imagePath: DummyData.currentUser.profileImage,
               fit: BoxFit.cover,
               width: 26,

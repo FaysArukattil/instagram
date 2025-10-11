@@ -11,6 +11,9 @@ import 'package:instagram/views/story_viewer_screen/story_viewer_screen.dart';
 import 'package:instagram/widgets/post_widget.dart';
 import 'package:instagram/widgets/story_avatar.dart';
 
+// Import the RouteObserver from profile_tab_screen
+import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -18,13 +21,72 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
   late List<PostModel> posts;
 
   @override
   void initState() {
     super.initState();
-    posts = List.from(DummyData.posts);
+    _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      routeObserver.subscribe(this, route);
+    }
+    // Reload data every time dependencies change (when tab is switched to)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadData();
+      }
+    });
+  }
+
+  // Add this to detect when the widget becomes visible again
+  @override
+  void didUpdateWidget(HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    setState(() {
+      _loadData();
+    });
+  }
+
+  @override
+  void didPush() {
+    // Called when this route is pushed onto the navigator
+    _loadData();
+  }
+
+  @override
+  void didPushNext() {
+    // Called when a new route is pushed on top of this route
+  }
+
+  void _loadData({bool shuffle = false}) {
+    if (!mounted) return;
+    setState(() {
+      // Create a fresh copy of posts from DummyData
+      posts = List.from(DummyData.posts);
+      // Only shuffle if explicitly requested (manual refresh)
+      if (shuffle) {
+        posts.shuffle();
+      }
+    });
+    print('HomeScreen: Loaded ${posts.length} posts (shuffled: $shuffle)');
   }
 
   void _handleLike(String postId) {
@@ -87,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ).then((_) {
-        setState(() {});
+        _loadData();
       });
     }
   }
@@ -107,14 +169,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ).then((_) {
-        setState(() {});
+        _loadData();
       });
     } else {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const MyStoryScreen()),
       ).then((_) {
-        setState(() {});
+        _loadData();
       });
     }
   }
@@ -124,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(builder: (context) => const MyStoryScreen()),
     ).then((_) {
-      setState(() {});
+      _loadData();
     });
   }
 
@@ -136,16 +198,14 @@ class _HomeScreenState extends State<HomeScreen> {
         context,
         MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
       ).then((_) {
-        setState(() {});
+        _loadData();
       });
     }
   }
 
   Future<void> _refreshPosts() async {
     await Future.delayed(const Duration(milliseconds: 800));
-    setState(() {
-      posts = List.from(DummyData.posts);
-    });
+    _loadData(shuffle: true); // Shuffle only on manual refresh
   }
 
   @override
