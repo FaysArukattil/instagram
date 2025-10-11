@@ -44,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => CommentsScreen(post: post),
     ).then((_) {
-      // Update the comment count from DummyData
       setState(() {
         final index = posts.indexWhere((p) => p.id == post.id);
         if (index != -1) {
@@ -74,9 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
             initialIndex: index,
           ),
         ),
-      ).then((_) {
-        setState(() {});
-      });
+      ).then((_) => setState(() {}));
     }
   }
 
@@ -94,16 +91,12 @@ class _HomeScreenState extends State<HomeScreen> {
             initialIndex: userStoryIndex,
           ),
         ),
-      ).then((_) {
-        setState(() {});
-      });
+      ).then((_) => setState(() {}));
     } else {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const MyStoryScreen()),
-      ).then((_) {
-        setState(() {});
-      });
+      ).then((_) => setState(() {}));
     }
   }
 
@@ -111,9 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const MyStoryScreen()),
-    ).then((_) {
-      setState(() {});
-    });
+    ).then((_) => setState(() {}));
   }
 
   void _openProfile(String userId) {
@@ -123,9 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
-      ).then((_) {
-        setState(() {});
-      });
+      ).then((_) => setState(() {}));
     }
   }
 
@@ -138,6 +127,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    setState(() {}); // refresh images when profile changes
+
     final currentUserHasStory = DummyData.stories.any(
       (s) => s.userId == DummyData.currentUser.id,
     );
@@ -211,8 +202,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _refreshPosts,
-        displacement: 60,
-        edgeOffset: 10,
         color: Colors.grey[700],
         backgroundColor: Colors.white,
         strokeWidth: 2.2,
@@ -221,7 +210,6 @@ class _HomeScreenState extends State<HomeScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           slivers: [
-            // Stories Section
             SliverToBoxAdapter(
               child: Container(
                 height: 110,
@@ -265,10 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
             const SliverToBoxAdapter(child: Divider(height: 1, thickness: 0.5)),
-
-            // Posts Section
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 return PostWidget(

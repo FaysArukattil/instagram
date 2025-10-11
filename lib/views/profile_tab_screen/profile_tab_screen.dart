@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/views/add_post_screen/add_post_screen.dart';
+import 'package:instagram/views/edit_profile_screen/edit_profil_screen.dart';
 import 'package:instagram/views/follower_screen/follower_screen.dart';
 import 'package:instagram/views/post_screen/post_screen.dart';
 import 'package:instagram/views/reels_screen/reels_screen.dart';
@@ -24,7 +25,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
   Future<void> _refreshData() async {
     await Future.delayed(const Duration(milliseconds: 800));
     setState(() {
-      // Update counts when refreshing
       _updateFollowerCounts();
     });
   }
@@ -41,7 +41,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    // Update counts on init
     _updateFollowerCounts();
   }
 
@@ -71,7 +70,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
       MaterialPageRoute(
         builder: (context) => FollowersScreen(
           userId: DummyData.currentUser.id,
-          initialTabIndex: 1, // Open Followers tab
+          initialTabIndex: 1,
         ),
       ),
     ).then((_) {
@@ -87,7 +86,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
       MaterialPageRoute(
         builder: (context) => FollowersScreen(
           userId: DummyData.currentUser.id,
-          initialTabIndex: 2, // Open Following tab
+          initialTabIndex: 2,
         ),
       ),
     ).then((_) {
@@ -167,7 +166,15 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                           children: [
                             CircleAvatar(
                               radius: 40,
-                              backgroundImage: NetworkImage(user.profileImage),
+                              backgroundColor: Colors.grey[200],
+                              child: ClipOval(
+                                child: UniversalImage(
+                                  imagePath: user.profileImage,
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                             ),
                             Positioned(
                               bottom: 0,
@@ -225,7 +232,19 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () async {
+                              final updated = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EditProfileScreen(
+                                    user: DummyData.currentUser,
+                                  ),
+                                ),
+                              );
+                              if (updated == true) {
+                                setState(() {});
+                              }
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.grey[200],
                               foregroundColor: Colors.black,

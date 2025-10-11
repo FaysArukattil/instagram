@@ -571,6 +571,7 @@ class DummyData {
       posts: 123,
       bio: 'Photographer 📷',
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_17',
@@ -581,6 +582,7 @@ class DummyData {
       followers: 567,
       following: 234,
       posts: 89,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_18',
@@ -592,6 +594,7 @@ class DummyData {
       following: 567,
       posts: 156,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_19',
@@ -602,6 +605,7 @@ class DummyData {
       followers: 678,
       following: 234,
       posts: 78,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_20',
@@ -613,6 +617,7 @@ class DummyData {
       following: 345,
       posts: 112,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_21',
@@ -623,6 +628,7 @@ class DummyData {
       followers: 456,
       following: 178,
       posts: 67,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_22',
@@ -634,6 +640,7 @@ class DummyData {
       following: 445,
       posts: 198,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_23',
@@ -644,6 +651,7 @@ class DummyData {
       followers: 789,
       following: 312,
       posts: 145,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_24',
@@ -655,6 +663,7 @@ class DummyData {
       following: 421,
       posts: 167,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_25',
@@ -665,6 +674,7 @@ class DummyData {
       followers: 567,
       following: 234,
       posts: 89,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_26',
@@ -676,6 +686,7 @@ class DummyData {
       following: 567,
       posts: 234,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_27',
@@ -686,6 +697,7 @@ class DummyData {
       followers: 456,
       following: 189,
       posts: 78,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_28',
@@ -697,6 +709,7 @@ class DummyData {
       following: 367,
       posts: 145,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_29',
@@ -707,6 +720,7 @@ class DummyData {
       followers: 678,
       following: 234,
       posts: 112,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_30',
@@ -718,6 +732,7 @@ class DummyData {
       following: 623,
       posts: 289,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_31',
@@ -729,6 +744,7 @@ class DummyData {
       following: 345,
       posts: 567,
       bio: 'Best Kerala cuisine 🍛',
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_32',
@@ -741,6 +757,7 @@ class DummyData {
       posts: 456,
       bio: 'Full Stack Developer',
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_33',
@@ -751,6 +768,7 @@ class DummyData {
       followers: 12345,
       following: 456,
       posts: 789,
+      gender: 'Not specified',
       bio: 'Comedy | Vlogs',
     ),
     UserModel(
@@ -763,6 +781,7 @@ class DummyData {
       following: 345,
       posts: 567,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_35',
@@ -774,6 +793,7 @@ class DummyData {
       following: 234,
       posts: 678,
       bio: 'Explore Wayanad 🏞️',
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_36',
@@ -785,6 +805,7 @@ class DummyData {
       following: 456,
       posts: 345,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_37',
@@ -796,6 +817,7 @@ class DummyData {
       following: 567,
       posts: 1234,
       bio: 'Daily memes 😂',
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_38',
@@ -807,6 +829,7 @@ class DummyData {
       following: 234,
       posts: 456,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_39',
@@ -818,6 +841,7 @@ class DummyData {
       following: 345,
       posts: 567,
       bio: '🎵 Music is life',
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_40',
@@ -829,6 +853,7 @@ class DummyData {
       following: 456,
       posts: 678,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_41',
@@ -839,6 +864,7 @@ class DummyData {
       followers: 8901,
       following: 567,
       posts: 789,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_42',
@@ -850,6 +876,7 @@ class DummyData {
       following: 345,
       posts: 456,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_43',
@@ -861,6 +888,7 @@ class DummyData {
       following: 456,
       posts: 890,
       bio: 'Street Photography 📸',
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_44',
@@ -872,6 +900,7 @@ class DummyData {
       following: 234,
       posts: 567,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_45',
@@ -883,6 +912,7 @@ class DummyData {
       following: 789,
       posts: 1234,
       bio: 'Daily Motivation 💪',
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_46',
@@ -894,6 +924,7 @@ class DummyData {
       following: 345,
       posts: 456,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_47',
@@ -905,6 +936,7 @@ class DummyData {
       following: 456,
       posts: 678,
       bio: 'Food reviews 🍔',
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_48',
@@ -916,6 +948,7 @@ class DummyData {
       following: 567,
       posts: 890,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_49',
@@ -926,6 +959,7 @@ class DummyData {
       followers: 7890,
       following: 234,
       posts: 567,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_50',
@@ -937,6 +971,7 @@ class DummyData {
       following: 456,
       posts: 678,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_51',
@@ -948,6 +983,7 @@ class DummyData {
       following: 345,
       posts: 567,
       bio: 'Animal lover 🐶',
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_52',
@@ -959,6 +995,7 @@ class DummyData {
       following: 567,
       posts: 789,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_53',
@@ -969,6 +1006,7 @@ class DummyData {
       followers: 8765,
       following: 234,
       posts: 456,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_54',
@@ -980,6 +1018,7 @@ class DummyData {
       following: 345,
       posts: 567,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_55',
@@ -991,6 +1030,7 @@ class DummyData {
       following: 456,
       posts: 678,
       bio: 'Car lover 🚗',
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_56',
@@ -1002,6 +1042,7 @@ class DummyData {
       following: 567,
       posts: 890,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_57',
@@ -1012,6 +1053,7 @@ class DummyData {
       followers: 28901,
       following: 678,
       posts: 1234,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_58',
@@ -1023,6 +1065,7 @@ class DummyData {
       following: 345,
       posts: 567,
       isFollowing: true,
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_59',
@@ -1034,11 +1077,13 @@ class DummyData {
       following: 456,
       posts: 678,
       bio: 'Kerala traditions 🌴',
+      gender: 'Not specified',
     ),
     UserModel(
       id: 'user_60',
       username: 'film_industry_kerala',
       name: 'Film Industry',
+      gender: 'Not specified',
       profileImage:
           'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150',
       followers: 34567,

@@ -1,17 +1,18 @@
 class UserModel {
-  final String id;
-  final String username;
-  final String name;
-  final String profileImage;
-  final bool hasStory;
+  String id;
+  String username;
+  String name;
+  String profileImage; // can be network URL or local file path
+  bool hasStory;
   int followers;
   int following;
   int posts;
-  final String bio;
-  final bool isVerified;
+  String bio;
+  bool isVerified;
   bool isFollowing;
-  final bool isOnline;
-  final String? lastSeen;
+  bool isOnline;
+  String? lastSeen;
+  String gender; // <-- NEW
 
   UserModel({
     required this.id,
@@ -27,5 +28,6 @@ class UserModel {
     this.isFollowing = false,
     this.isOnline = false,
     this.lastSeen,
+    this.gender = 'Not specified', // default
   });
 }
