@@ -23,14 +23,56 @@ class PostWidget extends StatefulWidget {
   State<PostWidget> createState() => _PostWidgetState();
 }
 
-class _PostWidgetState extends State<PostWidget> {
+class _PostWidgetState extends State<PostWidget>
+    with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+  bool _showHeart = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 700),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.2).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.5, 1.0),
+      ),
+    );
+
+    _animationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() => _showHeart = false);
+        _animationController.reset();
+      }
+    });
+  }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _animationController.dispose();
     super.dispose();
+  }
+
+  void _handleDoubleTap() {
+    if (!widget.post.isLiked) {
+      widget.onLike(widget.post.id);
+    }
+    setState(() => _showHeart = true);
+    _animationController.forward();
   }
 
   @override
@@ -98,51 +140,77 @@ class _PostWidgetState extends State<PostWidget> {
           ),
         ),
 
-        // Image carousel with proper aspect ratio
-        AspectRatio(
-          aspectRatio: 1.0, // Square aspect ratio like Instagram
-          child: Stack(
-            children: [
-              PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
-                },
-                itemCount: widget.post.images.length,
-                itemBuilder: (context, index) {
-                  return UniversalImage(
-                    imagePath: widget.post.images[index],
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    cacheWidth: 800,
-                    cacheHeight: 800,
-                  );
-                },
-              ),
-              if (widget.post.images.length > 1)
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${_currentPage + 1}/${widget.post.images.length}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+        // Image carousel with double tap
+        GestureDetector(
+          onDoubleTap: _handleDoubleTap,
+          child: AspectRatio(
+            aspectRatio: 1.0,
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() => _currentPage = index);
+                  },
+                  itemCount: widget.post.images.length,
+                  itemBuilder: (context, index) {
+                    return UniversalImage(
+                      imagePath: widget.post.images[index],
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      cacheWidth: 800,
+                      cacheHeight: 800,
+                    );
+                  },
+                ),
+                if (widget.post.images.length > 1)
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${_currentPage + 1}/${widget.post.images.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
+                // Animated heart overlay
+                if (_showHeart)
+                  Center(
+                    child: AnimatedBuilder(
+                      animation: _animationController,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: _scaleAnimation.value,
+                          child: Opacity(
+                            opacity: _opacityAnimation.value,
+                            child: const Icon(
+                              Icons.favorite,
+                              color: Colors.white,
+                              size: 100,
+                              shadows: [
+                                Shadow(blurRadius: 20, color: Colors.black54),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
 

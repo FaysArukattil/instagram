@@ -257,6 +257,8 @@ class DummyData {
     ],
   };
 
+  // Add this to your dummy_data.dart file - REPLACE the existing users list and followingMap
+
   static UserModel currentUser = UserModel(
     id: 'user_1',
     username: 'FaysAruka',
@@ -264,49 +266,122 @@ class DummyData {
     profileImage:
         'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     hasStory: true,
-    followers: 543,
-    following: 432,
+    followers: 37, // Will be calculated dynamically
+    following: 30, // Will be calculated dynamically
     posts: 78,
   );
 
-  // Add these maps to track actual followers/following relationships
-  static Map<String, List<String>> followersMap = {
-    'user_1': [],
-    'user_2': ['user_1'],
-    'user_3': [],
-    'user_4': [],
-    'user_5': [],
-    'user_6': [],
-    'user_7': [],
-    'user_8': [],
-    'user_9': [],
-    'user_10': [],
-    'user_11': [],
-    'user_12': [],
-    'user_13': [],
-    'user_14': [],
-    'user_15': [],
-  };
+  // Helper method to get actual follower count
+  static int getFollowerCount(String userId) {
+    int count = 0;
+    followingMap.forEach((key, value) {
+      if (value.contains(userId)) {
+        count++;
+      }
+    });
+    return count;
+  }
 
+  // Helper method to get actual following count
+  static int getFollowingCount(String userId) {
+    return followingMap[userId]?.length ?? 0;
+  }
+
+  // Helper method to get friends count (mutual followers)
+  static int getFriendsCount(String userId) {
+    final following = followingMap[userId] ?? [];
+    int friendsCount = 0;
+
+    for (String followingUserId in following) {
+      final theirFollowing = followingMap[followingUserId] ?? [];
+      if (theirFollowing.contains(userId)) {
+        friendsCount++;
+      }
+    }
+
+    return friendsCount;
+  }
+
+  // Extended followingMap - user_1 (current user) relationships
   static Map<String, List<String>> followingMap = {
-    'user_1': ['user_2'],
-    'user_2': [],
-    'user_3': [],
-    'user_4': [],
-    'user_5': [],
-    'user_6': [],
-    'user_7': [],
-    'user_8': [],
-    'user_9': [],
-    'user_10': [],
-    'user_11': [],
-    'user_12': [],
-    'user_13': [],
-    'user_14': [],
-    'user_15': [],
+    // Current user follows these people
+    'user_1': [
+      'user_2',
+      'user_3',
+      'user_5',
+      'user_7',
+      'user_8',
+      'user_10',
+      'user_12',
+      'user_14',
+      'user_16',
+      'user_18',
+      'user_20',
+      'user_22',
+      'user_24',
+      'user_26',
+      'user_28',
+      'user_30',
+      'user_32',
+      'user_34',
+      'user_36',
+      'user_38',
+      'user_40',
+      'user_42',
+      'user_44',
+      'user_46',
+      'user_48',
+      'user_50',
+      'user_52',
+      'user_54',
+      'user_56',
+      'user_58',
+    ],
+
+    // These users follow current user back (mutual - friends)
+    'user_2': ['user_1'],
+    'user_5': ['user_1'],
+    'user_8': ['user_1'],
+    'user_12': ['user_1'],
+    'user_16': ['user_1'],
+    'user_20': ['user_1'],
+    'user_24': ['user_1'],
+    'user_28': ['user_1'],
+
+    // These users follow current user but current user doesn't follow back
+    'user_4': ['user_1'],
+    'user_6': ['user_1'],
+    'user_9': ['user_1'],
+    'user_11': ['user_1'],
+    'user_13': ['user_1'],
+    'user_15': ['user_1'],
+    'user_17': ['user_1'],
+    'user_19': ['user_1'],
+    'user_21': ['user_1'],
+    'user_23': ['user_1'],
+    'user_25': ['user_1'],
+    'user_27': ['user_1'],
+    'user_29': ['user_1'],
+    'user_31': ['user_1'],
+    'user_33': ['user_1'],
+    'user_35': ['user_1'],
+    'user_37': ['user_1'],
+    'user_39': ['user_1'],
+    'user_41': ['user_1'],
+    'user_43': ['user_1'],
+    'user_45': ['user_1'],
+    'user_47': ['user_1'],
+    'user_49': ['user_1'],
+    'user_51': ['user_1'],
+    'user_53': ['user_1'],
+    'user_55': ['user_1'],
+    'user_57': ['user_1'],
+    'user_59': ['user_1'],
+    'user_60': ['user_1'],
   };
 
   static final List<UserModel> users = [
+    // Original users
     UserModel(
       id: 'user_2',
       username: 'sayyid_hussain_shihab',
@@ -331,7 +406,7 @@ class DummyData {
       following: 432,
       posts: 156,
       bio: 'Food lover 🍔',
-      isFollowing: false,
+      isFollowing: true,
     ),
     UserModel(
       id: 'user_4',
@@ -344,7 +419,6 @@ class DummyData {
       following: 234,
       posts: 67,
       bio: 'Thennala',
-      isFollowing: true,
     ),
     UserModel(
       id: 'user_5',
@@ -358,6 +432,7 @@ class DummyData {
       posts: 109,
       isOnline: false,
       lastSeen: '36 m',
+      isFollowing: true,
     ),
     UserModel(
       id: 'user_6',
@@ -366,8 +441,6 @@ class DummyData {
       profileImage:
           'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=150',
       hasStory: true,
-      isOnline: false,
-      lastSeen: '36 m',
       followers: 5621,
       following: 892,
       posts: 234,
@@ -379,12 +452,11 @@ class DummyData {
       profileImage:
           'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
       hasStory: true,
-      isOnline: false,
-      lastSeen: '16 m',
       followers: 12456,
       following: 234,
       posts: 567,
       bio: 'Kashmir ki kahaniyan 🏔️',
+      isFollowing: true,
     ),
     UserModel(
       id: 'user_8',
@@ -397,6 +469,7 @@ class DummyData {
       followers: 456,
       following: 123,
       posts: 89,
+      isFollowing: true,
     ),
     UserModel(
       id: 'user_9',
@@ -421,6 +494,7 @@ class DummyData {
       followers: 1567,
       following: 678,
       posts: 234,
+      isFollowing: true,
     ),
     UserModel(
       id: 'user_11',
@@ -445,6 +519,7 @@ class DummyData {
       following: 567,
       posts: 789,
       bio: 'No pain, no gain 💪',
+      isFollowing: true,
     ),
     UserModel(
       id: 'user_13',
@@ -469,6 +544,7 @@ class DummyData {
       following: 891,
       posts: 1234,
       bio: 'Capturing nature 📸🌿',
+      isFollowing: true,
     ),
     UserModel(
       id: 'user_15',
@@ -481,6 +557,494 @@ class DummyData {
       following: 234,
       posts: 567,
       bio: 'Art is life 🎨',
+    ),
+
+    // NEW USERS - More followers and following
+    UserModel(
+      id: 'user_16',
+      username: 'ishan_shbn',
+      name: 'Ishan Shabin',
+      profileImage:
+          'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=150',
+      followers: 892,
+      following: 345,
+      posts: 123,
+      bio: 'Photographer 📷',
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_17',
+      username: 'amarxch',
+      name: 'Amar Chand',
+      profileImage:
+          'https://images.unsplash.com/photo-1628157588553-5eeea00af15c?w=150',
+      followers: 567,
+      following: 234,
+      posts: 89,
+    ),
+    UserModel(
+      id: 'user_18',
+      username: '_j_k_v_',
+      name: 'Jaseem Kv',
+      profileImage:
+          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150',
+      followers: 1234,
+      following: 567,
+      posts: 156,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_19',
+      username: 'vah_id._',
+      name: 'عبد الواحد',
+      profileImage:
+          'https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=150',
+      followers: 678,
+      following: 234,
+      posts: 78,
+    ),
+    UserModel(
+      id: 'user_20',
+      username: 'iyas__k_',
+      name: 'iyas.k',
+      profileImage:
+          'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150',
+      followers: 890,
+      following: 345,
+      posts: 112,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_21',
+      username: 'harieeee',
+      name: 'HARIMON🤗',
+      profileImage:
+          'https://images.unsplash.com/photo-1521119989659-a83eee488004?w=150',
+      followers: 456,
+      following: 178,
+      posts: 67,
+    ),
+    UserModel(
+      id: 'user_22',
+      username: 'sanobar.rr',
+      name: 'Sanoobarrr...',
+      profileImage:
+          'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+      followers: 1123,
+      following: 445,
+      posts: 198,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_23',
+      username: 'jawahirr._',
+      name: 'جواهر',
+      profileImage:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      followers: 789,
+      following: 312,
+      posts: 145,
+    ),
+    UserModel(
+      id: 'user_24',
+      username: 'aslam_ahm...',
+      name: 'اسلم ناصر احمد',
+      profileImage:
+          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+      followers: 934,
+      following: 421,
+      posts: 167,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_25',
+      username: '_rxhis_.',
+      name: 'Hz',
+      profileImage:
+          'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=150',
+      followers: 567,
+      following: 234,
+      posts: 89,
+    ),
+    UserModel(
+      id: 'user_26',
+      username: 'fah_zn_',
+      name: 'FAHSIN🫧',
+      profileImage:
+          'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
+      followers: 1234,
+      following: 567,
+      posts: 234,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_27',
+      username: 'ramlabiabdussalam',
+      name: 'ramlabiabd...',
+      profileImage:
+          'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=150',
+      followers: 456,
+      following: 189,
+      posts: 78,
+    ),
+    UserModel(
+      id: 'user_28',
+      username: '_zyd__ziyad_',
+      name: 'Zyd ziyad',
+      profileImage:
+          'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=150',
+      followers: 890,
+      following: 367,
+      posts: 145,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_29',
+      username: 'jimshan_panthodi_jibu',
+      name: 'Jimshan Panthodi',
+      profileImage:
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+      followers: 678,
+      following: 234,
+      posts: 112,
+    ),
+    UserModel(
+      id: 'user_30',
+      username: 'ansilnaseem',
+      name: 'Ansil Naseem',
+      profileImage:
+          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+      followers: 1456,
+      following: 623,
+      posts: 289,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_31',
+      username: 'kerala_foodie',
+      name: 'Kerala Food',
+      profileImage:
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
+      followers: 8923,
+      following: 345,
+      posts: 567,
+      bio: 'Best Kerala cuisine 🍛',
+    ),
+    UserModel(
+      id: 'user_32',
+      username: 'coding_ninja',
+      name: 'Code Ninja',
+      profileImage:
+          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+      followers: 4567,
+      following: 234,
+      posts: 456,
+      bio: 'Full Stack Developer',
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_33',
+      username: 'malappuram_vines',
+      name: 'Malappuram Vines',
+      profileImage:
+          'https://images.unsplash.com/photo-1463453091185-61582044d556?w=150',
+      followers: 12345,
+      following: 456,
+      posts: 789,
+      bio: 'Comedy | Vlogs',
+    ),
+    UserModel(
+      id: 'user_34',
+      username: 'fitness_journey',
+      name: 'Fitness Journey',
+      profileImage:
+          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+      followers: 6789,
+      following: 345,
+      posts: 567,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_35',
+      username: 'wayanad_explorer',
+      name: 'Wayanad Tours',
+      profileImage:
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
+      followers: 9876,
+      following: 234,
+      posts: 678,
+      bio: 'Explore Wayanad 🏞️',
+    ),
+    UserModel(
+      id: 'user_36',
+      username: 'calicut_diaries',
+      name: 'Calicut Diaries',
+      profileImage:
+          'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150',
+      followers: 5432,
+      following: 456,
+      posts: 345,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_37',
+      username: 'memes_malayalam',
+      name: 'Malayalam Memes',
+      profileImage:
+          'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=150',
+      followers: 23456,
+      following: 567,
+      posts: 1234,
+      bio: 'Daily memes 😂',
+    ),
+    UserModel(
+      id: 'user_38',
+      username: 'book_worm_kerala',
+      name: 'Book Lover',
+      profileImage:
+          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+      followers: 3456,
+      following: 234,
+      posts: 456,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_39',
+      username: 'music_lover_mlp',
+      name: 'Music Lover',
+      profileImage:
+          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+      followers: 4567,
+      following: 345,
+      posts: 567,
+      bio: '🎵 Music is life',
+    ),
+    UserModel(
+      id: 'user_40',
+      username: 'gaming_geek',
+      name: 'Gaming Geek',
+      profileImage:
+          'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=150',
+      followers: 7890,
+      following: 456,
+      posts: 678,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_41',
+      username: 'style_icon_kerala',
+      name: 'Style Icon',
+      profileImage:
+          'https://images.unsplash.com/photo-1628157588553-5eeea00af15c?w=150',
+      followers: 8901,
+      following: 567,
+      posts: 789,
+    ),
+    UserModel(
+      id: 'user_42',
+      username: 'beach_lover_kvlm',
+      name: 'Beach Lover',
+      profileImage:
+          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150',
+      followers: 5678,
+      following: 345,
+      posts: 456,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_43',
+      username: 'street_photography_ind',
+      name: 'Street Photography',
+      profileImage:
+          'https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=150',
+      followers: 12345,
+      following: 456,
+      posts: 890,
+      bio: 'Street Photography 📸',
+    ),
+    UserModel(
+      id: 'user_44',
+      username: 'business_mindset',
+      name: 'Business Mind',
+      profileImage:
+          'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150',
+      followers: 9876,
+      following: 234,
+      posts: 567,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_45',
+      username: 'motivational_quotes_in',
+      name: 'Motivation',
+      profileImage:
+          'https://images.unsplash.com/photo-1521119989659-a83eee488004?w=150',
+      followers: 34567,
+      following: 789,
+      posts: 1234,
+      bio: 'Daily Motivation 💪',
+    ),
+    UserModel(
+      id: 'user_46',
+      username: 'cricket_fan_kerala',
+      name: 'Cricket Fan',
+      profileImage:
+          'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+      followers: 6789,
+      following: 345,
+      posts: 456,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_47',
+      username: 'food_blogger_mlp',
+      name: 'Food Blogger',
+      profileImage:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      followers: 8901,
+      following: 456,
+      posts: 678,
+      bio: 'Food reviews 🍔',
+    ),
+    UserModel(
+      id: 'user_48',
+      username: 'fashion_week_ind',
+      name: 'Fashion Week',
+      profileImage:
+          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+      followers: 23456,
+      following: 567,
+      posts: 890,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_49',
+      username: 'yoga_kerala',
+      name: 'Yoga Kerala',
+      profileImage:
+          'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=150',
+      followers: 7890,
+      following: 234,
+      posts: 567,
+    ),
+    UserModel(
+      id: 'user_50',
+      username: 'startup_kerala',
+      name: 'Startup Kerala',
+      profileImage:
+          'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
+      followers: 12345,
+      following: 456,
+      posts: 678,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_51',
+      username: 'pet_lovers_kerala',
+      name: 'Pet Lovers',
+      profileImage:
+          'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=150',
+      followers: 9876,
+      following: 345,
+      posts: 567,
+      bio: 'Animal lover 🐶',
+    ),
+    UserModel(
+      id: 'user_52',
+      username: 'adventure_seekers',
+      name: 'Adventure Seekers',
+      profileImage:
+          'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=150',
+      followers: 11234,
+      following: 567,
+      posts: 789,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_53',
+      username: 'makeup_artist_kerala',
+      name: 'Makeup Artist',
+      profileImage:
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+      followers: 8765,
+      following: 234,
+      posts: 456,
+    ),
+    UserModel(
+      id: 'user_54',
+      username: 'dance_academy_mlp',
+      name: 'Dance Academy',
+      profileImage:
+          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+      followers: 6543,
+      following: 345,
+      posts: 567,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_55',
+      username: 'car_enthusiast_ind',
+      name: 'Car Enthusiast',
+      profileImage:
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
+      followers: 13456,
+      following: 456,
+      posts: 678,
+      bio: 'Car lover 🚗',
+    ),
+    UserModel(
+      id: 'user_56',
+      username: 'wedding_photography_ker',
+      name: 'Wedding Photography',
+      profileImage:
+          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+      followers: 15678,
+      following: 567,
+      posts: 890,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_57',
+      username: 'comedy_shows_kerala',
+      name: 'Comedy Shows',
+      profileImage:
+          'https://images.unsplash.com/photo-1463453091185-61582044d556?w=150',
+      followers: 28901,
+      following: 678,
+      posts: 1234,
+    ),
+    UserModel(
+      id: 'user_58',
+      username: 'digital_marketing_ind',
+      name: 'Digital Marketing',
+      profileImage:
+          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+      followers: 9876,
+      following: 345,
+      posts: 567,
+      isFollowing: true,
+    ),
+    UserModel(
+      id: 'user_59',
+      username: 'traditional_kerala',
+      name: 'Traditional Kerala',
+      profileImage:
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
+      followers: 11234,
+      following: 456,
+      posts: 678,
+      bio: 'Kerala traditions 🌴',
+    ),
+    UserModel(
+      id: 'user_60',
+      username: 'film_industry_kerala',
+      name: 'Film Industry',
+      profileImage:
+          'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150',
+      followers: 34567,
+      following: 789,
+      posts: 1234,
+      bio: 'Malayalam Cinema 🎬',
     ),
   ];
   static void toggleFollow(String currentUserId, String targetUserId) {

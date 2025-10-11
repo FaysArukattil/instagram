@@ -22,4 +22,36 @@ class PostModel {
     this.isLiked = false,
     this.isSponsored = false,
   });
+
+  // Convert PostModel to JSON for persistence
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'images': images,
+      'caption': caption,
+      'likes': likes,
+      'comments': comments,
+      'timeAgo': timeAgo,
+      'location': location,
+      'isLiked': isLiked,
+      'isSponsored': isSponsored,
+    };
+  }
+
+  // Create PostModel from JSON
+  factory PostModel.fromJson(Map<String, dynamic> json) {
+    return PostModel(
+      id: json['id'],
+      userId: json['userId'],
+      images: List<String>.from(json['images']),
+      caption: json['caption'],
+      likes: json['likes'],
+      comments: json['comments'],
+      timeAgo: json['timeAgo'],
+      location: json['location'],
+      isLiked: json['isLiked'] ?? false,
+      isSponsored: json['isSponsored'] ?? false,
+    );
+  }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
+import 'package:instagram/views/commentscreen/commentscreen.dart';
+import 'package:instagram/views/share_bottom_sheet/share_bottom_sheet.dart';
 import 'package:instagram/widgets/post_widget.dart';
 
 class PostScreen extends StatefulWidget {
@@ -48,6 +50,34 @@ class _PostScreenState extends State<PostScreen> {
     });
   }
 
+  void _openComments(PostModel post) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CommentsScreen(post: post),
+    ).then((_) {
+      // Update the comment count from DummyData
+      setState(() {
+        final index = userPosts.indexWhere((p) => p.id == post.id);
+        if (index != -1) {
+          userPosts[index].comments = DummyData.getCommentsForPost(
+            post.id,
+          ).length;
+        }
+      });
+    });
+  }
+
+  void _openShare(PostModel post) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ShareBottomSheet(post: post),
+    );
+  }
+
   void _openProfile(String userId) {
     // Already on profile screen, so do nothing
   }
@@ -81,6 +111,8 @@ class _PostScreenState extends State<PostScreen> {
               post: userPosts[index],
               onLike: _handleLike,
               onProfileTap: _openProfile,
+              onComment: _openComments,
+              onShare: _openShare,
             ),
           );
         },

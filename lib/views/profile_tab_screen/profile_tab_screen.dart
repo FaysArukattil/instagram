@@ -23,13 +23,26 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
 
   Future<void> _refreshData() async {
     await Future.delayed(const Duration(milliseconds: 800));
-    setState(() {});
+    setState(() {
+      // Update counts when refreshing
+      _updateFollowerCounts();
+    });
+  }
+
+  void _updateFollowerCounts() {
+    final currentUserId = DummyData.currentUser.id;
+    DummyData.currentUser.followers = DummyData.getFollowerCount(currentUserId);
+    DummyData.currentUser.following = DummyData.getFollowingCount(
+      currentUserId,
+    );
   }
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    // Update counts on init
+    _updateFollowerCounts();
   }
 
   @override
@@ -47,25 +60,41 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
 
   @override
   void didPopNext() {
-    _refreshData();
+    setState(() {
+      _updateFollowerCounts();
+    });
   }
 
   void _openFollowers() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => FollowersScreen(userId: DummyData.currentUser.id),
+        builder: (context) => FollowersScreen(
+          userId: DummyData.currentUser.id,
+          initialTabIndex: 1, // Open Followers tab
+        ),
       ),
-    ).then((_) => setState(() {}));
+    ).then((_) {
+      setState(() {
+        _updateFollowerCounts();
+      });
+    });
   }
 
   void _openFollowing() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => FollowersScreen(userId: DummyData.currentUser.id),
+        builder: (context) => FollowersScreen(
+          userId: DummyData.currentUser.id,
+          initialTabIndex: 2, // Open Following tab
+        ),
       ),
-    ).then((_) => setState(() {}));
+    ).then((_) {
+      setState(() {
+        _updateFollowerCounts();
+      });
+    });
   }
 
   @override

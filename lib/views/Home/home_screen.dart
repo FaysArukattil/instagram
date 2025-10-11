@@ -43,7 +43,15 @@ class _HomeScreenState extends State<HomeScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => CommentsScreen(post: post),
-    ).then((_) => setState(() {}));
+    ).then((_) {
+      // Update the comment count from DummyData
+      setState(() {
+        final index = posts.indexWhere((p) => p.id == post.id);
+        if (index != -1) {
+          posts[index].comments = DummyData.getCommentsForPost(post.id).length;
+        }
+      });
+    });
   }
 
   void _openShare(PostModel post) {
