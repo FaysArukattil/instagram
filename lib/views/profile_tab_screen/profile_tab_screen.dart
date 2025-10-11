@@ -38,6 +38,12 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     routeObserver.subscribe(this, ModalRoute.of(context)!);
+    // Reload data every time dependencies change (when tab is switched to)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadData();
+      }
+    });
   }
 
   @override
@@ -51,6 +57,17 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
     setState(() {
       _loadData();
     });
+  }
+
+  @override
+  void didPush() {
+    // Called when this route is pushed onto the navigator
+    _loadData();
+  }
+
+  @override
+  void didPushNext() {
+    // Called when a new route is pushed on top of this route
   }
 
   void _loadData() {
