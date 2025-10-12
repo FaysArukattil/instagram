@@ -9,8 +9,14 @@ import 'package:instagram/views/profile_screen/profile_screen.dart';
 class ReelsScreen extends StatefulWidget {
   final int initialIndex;
   final VoidCallback? onRefresh;
+  final bool isVisible; // Add this parameter
 
-  const ReelsScreen({super.key, this.initialIndex = 0, this.onRefresh});
+  const ReelsScreen({
+    super.key,
+    this.initialIndex = 0,
+    this.onRefresh,
+    this.isVisible = true, // Default to visible
+  });
 
   @override
   State<ReelsScreen> createState() => _ReelsScreenState();
@@ -19,7 +25,7 @@ class ReelsScreen extends StatefulWidget {
 class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
   late PageController _pageController;
   int _currentIndex = 0;
-  List<ReelModel> reels = []; // Initialize as empty list
+  List<ReelModel> reels = [];
   String _screenId = '';
 
   @override
@@ -34,7 +40,6 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Pause video when app goes to background
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
       // Videos will auto-pause through their lifecycle management
@@ -46,7 +51,6 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
   void _loadReels({bool shuffle = false}) {
     if (!mounted) return;
 
-    // Get current reel ID if exists
     String? currentReelId;
     if (reels.isNotEmpty &&
         _currentIndex >= 0 &&
@@ -59,7 +63,6 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
       if (shuffle) {
         reels.shuffle();
 
-        // Keep shuffling until first reel is different
         int attempts = 0;
         while (attempts < 20 &&
             reels.isNotEmpty &&
@@ -112,15 +115,14 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
         scrollDirection: Axis.vertical,
         itemCount: reels.length,
         onPageChanged: _onPageChanged,
-        physics:
-            const ClampingScrollPhysics(), // Enable smooth vertical swiping
+        physics: const ClampingScrollPhysics(),
         itemBuilder: (context, index) {
           return ReelItem(
-            key: ValueKey(
-              '${reels[index].id}_$_screenId',
-            ), // Unique key with screen ID
+            key: ValueKey('${reels[index].id}_$_screenId'),
             reel: reels[index],
-            isActive: index == _currentIndex,
+            isActive:
+                index == _currentIndex &&
+                widget.isVisible, // Check both conditions
             onReelUpdated: () => setState(() {}),
           );
         },
@@ -163,7 +165,6 @@ class _ReelItemState extends State<ReelItem>
     WidgetsBinding.instance.addObserver(this);
     _initializeVideo();
 
-    // Like animation setup
     _likeAnimationController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
@@ -180,7 +181,6 @@ class _ReelItemState extends State<ReelItem>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Subscribe to route changes
     final route = ModalRoute.of(context);
     if (route is PageRoute) {
       // Will pause when navigating away
@@ -189,14 +189,12 @@ class _ReelItemState extends State<ReelItem>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Pause video when app goes to background or inactive
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
       if (_isInitialized && _controller.value.isPlaying) {
         _controller.pause();
       }
     } else if (state == AppLifecycleState.resumed) {
-      // Resume only if this reel is active and not paused by user
       if (_isInitialized && widget.isActive && !_isPausedByUser) {
         _controller.play();
       }
@@ -227,7 +225,6 @@ class _ReelItemState extends State<ReelItem>
   void didUpdateWidget(ReelItem oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // If the reel changed (different video), reinitialize
     if (widget.reel.id != oldWidget.reel.id ||
         widget.reel.videoUrl != oldWidget.reel.videoUrl) {
       _controller.pause();
@@ -237,7 +234,7 @@ class _ReelItemState extends State<ReelItem>
       return;
     }
 
-    // Otherwise just handle play/pause
+    // Handle play/pause based on isActive
     if (widget.isActive && !oldWidget.isActive) {
       if (!_isPausedByUser) {
         _controller.play();
@@ -262,7 +259,6 @@ class _ReelItemState extends State<ReelItem>
       _showVolumeIndicator = true;
     });
 
-    // Hide indicator after 800ms
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) {
         setState(() {
@@ -273,7 +269,6 @@ class _ReelItemState extends State<ReelItem>
   }
 
   void _handleDoubleTap() {
-    // Always show the animation
     setState(() {
       _showLikeAnimation = true;
     });
@@ -288,7 +283,6 @@ class _ReelItemState extends State<ReelItem>
       });
     });
 
-    // Only actually like if not already liked
     if (!widget.reel.isLiked) {
       setState(() {
         widget.reel.isLiked = true;
@@ -307,7 +301,6 @@ class _ReelItemState extends State<ReelItem>
   }
 
   void _openComments() {
-    // Pause video when opening comments
     if (_controller.value.isPlaying) {
       _controller.pause();
       _isPausedByUser = true;
@@ -319,7 +312,6 @@ class _ReelItemState extends State<ReelItem>
       backgroundColor: Colors.transparent,
       builder: (context) => ReelCommentsScreen(reel: widget.reel),
     ).then((_) {
-      // Resume video when comments are closed
       _isPausedByUser = false;
       if (widget.isActive && mounted) {
         _controller.play();
@@ -331,7 +323,6 @@ class _ReelItemState extends State<ReelItem>
   void _handleRepost() {
     setState(() {
       if (widget.reel.isReposted) {
-        // Undo repost
         widget.reel.isReposted = false;
         widget.reel.shares--;
         DummyData.removeRepost(widget.reel.id, DummyData.currentUser.id);
@@ -343,7 +334,6 @@ class _ReelItemState extends State<ReelItem>
           ),
         );
       } else {
-        // Add repost
         widget.reel.isReposted = true;
         widget.reel.shares++;
         DummyData.addRepost(widget.reel.id, DummyData.currentUser.id);
@@ -360,7 +350,6 @@ class _ReelItemState extends State<ReelItem>
   }
 
   void _showShareSheet() {
-    // Pause video when opening share sheet
     if (_controller.value.isPlaying) {
       _controller.pause();
       _isPausedByUser = true;
@@ -372,7 +361,6 @@ class _ReelItemState extends State<ReelItem>
       backgroundColor: Colors.transparent,
       builder: (context) => ReelShareBottomSheet(reel: widget.reel),
     ).then((_) {
-      // Resume video when share sheet is closed
       _isPausedByUser = false;
       if (widget.isActive && mounted) {
         _controller.play();
@@ -381,7 +369,6 @@ class _ReelItemState extends State<ReelItem>
   }
 
   void _showMoreOptions() {
-    // Pause video when opening more options
     if (_controller.value.isPlaying) {
       _controller.pause();
       _isPausedByUser = true;
@@ -393,7 +380,6 @@ class _ReelItemState extends State<ReelItem>
       isScrollControlled: true,
       builder: (context) => _buildMoreOptionsSheet(),
     ).then((_) {
-      // Resume video when options are closed
       _isPausedByUser = false;
       if (widget.isActive && mounted) {
         _controller.play();
@@ -486,7 +472,6 @@ class _ReelItemState extends State<ReelItem>
   void _openProfile() {
     final user = DummyData.getUserById(widget.reel.userId);
     if (user != null) {
-      // Pause video when navigating to profile
       if (_controller.value.isPlaying) {
         _controller.pause();
         _isPausedByUser = true;
@@ -496,7 +481,6 @@ class _ReelItemState extends State<ReelItem>
         context,
         MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
       ).then((_) {
-        // Resume video when returning from profile
         _isPausedByUser = false;
         if (widget.isActive && mounted) {
           _controller.play();
@@ -540,7 +524,6 @@ class _ReelItemState extends State<ReelItem>
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Video Player - Full screen
           SizedBox.expand(
             child: FittedBox(
               fit: BoxFit.cover,
@@ -551,8 +534,6 @@ class _ReelItemState extends State<ReelItem>
               ),
             ),
           ),
-
-          // Gradient overlays
           Positioned(
             top: 0,
             left: 0,
@@ -571,7 +552,6 @@ class _ReelItemState extends State<ReelItem>
               ),
             ),
           ),
-
           Positioned(
             bottom: 0,
             left: 0,
@@ -590,8 +570,6 @@ class _ReelItemState extends State<ReelItem>
               ),
             ),
           ),
-
-          // Volume indicator - centered and bigger
           if (_showVolumeIndicator)
             Center(
               child: Container(
@@ -607,8 +585,6 @@ class _ReelItemState extends State<ReelItem>
                 ),
               ),
             ),
-
-          // Like animation - centered heart
           if (_showLikeAnimation)
             Center(
               child: AnimatedBuilder(
@@ -625,8 +601,6 @@ class _ReelItemState extends State<ReelItem>
                 },
               ),
             ),
-
-          // Long press pause indicator
           if (_isLongPressing)
             Center(
               child: Container(
@@ -638,8 +612,6 @@ class _ReelItemState extends State<ReelItem>
                 child: const Icon(Icons.pause, color: Colors.white, size: 40),
               ),
             ),
-
-          // Bottom info section
           Positioned(
             bottom: 20,
             left: 12,
@@ -648,7 +620,6 @@ class _ReelItemState extends State<ReelItem>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // User info
                 GestureDetector(
                   onTap: _openProfile,
                   child: Row(
@@ -694,7 +665,6 @@ class _ReelItemState extends State<ReelItem>
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Caption
                 Text(
                   widget.reel.caption,
                   style: const TextStyle(color: Colors.white, fontSize: 14),
@@ -728,14 +698,11 @@ class _ReelItemState extends State<ReelItem>
               ],
             ),
           ),
-
-          // Right side actions
           Positioned(
             bottom: 20,
             right: 12,
             child: Column(
               children: [
-                // Like button
                 GestureDetector(
                   onTap: _toggleLike,
                   child: Column(
@@ -760,8 +727,6 @@ class _ReelItemState extends State<ReelItem>
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // Comment button
                 GestureDetector(
                   onTap: _openComments,
                   child: Column(
@@ -784,8 +749,6 @@ class _ReelItemState extends State<ReelItem>
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // Repost button (with undo functionality)
                 GestureDetector(
                   onTap: _handleRepost,
                   child: Column(
@@ -810,8 +773,6 @@ class _ReelItemState extends State<ReelItem>
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // Share button
                 GestureDetector(
                   onTap: _showShareSheet,
                   child: const Column(
@@ -819,8 +780,6 @@ class _ReelItemState extends State<ReelItem>
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // More options (three dots)
                 GestureDetector(
                   onTap: _showMoreOptions,
                   child: const Icon(

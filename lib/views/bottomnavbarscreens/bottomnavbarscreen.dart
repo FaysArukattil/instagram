@@ -25,7 +25,10 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
       HomeScreen(key: ValueKey('home_$_homeRefreshKey')),
       const SearchScreen(),
       const SizedBox(), // Placeholder for Add Post
-      ReelsScreen(key: ValueKey('reels_$_reelsRefreshKey')),
+      ReelsScreen(
+        key: ValueKey('reels_$_reelsRefreshKey'),
+        isVisible: _currentIndex == 3, // Pass visibility status
+      ),
       ProfileTabScreen(key: ValueKey('profile_$_profileRefreshKey')),
     ];
   }
