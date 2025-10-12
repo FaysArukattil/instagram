@@ -16,15 +16,17 @@ class BottomNavBarScreen extends StatefulWidget {
 
 class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   int _currentIndex = 0;
-  int _homeRefreshKey = 0; // Add a refresh counter for home screen
+  int _homeRefreshKey = 0;
+  int _reelsRefreshKey = 0;
+  int _profileRefreshKey = 0;
 
   List<Widget> _getScreens() {
     return [
-      HomeScreen(key: ValueKey('home_$_homeRefreshKey')), // Dynamic key
+      HomeScreen(key: ValueKey('home_$_homeRefreshKey')),
       const SearchScreen(),
       const SizedBox(), // Placeholder for Add Post
-      const ReelsScreen(),
-      const ProfileTabScreen(),
+      ReelsScreen(key: ValueKey('reels_$_reelsRefreshKey')),
+      ProfileTabScreen(key: ValueKey('profile_$_profileRefreshKey')),
     ];
   }
 
@@ -40,14 +42,33 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
       ).then((_) {
         // Refresh home screen after returning from add post
         setState(() {
-          _homeRefreshKey++; // Increment to force HomeScreen rebuild
+          _homeRefreshKey++;
         });
       });
     } else {
       setState(() {
-        // If switching to home tab, increment key to force refresh
-        if (index == 0 && _currentIndex != 0) {
-          _homeRefreshKey++;
+        // If tapping the same tab, refresh it
+        if (_currentIndex == index) {
+          if (index == 0) {
+            // Refresh home
+            _homeRefreshKey++;
+          } else if (index == 3) {
+            // Refresh reels
+            _reelsRefreshKey++;
+          } else if (index == 4) {
+            // Refresh profile
+            _profileRefreshKey++;
+          }
+        } else {
+          // Switching to different tab
+          if (index == 0) {
+            _homeRefreshKey++;
+          } else if (index == 3) {
+            _reelsRefreshKey++;
+          } else if (index == 4) {
+            // Always refresh profile when switching to it
+            _profileRefreshKey++;
+          }
         }
         _currentIndex = index;
       });

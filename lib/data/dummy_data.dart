@@ -5,6 +5,38 @@ import '../models/comment_model.dart';
 import '../models/reel_model.dart';
 
 class DummyData {
+  // ADD THESE METHODS TO YOUR DummyData CLASS
+  // REPLACE the existing addRepost method with all of this code
+
+  // Track which users have reposted which reels
+  static Map<String, List<String>> userReposts = {};
+
+  // Get all reposted reels for a specific user
+  static List<ReelModel> getRepostsForUser(String userId) {
+    final repostedReelIds = userReposts[userId] ?? [];
+    return reels.where((reel) => repostedReelIds.contains(reel.id)).toList();
+  }
+
+  // Add a repost - UPDATED VERSION (REPLACE THE OLD ONE)
+
+  // Remove a repost
+  static void removeRepost(String reelId, String currentUserId) {
+    final reelIndex = reels.indexWhere((r) => r.id == reelId);
+    if (reelIndex != -1) {
+      reels[reelIndex].isReposted = false;
+
+      // Remove from user's reposts list
+      if (userReposts.containsKey(currentUserId)) {
+        userReposts[currentUserId]!.remove(reelId);
+      }
+    }
+  }
+
+  // Check if a user has reposted a specific reel
+  static bool hasUserReposted(String reelId, String userId) {
+    return userReposts[userId]?.contains(reelId) ?? false;
+  }
+
   static final List<ReelModel> reels = [
     ReelModel(
       id: 'reel_1',
@@ -151,10 +183,15 @@ class DummyData {
     final reelIndex = reels.indexWhere((r) => r.id == reelId);
     if (reelIndex != -1) {
       reels[reelIndex].isReposted = true;
-      reels[reelIndex].shares++;
 
-      // Create a reposted reel entry for current user
-      // You can implement this based on your requirements
+      // Add to user's reposts list
+      if (userReposts.containsKey(currentUserId)) {
+        if (!userReposts[currentUserId]!.contains(reelId)) {
+          userReposts[currentUserId]!.add(reelId);
+        }
+      } else {
+        userReposts[currentUserId] = [reelId];
+      }
     }
   }
 

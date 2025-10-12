@@ -86,7 +86,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         posts.shuffle();
       }
     });
-    print('HomeScreen: Loaded ${posts.length} posts (shuffled: $shuffle)');
   }
 
   void _handleLike(String postId) {

@@ -194,10 +194,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     final imageToShow = _profileImagePath ?? widget.user.profileImage;
 
-    return WillPopScope(
-      onWillPop: () async {
-        _saveProfile();
-        return false; // We handle the navigation in _saveProfile
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _saveProfile();
+        }
       },
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -496,7 +498,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 _showThreadsBanner = value;
               });
             },
-            activeColor: Colors.blue,
+            activeThumbColor: Colors.blue,
           ),
         ],
       ),

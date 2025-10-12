@@ -8,6 +8,7 @@ import 'package:instagram/views/edit_profile_screen/edit_profil_screen.dart';
 import 'package:instagram/views/follower_screen/follower_screen.dart';
 import 'package:instagram/views/post_screen/post_screen.dart';
 import 'package:instagram/views/reels_screen/reels_screen.dart';
+import 'package:instagram/views/story_viewer_screen/story_viewer_screen.dart';
 import 'package:instagram/widgets/universal_image.dart';
 import 'package:instagram/widgets/primary_button.dart';
 
@@ -27,6 +28,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
   int selectedTabIndex = 0;
   List<PostModel> userPosts = [];
   List<ReelModel> userReels = [];
+  List<ReelModel> userReposts = [];
 
   @override
   void initState() {
@@ -83,6 +85,9 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
       userReels = DummyData.reels
           .where((reel) => reel.userId == currentUser.id)
           .toList();
+
+      // Load user's reposts
+      userReposts = DummyData.getRepostsForUser(currentUser.id);
 
       // Update counts
       _updateFollowerCounts();
@@ -141,6 +146,29 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
         fullscreenDialog: true,
       ),
     ).then((_) => _loadData());
+  }
+
+  void _handleProfilePictureTap() {
+    // Check if current user has a story
+    final userStoryIndex = DummyData.stories.indexWhere(
+      (story) => story.userId == currentUser.id,
+    );
+
+    if (userStoryIndex != -1) {
+      // User has a story, navigate to story viewer
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => StoryViewerScreen(
+            stories: DummyData.stories,
+            initialIndex: userStoryIndex,
+          ),
+        ),
+      ).then((_) => _loadData());
+    } else {
+      // No story, navigate to add post/story
+      _navigateToAddPost();
+    }
   }
 
   void _showOptionsMenu() {
@@ -305,86 +333,90 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                           // Profile Picture and Stats
                           Row(
                             children: [
-                              Stack(
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: currentUser.hasStory
-                                          ? const LinearGradient(
-                                              colors: [
-                                                Color(0xFFFBAA47),
-                                                Color(0xFFD91A46),
-                                                Color(0xFFA60F93),
-                                              ],
-                                              begin: Alignment.topRight,
-                                              end: Alignment.bottomLeft,
-                                            )
-                                          : null,
-                                    ),
-                                    padding: const EdgeInsets.all(3),
-                                    child: Container(
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
+                              GestureDetector(
+                                onTap: _handleProfilePictureTap,
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
                                         shape: BoxShape.circle,
+                                        gradient: currentUser.hasStory
+                                            ? const LinearGradient(
+                                                colors: [
+                                                  Color(0xFFFBAA47),
+                                                  Color(0xFFD91A46),
+                                                  Color(0xFFA60F93),
+                                                ],
+                                                begin: Alignment.topRight,
+                                                end: Alignment.bottomLeft,
+                                              )
+                                            : null,
                                       ),
                                       padding: const EdgeInsets.all(3),
-                                      child: ClipOval(
-                                        child: SizedBox(
-                                          width: 84,
-                                          height: 84,
-                                          child: UniversalImage(
-                                            imagePath: currentUser.profileImage,
-                                            fit: BoxFit.cover,
-                                            placeholder: Container(
-                                              color: Colors.grey[300],
-                                              child: const Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                    ),
-                                              ),
-                                            ),
-                                            errorWidget: Container(
-                                              color: Colors.grey[200],
-                                              child: const Icon(
-                                                Icons.person,
-                                                size: 42,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: 0,
-                                    bottom: 0,
-                                    child: GestureDetector(
-                                      onTap: _navigateToAddPost,
                                       child: Container(
-                                        padding: const EdgeInsets.all(2),
                                         decoration: const BoxDecoration(
                                           color: Colors.white,
                                           shape: BoxShape.circle,
                                         ),
-                                        child: Container(
-                                          width: 26,
-                                          height: 26,
-                                          decoration: const BoxDecoration(
-                                            color: Colors.blue,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.add,
-                                            color: Colors.white,
-                                            size: 18,
+                                        padding: const EdgeInsets.all(3),
+                                        child: ClipOval(
+                                          child: SizedBox(
+                                            width: 84,
+                                            height: 84,
+                                            child: UniversalImage(
+                                              imagePath:
+                                                  currentUser.profileImage,
+                                              fit: BoxFit.cover,
+                                              placeholder: Container(
+                                                color: Colors.grey[300],
+                                                child: const Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                ),
+                                              ),
+                                              errorWidget: Container(
+                                                color: Colors.grey[200],
+                                                child: const Icon(
+                                                  Icons.person,
+                                                  size: 42,
+                                                ),
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    Positioned(
+                                      right: 0,
+                                      bottom: 0,
+                                      child: GestureDetector(
+                                        onTap: _navigateToAddPost,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(2),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Container(
+                                            width: 26,
+                                            height: 26,
+                                            decoration: const BoxDecoration(
+                                              color: Colors.blue,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.add,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                               Expanded(
                                 child: Row(
@@ -525,8 +557,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                     // Content Area
                     if (selectedTabIndex == 0) _buildPostsGrid(),
                     if (selectedTabIndex == 1) _buildReelsGrid(),
-                    if (selectedTabIndex == 2)
-                      _buildEmptyState('No Reposts Yet'),
+                    if (selectedTabIndex == 2) _buildRepostsGrid(),
                     if (selectedTabIndex == 3)
                       _buildEmptyState('No Tagged Posts'),
                   ],
@@ -604,39 +635,41 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
     if (userPosts.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 60),
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.black, width: 2),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 60),
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black, width: 2),
+                ),
+                child: const Icon(Icons.camera_alt_outlined, size: 40),
               ),
-              child: const Icon(Icons.camera_alt_outlined, size: 40),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Create your first post',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Give this space some love.',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            PrimaryButton(
-              text: 'Create',
-              onPressed: _navigateToAddPost,
-              width: 120,
-            ),
-            const SizedBox(height: 60),
-          ],
+              const SizedBox(height: 20),
+              const Text(
+                'Create your first post',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Give this space some love.',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              PrimaryButton(
+                text: 'Create',
+                onPressed: _navigateToAddPost,
+                width: 120,
+              ),
+              const SizedBox(height: 60),
+            ],
+          ),
         ),
       );
     }
@@ -682,7 +715,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
+                      color: Colors.black.withValues(alpha: .6),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Icon(
@@ -742,6 +775,125 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                 errorWidget: Container(
                   color: Colors.grey[200],
                   child: const Icon(Icons.videocam, size: 40),
+                ),
+              ),
+              Positioned(
+                bottom: 8,
+                left: 8,
+                child: Row(
+                  children: [
+                    const Icon(Icons.play_arrow, color: Colors.white, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      _formatCount(reel.likes),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRepostsGrid() {
+    if (userReposts.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(40),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 60),
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black, width: 2),
+                ),
+                child: const Icon(Icons.repeat, size: 40),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Repost videos you love',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Share reels to your profile so you can easily find them later.',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 60),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 9 / 16,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
+      ),
+      itemCount: userReposts.length,
+      itemBuilder: (context, index) {
+        final reel = userReposts[index];
+        final fullReelIndex = DummyData.reels.indexWhere(
+          (r) => r.id == reel.id,
+        );
+
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ReelsScreen(
+                  initialIndex: fullReelIndex >= 0 ? fullReelIndex : 0,
+                ),
+              ),
+            ).then((_) => _loadData());
+          },
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              UniversalImage(
+                imagePath: reel.thumbnailUrl,
+                fit: BoxFit.cover,
+                placeholder: Container(color: Colors.grey[300]),
+                errorWidget: Container(
+                  color: Colors.grey[200],
+                  child: const Icon(Icons.videocam, size: 40),
+                ),
+              ),
+              // Repost indicator overlay
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Icon(
+                    Icons.repeat,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                 ),
               ),
               Positioned(
