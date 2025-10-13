@@ -43,9 +43,10 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
           fullscreenDialog: true,
         ),
       ).then((_) {
-        // Refresh home screen after returning from add post
+        // ✅ FIX: Refresh both home and profile screens after returning from add post
         setState(() {
           _homeRefreshKey++;
+          _profileRefreshKey++;
         });
       });
     } else {

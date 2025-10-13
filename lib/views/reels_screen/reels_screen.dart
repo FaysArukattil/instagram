@@ -10,12 +10,14 @@ class ReelsScreen extends StatefulWidget {
   final int initialIndex;
   final VoidCallback? onRefresh;
   final bool isVisible; // Add this parameter
+  final bool disableShuffle; // ✅ NEW: Add this parameter
 
   const ReelsScreen({
     super.key,
     this.initialIndex = 0,
     this.onRefresh,
     this.isVisible = true, // Default to visible
+    this.disableShuffle = false, // ✅ NEW: Default is false
   });
 
   @override
@@ -48,6 +50,8 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
     }
   }
 
+  // In _ReelsScreenState, update the _loadReels method to sync repost status:
+
   void _loadReels({bool shuffle = false}) {
     if (!mounted) return;
 
@@ -60,7 +64,16 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
 
     setState(() {
       reels = List.from(DummyData.reels);
-      if (shuffle) {
+
+      // ✅ NEW: Sync repost status for current user
+      for (var reel in reels) {
+        reel.isReposted = DummyData.hasUserReposted(
+          reel.id,
+          DummyData.currentUser.id,
+        );
+      }
+
+      if (shuffle && !widget.disableShuffle) {
         reels.shuffle();
 
         int attempts = 0;
@@ -78,10 +91,12 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
   @override
   void didUpdateWidget(ReelsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // When widget key changes (tab tapped), shuffle and reset
+    // When widget key changes (tab tapped), shuffle only if not disabled
     if (widget.key != oldWidget.key) {
       _screenId = DateTime.now().millisecondsSinceEpoch.toString();
-      _loadReels(shuffle: true);
+
+      // ✅ FIX: Don't shuffle if coming from profile
+      _loadReels(shuffle: !widget.disableShuffle);
       _currentIndex = 0;
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -323,9 +338,13 @@ class _ReelItemState extends State<ReelItem>
   void _handleRepost() {
     setState(() {
       if (widget.reel.isReposted) {
+        // Remove repost
         widget.reel.isReposted = false;
-        widget.reel.shares--;
+        widget.reel.shares = widget.reel.shares > 0
+            ? widget.reel.shares - 1
+            : 0;
         DummyData.removeRepost(widget.reel.id, DummyData.currentUser.id);
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Removed from your profile'),
@@ -334,9 +353,11 @@ class _ReelItemState extends State<ReelItem>
           ),
         );
       } else {
+        // Add repost
         widget.reel.isReposted = true;
         widget.reel.shares++;
         DummyData.addRepost(widget.reel.id, DummyData.currentUser.id);
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Reposted to your profile'),
@@ -756,15 +777,19 @@ class _ReelItemState extends State<ReelItem>
                       Icon(
                         Icons.repeat,
                         color: widget.reel.isReposted
-                            ? Colors.green
+                            ? Colors
+                                  .green // ✅ Green when reposted
                             : Colors.white,
                         size: 30,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         _formatCount(widget.reel.shares),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: widget.reel.isReposted
+                              ? Colors
+                                    .green // ✅ Green text when reposted
+                              : Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),

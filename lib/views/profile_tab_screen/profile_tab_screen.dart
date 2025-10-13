@@ -82,12 +82,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
           .toList();
 
       // Load user's reels
-      userReels = DummyData.reels
-          .where((reel) => reel.userId == currentUser.id)
-          .toList();
-
-      // Load user's reposts
-      userReposts = DummyData.getRepostsForUser(currentUser.id);
+      userReels = DummyData.getReelsForUser(currentUser.id);
 
       // Update counts
       _updateFollowerCounts();
@@ -750,21 +745,29 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
       itemCount: userReels.length,
       itemBuilder: (context, index) {
         final reel = userReels[index];
-        final fullReelIndex = DummyData.reels.indexWhere(
-          (r) => r.id == reel.id,
-        );
+
+        // ✅ FIX: Find the index in the FULL reels list, not the filtered list
+        DummyData.reels.indexWhere((r) => r.id == reel.id);
 
         return GestureDetector(
           onTap: () {
+            final fullReelIndex = DummyData.reels.indexWhere(
+              (r) => r.id == reel.id,
+            );
+
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => ReelsScreen(
                   initialIndex: fullReelIndex >= 0 ? fullReelIndex : 0,
+                  isVisible: true,
+                  disableShuffle:
+                      true, // ✅ NEW: Disable shuffle when from profile
                 ),
               ),
             ).then((_) => _loadData());
           },
+
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -852,17 +855,22 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
       itemCount: userReposts.length,
       itemBuilder: (context, index) {
         final reel = userReposts[index];
-        final fullReelIndex = DummyData.reels.indexWhere(
-          (r) => r.id == reel.id,
-        );
+        DummyData.reels.indexWhere((r) => r.id == reel.id);
 
         return GestureDetector(
           onTap: () {
+            final fullReelIndex = DummyData.reels.indexWhere(
+              (r) => r.id == reel.id,
+            );
+
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => ReelsScreen(
                   initialIndex: fullReelIndex >= 0 ? fullReelIndex : 0,
+                  isVisible: true,
+                  disableShuffle:
+                      true, // ✅ NEW: Disable shuffle when from profile
                 ),
               ),
             ).then((_) => _loadData());

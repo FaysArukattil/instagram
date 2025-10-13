@@ -21,8 +21,10 @@ class DummyData {
 
   // Remove a repost
   static void removeRepost(String reelId, String currentUserId) {
+    // Find the reel in the main reels list
     final reelIndex = reels.indexWhere((r) => r.id == reelId);
     if (reelIndex != -1) {
+      // Unmark as reposted in the main list
       reels[reelIndex].isReposted = false;
 
       // Remove from user's reposts list
@@ -32,7 +34,6 @@ class DummyData {
     }
   }
 
-  // Check if a user has reposted a specific reel
   static bool hasUserReposted(String reelId, String userId) {
     return userReposts[userId]?.contains(reelId) ?? false;
   }
@@ -180,8 +181,10 @@ class DummyData {
   }
 
   static void addRepost(String reelId, String currentUserId) {
+    // Find the reel in the main reels list
     final reelIndex = reels.indexWhere((r) => r.id == reelId);
     if (reelIndex != -1) {
+      // Mark as reposted in the main list
       reels[reelIndex].isReposted = true;
 
       // Add to user's reposts list
