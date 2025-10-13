@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/utils/slide_page_route.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/views/commentscreen/commentscreen.dart';
@@ -207,6 +208,20 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _loadData(shuffle: true); // Shuffle only on manual refresh
   }
 
+  // Handle swipe gesture to open messenger
+  void _handleSwipe(DragEndDetails details) {
+    // Swipe left (negative velocity) → open Messenger
+    if (details.primaryVelocity! < 0) {
+      Navigator.push(
+        context,
+        SlidePageRoute(
+          page: const MessengerScreen(),
+          direction: SlideDirection.rightToLeft,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUserHasStory = DummyData.stories.any(
@@ -280,78 +295,83 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _refreshPosts,
-        displacement: 60,
-        edgeOffset: 10,
-        color: Colors.grey[700],
-        backgroundColor: Colors.white,
-        strokeWidth: 2.2,
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
-          slivers: [
-            // Stories Section
-            SliverToBoxAdapter(
-              child: Container(
-                height: 110,
-                margin: const EdgeInsets.only(bottom: 2),
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 8,
-                  ),
-                  itemCount:
-                      1 + DummyData.users.where((u) => u.hasStory).length,
-                  itemBuilder: (context, storyIndex) {
-                    if (storyIndex == 0) {
+      body: GestureDetector(
+        onHorizontalDragEnd: _handleSwipe,
+        child: RefreshIndicator(
+          onRefresh: _refreshPosts,
+          displacement: 60,
+          edgeOffset: 10,
+          color: Colors.grey[700],
+          backgroundColor: Colors.white,
+          strokeWidth: 2.2,
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            slivers: [
+              // Stories Section
+              SliverToBoxAdapter(
+                child: Container(
+                  height: 110,
+                  margin: const EdgeInsets.only(bottom: 2),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 8,
+                    ),
+                    itemCount:
+                        1 + DummyData.users.where((u) => u.hasStory).length,
+                    itemBuilder: (context, storyIndex) {
+                      if (storyIndex == 0) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: StoryAvatar(
+                            user: DummyData.currentUser,
+                            hasStory: currentUserHasStory,
+                            isCurrentUser: true,
+                            onTap: _openMyStory,
+                            onAddStory: _addToStory,
+                          ),
+                        );
+                      }
+
+                      final storiesUsers = DummyData.users
+                          .where((u) => u.hasStory)
+                          .toList();
+                      final user = storiesUsers[storyIndex - 1];
+
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: StoryAvatar(
-                          user: DummyData.currentUser,
-                          hasStory: currentUserHasStory,
-                          isCurrentUser: true,
-                          onTap: _openMyStory,
-                          onAddStory: _addToStory,
+                          user: user,
+                          hasStory: true,
+                          onTap: () => _openStory(user.id),
                         ),
                       );
-                    }
-
-                    final storiesUsers = DummyData.users
-                        .where((u) => u.hasStory)
-                        .toList();
-                    final user = storiesUsers[storyIndex - 1];
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: StoryAvatar(
-                        user: user,
-                        hasStory: true,
-                        onTap: () => _openStory(user.id),
-                      ),
-                    );
-                  },
+                    },
+                  ),
                 ),
               ),
-            ),
 
-            const SliverToBoxAdapter(child: Divider(height: 1, thickness: 0.5)),
+              const SliverToBoxAdapter(
+                child: Divider(height: 1, thickness: 0.5),
+              ),
 
-            // Posts Section
-            SliverList(
-              delegate: SliverChildBuilderDelegate((context, index) {
-                return PostWidget(
-                  post: posts[index],
-                  onLike: _handleLike,
-                  onProfileTap: _openProfile,
-                  onComment: _openComments,
-                  onShare: _openShare,
-                );
-              }, childCount: posts.length),
-            ),
-          ],
+              // Posts Section
+              SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  return PostWidget(
+                    post: posts[index],
+                    onLike: _handleLike,
+                    onProfileTap: _openProfile,
+                    onComment: _openComments,
+                    onShare: _openShare,
+                  );
+                }, childCount: posts.length),
+              ),
+            ],
+          ),
         ),
       ),
     );

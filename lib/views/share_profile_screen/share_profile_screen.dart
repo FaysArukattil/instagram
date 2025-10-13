@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -93,10 +92,12 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
       final file = await File('${tempDir.path}/qr_code.png').create();
       await file.writeAsBytes(imageBytes);
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text:
-            'Follow me on Instagram: @${widget.username}\nhttps://instagram.com/${widget.username}',
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text:
+              'Follow me on Instagram: @${widget.username}\nhttps://instagram.com/${widget.username}',
+        ),
       );
     } catch (e) {
       if (mounted) {
