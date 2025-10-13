@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/models/user_model.dart';
 import 'package:instagram/views/reels_screen/reelscommentscreen.dart';
 import 'package:instagram/views/reels_screen/reelssharebottomsheet.dart';
 import 'package:video_player/video_player.dart';
@@ -164,6 +165,7 @@ class ReelItem extends StatefulWidget {
 
 class _ReelItemState extends State<ReelItem>
     with TickerProviderStateMixin, WidgetsBindingObserver, RouteAware {
+  UserModel? _cachedUser;
   late VideoPlayerController _controller;
   bool _isInitialized = false;
   bool _showVolumeIndicator = false;
@@ -173,11 +175,15 @@ class _ReelItemState extends State<ReelItem>
 
   late AnimationController _likeAnimationController;
   late Animation<double> _likeAnimation;
+  void _loadUserData() {
+    _cachedUser = DummyData.getUserById(widget.reel.userId);
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _loadUserData();
     _initializeVideo();
 
     _likeAnimationController = AnimationController(
@@ -239,6 +245,7 @@ class _ReelItemState extends State<ReelItem>
   @override
   void didUpdateWidget(ReelItem oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _loadUserData();
 
     if (widget.reel.id != oldWidget.reel.id ||
         widget.reel.videoUrl != oldWidget.reel.videoUrl) {
@@ -526,7 +533,7 @@ class _ReelItemState extends State<ReelItem>
 
   @override
   Widget build(BuildContext context) {
-    final user = DummyData.getUserById(widget.reel.userId);
+    final user = _cachedUser ?? DummyData.getUserById(widget.reel.userId);
 
     if (!_isInitialized) {
       return Container(
@@ -645,9 +652,21 @@ class _ReelItemState extends State<ReelItem>
                   onTap: _openProfile,
                   child: Row(
                     children: [
+                      // ✅ FIX: Use ValueKey to force rebuild when profile image changes
                       CircleAvatar(
+                        key: ValueKey(user?.profileImage ?? ''),
                         radius: 18,
-                        backgroundImage: NetworkImage(user?.profileImage ?? ''),
+                        backgroundImage: user?.profileImage != null
+                            ? NetworkImage(user!.profileImage)
+                            : null,
+                        backgroundColor: Colors.grey[300],
+                        child: user?.profileImage == null
+                            ? const Icon(
+                                Icons.person,
+                                size: 18,
+                                color: Colors.white,
+                              )
+                            : null,
                       ),
                       const SizedBox(width: 8),
                       Flexible(

@@ -180,12 +180,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _saveProfile() {
+    // Update current user
     DummyData.currentUser
       ..name = _nameController.text.trim()
       ..username = _usernameController.text.trim()
       ..bio = _bioController.text.trim()
       ..gender = _gender
       ..profileImage = _profileImagePath ?? DummyData.currentUser.profileImage;
+
+    // ✅ FIX: Also update the user in the users list if exists
+    final userIndex = DummyData.users.indexWhere(
+      (u) => u.id == DummyData.currentUser.id,
+    );
+    if (userIndex != -1) {
+      DummyData.users[userIndex] = DummyData.currentUser;
+    }
 
     Navigator.pop(context, true);
   }

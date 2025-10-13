@@ -47,6 +47,7 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
         setState(() {
           _homeRefreshKey++;
           _profileRefreshKey++;
+          _reelsRefreshKey++;
         });
       });
     } else {
@@ -165,6 +166,7 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
           ),
           child: ClipOval(
             child: UniversalImage(
+              key: ValueKey(DummyData.currentUser.profileImage),
               imagePath: DummyData.currentUser.profileImage,
               fit: BoxFit.cover,
               width: 26,

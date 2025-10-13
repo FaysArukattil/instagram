@@ -56,9 +56,12 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
 
   @override
   void didPopNext() {
-    setState(() {
-      _loadData();
-    });
+    // ✅ Called when returning from another screen
+    if (mounted) {
+      setState(() {
+        _loadData();
+      });
+    }
   }
 
   @override
@@ -73,6 +76,8 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
   }
 
   void _loadData() {
+    if (!mounted) return;
+
     setState(() {
       currentUser = DummyData.currentUser;
 
@@ -81,8 +86,18 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
           .where((post) => post.userId == currentUser.id)
           .toList();
 
-      // Load user's reels
+      // Load user's reels (only their own reels, not reposts)
       userReels = DummyData.getReelsForUser(currentUser.id);
+
+      // ✅ FIX: Load user's reposts
+      userReposts = DummyData.getRepostsForUser(currentUser.id);
+
+      // Debug output
+      debugPrint('=== Profile Data Loaded ===');
+      debugPrint('User Posts: ${userPosts.length}');
+      debugPrint('User Reels: ${userReels.length}');
+      debugPrint('User Reposts: ${userReposts.length}');
+      debugPrint('Repost IDs: ${DummyData.userReposts[currentUser.id]}');
 
       // Update counts
       _updateFollowerCounts();
@@ -608,6 +623,10 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
         onTap: () {
           setState(() {
             selectedTabIndex = index;
+            // ✅ Reload data when switching to reposts tab
+            if (index == 2) {
+              _loadData();
+            }
           });
         },
         child: Container(
