@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:instagram/core/utils/slide_page_route.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/views/commentscreen/commentscreen.dart';
@@ -12,7 +11,7 @@ import 'package:instagram/views/story_viewer_screen/story_viewer_screen.dart';
 import 'package:instagram/widgets/post_widget.dart';
 import 'package:instagram/widgets/story_avatar.dart';
 
-// Import the RouteObserver from profile_tab_screen
+// RouteObserver from profile_tab_screen
 import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,6 +24,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with RouteAware {
   late List<PostModel> posts;
 
+  // Swipe variables
+  double _dragOffset = 0.0;
+  bool _isDragging = false;
+  late double screenWidth;
+
   @override
   void initState() {
     super.initState();
@@ -35,18 +39,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final route = ModalRoute.of(context);
-    if (route != null) {
-      routeObserver.subscribe(this, route);
-    }
-    // Reload data every time dependencies change (when tab is switched to)
+    if (route != null) routeObserver.subscribe(this, route);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _loadData();
-      }
+      if (mounted) _loadData();
     });
   }
 
-  // Add this to detect when the widget becomes visible again
   @override
   void didUpdateWidget(HomeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -60,32 +59,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   @override
-  void didPopNext() {
-    setState(() {
-      _loadData();
-    });
-  }
+  void didPopNext() => _loadData();
 
   @override
-  void didPush() {
-    // Called when this route is pushed onto the navigator
-    _loadData();
-  }
-
-  @override
-  void didPushNext() {
-    // Called when a new route is pushed on top of this route
-  }
+  void didPush() => _loadData();
 
   void _loadData({bool shuffle = false}) {
     if (!mounted) return;
     setState(() {
-      // Create a fresh copy of posts from DummyData
       posts = List.from(DummyData.posts);
-      // Only shuffle if explicitly requested (manual refresh)
-      if (shuffle) {
-        posts.shuffle();
-      }
+      if (shuffle) posts.shuffle();
     });
   }
 
@@ -95,8 +78,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       if (index != -1) {
         posts[index].isLiked = !posts[index].isLiked;
         posts[index].likes += posts[index].isLiked ? 1 : -1;
-
-        // Update in main DummyData
         final mainIndex = DummyData.posts.indexWhere((p) => p.id == postId);
         if (mainIndex != -1) {
           DummyData.posts[mainIndex].isLiked = posts[index].isLiked;
@@ -117,8 +98,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         final index = posts.indexWhere((p) => p.id == post.id);
         if (index != -1) {
           posts[index].comments = DummyData.getCommentsForPost(post.id).length;
-
-          // Update in main DummyData
           final mainIndex = DummyData.posts.indexWhere((p) => p.id == post.id);
           if (mainIndex != -1) {
             DummyData.posts[mainIndex].comments = posts[index].comments;
@@ -148,9 +127,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             initialIndex: index,
           ),
         ),
-      ).then((_) {
-        _loadData();
-      });
+      ).then((_) => _loadData());
     }
   }
 
@@ -158,7 +135,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final userStoryIndex = DummyData.stories.indexWhere(
       (s) => s.userId == DummyData.currentUser.id,
     );
-
     if (userStoryIndex != -1) {
       Navigator.push(
         context,
@@ -168,16 +144,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             initialIndex: userStoryIndex,
           ),
         ),
-      ).then((_) {
-        _loadData();
-      });
+      ).then((_) => _loadData());
     } else {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const MyStoryScreen()),
-      ).then((_) {
-        _loadData();
-      });
+      ).then((_) => _loadData());
     }
   }
 
@@ -185,9 +157,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const MyStoryScreen()),
-    ).then((_) {
-      _loadData();
-    });
+    ).then((_) => _loadData());
   }
 
   void _openProfile(String userId) {
@@ -197,183 +167,206 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
-      ).then((_) {
-        _loadData();
-      });
+      ).then((_) => _loadData());
     }
   }
 
   Future<void> _refreshPosts() async {
     await Future.delayed(const Duration(milliseconds: 800));
-    _loadData(shuffle: true); // Shuffle only on manual refresh
-  }
-
-  // Handle swipe gesture to open messenger
-  void _handleSwipe(DragEndDetails details) {
-    // Swipe left (negative velocity) → open Messenger
-    if (details.primaryVelocity! < 0) {
-      Navigator.push(
-        context,
-        SlidePageRoute(
-          page: const MessengerScreen(),
-          direction: SlideDirection.rightToLeft,
-        ),
-      );
-    }
+    _loadData(shuffle: true);
   }
 
   @override
   Widget build(BuildContext context) {
+    screenWidth = MediaQuery.of(context).size.width;
     final currentUserHasStory = DummyData.stories.any(
       (s) => s.userId == DummyData.currentUser.id,
     );
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Instagram',
-          style: TextStyle(
-            fontFamily: 'Billabong',
-            fontSize: 32,
-            color: Colors.black,
-          ),
+    return Stack(
+      children: [
+        // Messenger slides in from right
+        Transform.translate(
+          offset: Offset(screenWidth + _dragOffset, 0),
+          child: const MessengerScreen(),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.favorite_border, color: Colors.black),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationsScreen(),
-                ),
-              );
+
+        // HomeScreen slides left with finger
+        Transform.translate(
+          offset: Offset(_dragOffset, 0),
+          child: GestureDetector(
+            onHorizontalDragStart: (_) => _isDragging = true,
+            onHorizontalDragUpdate: (details) {
+              if (!_isDragging) return;
+              setState(() {
+                _dragOffset += details.delta.dx; // negative when swiping left
+                if (_dragOffset < -screenWidth) _dragOffset = -screenWidth;
+                if (_dragOffset > 0) _dragOffset = 0;
+              });
             },
-          ),
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.messenger_outline, color: Colors.black),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MessengerScreen(),
-                    ),
-                  );
-                },
-              ),
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 18,
-                    minHeight: 18,
-                  ),
-                  child: const Text(
-                    '15',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
+            onHorizontalDragEnd: (details) {
+              _isDragging = false;
+              if (_dragOffset < -screenWidth / 3 ||
+                  details.primaryVelocity! < -500) {
+                // Complete swipe
+                setState(() => _dragOffset = -screenWidth);
+              } else {
+                // Cancel swipe
+                setState(() => _dragOffset = 0);
+              }
+            },
+            child: Scaffold(
+              backgroundColor: Colors.white,
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                elevation: 0,
+                automaticallyImplyLeading: false,
+                title: const Text(
+                  'Instagram',
+                  style: TextStyle(
+                    fontFamily: 'Billabong',
+                    fontSize: 32,
+                    color: Colors.black,
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: GestureDetector(
-        onHorizontalDragEnd: _handleSwipe,
-        child: RefreshIndicator(
-          onRefresh: _refreshPosts,
-          displacement: 60,
-          edgeOffset: 10,
-          color: Colors.grey[700],
-          backgroundColor: Colors.white,
-          strokeWidth: 2.2,
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
-              // Stories Section
-              SliverToBoxAdapter(
-                child: Container(
-                  height: 110,
-                  margin: const EdgeInsets.only(bottom: 2),
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
+                actions: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.favorite_border,
+                      color: Colors.black,
                     ),
-                    itemCount:
-                        1 + DummyData.users.where((u) => u.hasStory).length,
-                    itemBuilder: (context, storyIndex) {
-                      if (storyIndex == 0) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: StoryAvatar(
-                            user: DummyData.currentUser,
-                            hasStory: currentUserHasStory,
-                            isCurrentUser: true,
-                            onTap: _openMyStory,
-                            onAddStory: _addToStory,
-                          ),
-                        );
-                      }
-
-                      final storiesUsers = DummyData.users
-                          .where((u) => u.hasStory)
-                          .toList();
-                      final user = storiesUsers[storyIndex - 1];
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: StoryAvatar(
-                          user: user,
-                          hasStory: true,
-                          onTap: () => _openStory(user.id),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationsScreen(),
                         ),
                       );
                     },
                   ),
+                  Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.messenger_outline,
+                          color: Colors.black,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MessengerScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 18,
+                            minHeight: 18,
+                          ),
+                          child: const Text(
+                            '15',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              body: RefreshIndicator(
+                onRefresh: _refreshPosts,
+                displacement: 60,
+                edgeOffset: 10,
+                color: Colors.grey[700],
+                backgroundColor: Colors.white,
+                strokeWidth: 2.2,
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Container(
+                        height: 110,
+                        margin: const EdgeInsets.only(bottom: 2),
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 8,
+                          ),
+                          itemCount:
+                              1 +
+                              DummyData.users.where((u) => u.hasStory).length,
+                          itemBuilder: (context, storyIndex) {
+                            if (storyIndex == 0) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                child: StoryAvatar(
+                                  user: DummyData.currentUser,
+                                  hasStory: currentUserHasStory,
+                                  isCurrentUser: true,
+                                  onTap: _openMyStory,
+                                  onAddStory: _addToStory,
+                                ),
+                              );
+                            }
+                            final storiesUsers = DummyData.users
+                                .where((u) => u.hasStory)
+                                .toList();
+                            final user = storiesUsers[storyIndex - 1];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              child: StoryAvatar(
+                                user: user,
+                                hasStory: true,
+                                onTap: () => _openStory(user.id),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(
+                      child: Divider(height: 1, thickness: 0.5),
+                    ),
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        return PostWidget(
+                          post: posts[index],
+                          onLike: _handleLike,
+                          onProfileTap: _openProfile,
+                          onComment: _openComments,
+                          onShare: _openShare,
+                        );
+                      }, childCount: posts.length),
+                    ),
+                  ],
                 ),
               ),
-
-              const SliverToBoxAdapter(
-                child: Divider(height: 1, thickness: 0.5),
-              ),
-
-              // Posts Section
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  return PostWidget(
-                    post: posts[index],
-                    onLike: _handleLike,
-                    onProfileTap: _openProfile,
-                    onComment: _openComments,
-                    onShare: _openShare,
-                  );
-                }, childCount: posts.length),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

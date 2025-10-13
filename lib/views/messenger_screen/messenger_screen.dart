@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
+import 'package:instagram/views/bottomnavbarscreens/bottomnavbarscreen.dart';
 import 'package:instagram/views/chatscreen/chatscreen.dart';
 
 class MessengerScreen extends StatefulWidget {
@@ -10,10 +11,14 @@ class MessengerScreen extends StatefulWidget {
   State<MessengerScreen> createState() => _MessengerScreenState();
 }
 
-class _MessengerScreenState extends State<MessengerScreen> {
+class _MessengerScreenState extends State<MessengerScreen>
+    with SingleTickerProviderStateMixin {
   String selectedTab = 'Primary';
   final TextEditingController _searchController = TextEditingController();
   String searchQuery = '';
+
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
 
   final Map<String, List<Map<String, dynamic>>> tabMessages = {
     'Primary': [
@@ -90,16 +95,54 @@ class _MessengerScreenState extends State<MessengerScreen> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _slideAnimation =
+        Tween<Offset>(
+          begin: Offset.zero,
+          end: const Offset(1.0, 0.0), // slide right
+        ).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
-  List<UserModel> _getFilteredUsers() {
-    if (searchQuery.isEmpty) {
-      return [];
-    }
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final delta = details.primaryDelta! / screenWidth;
+    _animationController.value = (_animationController.value + delta).clamp(
+      0.0,
+      1.0,
+    );
+  }
 
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    if (_animationController.value > 0.3 ||
+        (details.primaryVelocity ?? 0) > 500) {
+      _animationController.forward().then((_) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const BottomNavBarScreen()),
+        );
+      });
+    } else {
+      _animationController.reverse();
+    }
+  }
+
+  List<UserModel> _getFilteredUsers() {
+    if (searchQuery.isEmpty) return [];
     final query = searchQuery.toLowerCase();
     return DummyData.users.where((user) {
       return user.username.toLowerCase().contains(query) ||
@@ -111,7 +154,6 @@ class _MessengerScreenState extends State<MessengerScreen> {
     if (searchQuery.isEmpty) {
       return tabMessages[selectedTab] ?? [];
     }
-
     final query = searchQuery.toLowerCase();
     final messages = tabMessages[selectedTab] ?? [];
 
@@ -125,18 +167,12 @@ class _MessengerScreenState extends State<MessengerScreen> {
     }).toList();
   }
 
-  // Handle swipe gesture to go back
-  void _handleSwipe(DragEndDetails details) {
-    // Swipe right (positive velocity) - go back
-    if (details.primaryVelocity! > 0) {
-      Navigator.pop(context);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final filteredMessages = _getFilteredMessages();
-    final searchResults = searchQuery.isNotEmpty ? _getFilteredUsers() : [];
+    final List<UserModel> searchResults = searchQuery.isNotEmpty
+        ? List<UserModel>.from(_getFilteredUsers())
+        : <UserModel>[];
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -189,216 +225,218 @@ class _MessengerScreenState extends State<MessengerScreen> {
         ],
       ),
       body: GestureDetector(
-        onHorizontalDragEnd: _handleSwipe,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Search bar
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (value) {
-                            setState(() {
-                              searchQuery = value;
-                            });
-                          },
-                          decoration: InputDecoration(
-                            hintText: 'Search',
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Colors.grey[600],
-                              size: 20,
-                            ),
-                            suffixIcon: searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: Icon(
-                                      Icons.clear,
-                                      color: Colors.grey[600],
-                                      size: 20,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _searchController.clear();
-                                        searchQuery = '';
-                                      });
-                                    },
-                                  )
-                                : null,
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Filter',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Show search results if searching
-              if (searchQuery.isNotEmpty && searchResults.isNotEmpty) ...[
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Text(
-                    'Users',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                ...List.generate(searchResults.length, (index) {
-                  final user = searchResults[index];
-                  return _buildMessageItem(
-                    user: user,
-                    message: user.bio.isEmpty ? 'Tap to message' : user.bio,
-                    time: '',
-                    hasUnread: false,
-                  );
-                }),
-              ],
-
-              // Stories section (only show when not searching)
-              if (searchQuery.isEmpty) ...[
-                SizedBox(
-                  height: 110,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      _buildNoteItem(
-                        image: DummyData.currentUser.profileImage,
-                        label: 'Your note',
-                        noteText: 'Weekend\nplans?',
-                      ),
-                      _buildStoryItem(
-                        image: DummyData.users[1].profileImage,
-                        label: DummyData.users[1].name.split(' ')[0],
-                        noteText: 'Blabla...\npt829!',
-                      ),
-                      _buildStoryItem(
-                        image: DummyData.users[2].profileImage,
-                        label: DummyData.users[2].name.split(' ')[0],
-                        isOnline: true,
-                      ),
-                      _buildStoryItem(
-                        image: DummyData.users[9].profileImage,
-                        label: DummyData.users[9].name.split(' ')[0],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Tabs
-                SizedBox(
-                  height: 44,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      _buildTab('Primary', 14),
-                      const SizedBox(width: 8),
-                      _buildTab('General', 0),
-                      const SizedBox(width: 8),
-                      _buildTab('Requests', 1),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-
-              // Messages list
-              if (searchQuery.isEmpty || filteredMessages.isNotEmpty) ...[
-                if (searchQuery.isNotEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text(
-                      'Messages',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ...List.generate(filteredMessages.length, (index) {
-                  final messageData = filteredMessages[index];
-                  final user = DummyData.getUserById(messageData['userId']);
-
-                  if (user == null) return const SizedBox.shrink();
-
-                  return _buildMessageItem(
-                    user: user,
-                    message: messageData['message'],
-                    time: messageData['time'],
-                    hasUnread: messageData['hasUnread'] ?? false,
-                    isMuted: messageData['isMuted'] ?? false,
-                    showCamera: messageData['showCamera'] ?? false,
-                    showPlay: messageData['showPlay'] ?? false,
-                  );
-                }),
-              ],
-
-              // No results message
-              if (searchQuery.isNotEmpty &&
-                  searchResults.isEmpty &&
-                  filteredMessages.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No results found',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Try searching for people or messages',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
+        onHorizontalDragUpdate: _onHorizontalDragUpdate,
+        onHorizontalDragEnd: _onHorizontalDragEnd,
+        child: Stack(
+          children: [
+            SlideTransition(
+              position: _slideAnimation,
+              child: _buildContent(filteredMessages, searchResults),
+            ),
+          ],
         ),
       ),
     );
   }
 
+  Widget _buildContent(
+    List<Map<String, dynamic>> filteredMessages,
+    List<UserModel> searchResults,
+  ) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Search',
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: Colors.grey[600],
+                          size: 20,
+                        ),
+                        suffixIcon: searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(
+                                  Icons.clear,
+                                  color: Colors.grey[600],
+                                  size: 20,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _searchController.clear();
+                                    searchQuery = '';
+                                  });
+                                },
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Filter',
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Search results
+          if (searchQuery.isNotEmpty && searchResults.isNotEmpty) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                'Users',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+            ...List.generate(searchResults.length, (index) {
+              final user = searchResults[index];
+              return _buildMessageItem(
+                user: user,
+                message: user.bio.isEmpty ? 'Tap to message' : user.bio,
+                time: '',
+                hasUnread: false,
+              );
+            }),
+          ],
+
+          // Stories & tabs
+          if (searchQuery.isEmpty) ...[
+            SizedBox(
+              height: 110,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  _buildNoteItem(
+                    image: DummyData.currentUser.profileImage,
+                    label: 'Your note',
+                    noteText: 'Weekend\nplans?',
+                  ),
+                  _buildStoryItem(
+                    image: DummyData.users[1].profileImage,
+                    label: DummyData.users[1].name.split(' ')[0],
+                    noteText: 'Blabla...\npt829!',
+                  ),
+                  _buildStoryItem(
+                    image: DummyData.users[2].profileImage,
+                    label: DummyData.users[2].name.split(' ')[0],
+                    isOnline: true,
+                  ),
+                  _buildStoryItem(
+                    image: DummyData.users[9].profileImage,
+                    label: DummyData.users[9].name.split(' ')[0],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 44,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  _buildTab('Primary', 14),
+                  const SizedBox(width: 8),
+                  _buildTab('General', 0),
+                  const SizedBox(width: 8),
+                  _buildTab('Requests', 1),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+
+          // Messages
+          if (searchQuery.isEmpty || filteredMessages.isNotEmpty) ...[
+            if (searchQuery.isNotEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  'Messages',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ...List.generate(filteredMessages.length, (index) {
+              final messageData = filteredMessages[index];
+              final user = DummyData.getUserById(messageData['userId']);
+              if (user == null) return const SizedBox.shrink();
+              return _buildMessageItem(
+                user: user,
+                message: messageData['message'],
+                time: messageData['time'],
+                hasUnread: messageData['hasUnread'] ?? false,
+                isMuted: messageData['isMuted'] ?? false,
+                showCamera: messageData['showCamera'] ?? false,
+                showPlay: messageData['showPlay'] ?? false,
+              );
+            }),
+          ],
+
+          // No results
+          if (searchQuery.isNotEmpty &&
+              searchResults.isEmpty &&
+              filteredMessages.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No results found',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Try searching for people or messages',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ----------------- Tabs -----------------
   Widget _buildTab(String label, int count) {
     final isSelected = selectedTab == label;
     return GestureDetector(
@@ -452,6 +490,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
     );
   }
 
+  // ----------------- Note -----------------
   Widget _buildNoteItem({
     required String image,
     required String label,
@@ -512,6 +551,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
     );
   }
 
+  // ----------------- Story -----------------
   Widget _buildStoryItem({
     required String image,
     required String label,
@@ -588,8 +628,9 @@ class _MessengerScreenState extends State<MessengerScreen> {
     );
   }
 
+  // ----------------- Message -----------------
   Widget _buildMessageItem({
-    required user,
+    required UserModel user,
     required String message,
     required String time,
     bool hasUnread = false,
