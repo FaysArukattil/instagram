@@ -14,14 +14,11 @@ class DummyData {
   // ✅ Get all reposted reels for a specific user
   static List<ReelModel> getRepostsForUser(String userId) {
     final repostedReelIds = userReposts[userId] ?? [];
-    print('Getting reposts for user $userId');
-    print('Reposted IDs: $repostedReelIds');
 
     final repostedReels = reels
         .where((reel) => repostedReelIds.contains(reel.id))
         .toList();
 
-    print('Found ${repostedReels.length} reposted reels');
     return repostedReels;
   }
 
@@ -29,8 +26,6 @@ class DummyData {
 
   // Remove a repost
   static void removeRepost(String reelId, String currentUserId) {
-    print('Removing repost: $reelId for user $currentUserId');
-
     // Find the reel in the main reels list
     final reelIndex = reels.indexWhere((r) => r.id == reelId);
     if (reelIndex != -1) {
@@ -40,14 +35,12 @@ class DummyData {
       // Remove from user's reposts list
       if (userReposts.containsKey(currentUserId)) {
         userReposts[currentUserId]!.remove(reelId);
-        print('Removed. Remaining: ${userReposts[currentUserId]!.length}');
       }
     }
   }
 
   static bool hasUserReposted(String reelId, String userId) {
     final hasReposted = userReposts[userId]?.contains(reelId) ?? false;
-    print('User $userId has reposted $reelId: $hasReposted');
     return hasReposted;
   }
 
@@ -211,8 +204,6 @@ class DummyData {
   //   }
   // }
   static void addRepost(String reelId, String currentUserId) {
-    print('Adding repost: $reelId for user $currentUserId');
-
     // Find the reel in the main reels list
     final reelIndex = reels.indexWhere((r) => r.id == reelId);
     if (reelIndex != -1) {
@@ -223,17 +214,11 @@ class DummyData {
       if (userReposts.containsKey(currentUserId)) {
         if (!userReposts[currentUserId]!.contains(reelId)) {
           userReposts[currentUserId]!.add(reelId);
-          print(
-            'Added to existing list. Total: ${userReposts[currentUserId]!.length}',
-          );
         }
       } else {
         userReposts[currentUserId] = [reelId];
-        print('Created new list for user');
       }
-    } else {
-      print('ERROR: Reel not found: $reelId');
-    }
+    } else {}
   }
 
   static final Map<String, List<Map<String, dynamic>>> chats = {
