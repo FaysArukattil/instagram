@@ -8,6 +8,7 @@ import 'package:instagram/views/edit_profile_screen/edit_profil_screen.dart';
 import 'package:instagram/views/follower_screen/follower_screen.dart';
 import 'package:instagram/views/post_screen/post_screen.dart';
 import 'package:instagram/views/reels_screen/reels_screen.dart';
+import 'package:instagram/views/share_profile_screen/share_profile_screen.dart';
 import 'package:instagram/views/story_viewer_screen/story_viewer_screen.dart';
 import 'package:instagram/widgets/universal_image.dart';
 import 'package:instagram/widgets/primary_button.dart';
@@ -544,7 +545,22 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                               ),
                               const SizedBox(width: 8),
                               Expanded(
-                                child: _buildActionButton('Share profile'),
+                                child: _buildActionButton(
+                                  'Share profile',
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ShareProfileScreen(
+                                              username: DummyData
+                                                  .currentUser
+                                                  .username,
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
                             ],
                           ),
