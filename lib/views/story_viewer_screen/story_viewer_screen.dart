@@ -28,18 +28,15 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   late AnimationController _progressController;
   static const Duration storyDuration = Duration(seconds: 5);
 
-  // prevent concurrent page transitions / double taps
   bool _isTransitioning = false;
   bool _tapLock = false;
 
-  // vertical drag dismiss
   double _verticalDrag = 0.0;
   bool _isDismissing = false;
 
   @override
   void initState() {
     super.initState();
-
     _currentUserIndex = widget.initialIndex.clamp(0, widget.stories.length - 1);
     _pageController = PageController(initialPage: _currentUserIndex);
 
@@ -61,10 +58,8 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     if (!mounted) return;
     _progressController.stop();
     _progressController.reset();
-    // if current story has no images, advance to next user
     final images = _currentStoryImages;
     if (images == null || images.isEmpty) {
-      // small delay so UI can update
       Future.microtask(() => _goToNextUserOrClose());
       return;
     }
@@ -104,12 +99,9 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
       } else {
         _goToNextUserOrClose();
       }
-    } catch (_) {
-      // ignore race conditions
-    }
+    } catch (_) {}
   }
 
-  // Tap handlers
   void _onTapAtPosition(Offset localPosition, BuildContext context) {
     if (_tapLock || _isTransitioning) return;
     _tapLock = true;
@@ -122,7 +114,6 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
 
     try {
       if (localPosition.dx < width / 2) {
-        // left half -> previous image or previous user
         if (images != null && _currentImageIndex > 0) {
           setState(() {
             _currentImageIndex = (_currentImageIndex - 1).clamp(
@@ -135,7 +126,6 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
           _goToPreviousUserOrClose();
         }
       } else {
-        // right half -> next image or next user
         if (images != null && _currentImageIndex < images.length - 1) {
           setState(() {
             _currentImageIndex = (_currentImageIndex + 1).clamp(
@@ -148,9 +138,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
           _goToNextUserOrClose();
         }
       }
-    } catch (_) {
-      // swallow race errors
-    }
+    } catch (_) {}
   }
 
   void _goToNextUserOrClose() {
@@ -163,7 +151,6 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
             curve: Curves.easeOut,
           )
           .whenComplete(() {
-            // onPageChanged will handle reset
             _isTransitioning = false;
           });
     } else {
@@ -213,36 +200,28 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
       backgroundColor: Colors.black,
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
-
         onTapUp: (details) => _onTapAtPosition(details.localPosition, context),
-
         onLongPressStart: (_) => _pauseProgress(),
         onLongPressEnd: (_) => _resumeProgress(),
-
         onVerticalDragUpdate: (details) {
-          // only allow downward drag
           if (details.delta.dy > 0) {
             _pauseProgress();
             setState(() {
               _verticalDrag += details.delta.dy;
-              // cap to screen height
               if (_verticalDrag > screenHeight) _verticalDrag = screenHeight;
             });
           }
         },
         onVerticalDragEnd: (details) {
           if (_verticalDrag > 140) {
-            // dismiss with animation
             _performDismissAnimation(screenHeight);
           } else {
-            // bounce back
             setState(() {
               _verticalDrag = 0;
             });
             _resumeProgress();
           }
         },
-
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           transform: Matrix4.translationValues(0, _verticalDrag, 0),
@@ -279,7 +258,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Image / placeholder
+                  // Story image
                   if (imageUrl == null)
                     Container(
                       color: Colors.black,
@@ -310,7 +289,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                       ),
                     ),
 
-                  // Top progress bars
+                  // Progress bars
                   Positioned(
                     top: 40,
                     left: 8,
@@ -351,7 +330,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                     ),
                   ),
 
-                  // user info (avatar, name, time)
+                  // User info (avatar, name, time)
                   Positioned(
                     top: 52,
                     left: 16,
@@ -361,10 +340,14 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                         CircleAvatar(
                           radius: 20,
                           backgroundImage:
-                              pageStory.profileImageUrl.startsWith('http')
-                              ? NetworkImage(pageStory.profileImageUrl)
-                              : FileImage(File(pageStory.profileImageUrl))
-                                    as ImageProvider,
+                              (user?.profileImage != null &&
+                                  user!.profileImage.startsWith('http'))
+                              ? NetworkImage(user.profileImage)
+                              : (user?.profileImage != null &&
+                                    File(user!.profileImage).existsSync())
+                              ? FileImage(File(user.profileImage))
+                                    as ImageProvider
+                              : const AssetImage('assets/default_avatar.png'),
                         ),
                         const SizedBox(width: 8),
                         Column(
