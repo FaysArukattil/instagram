@@ -10,15 +10,15 @@ import 'package:instagram/views/profile_screen/profile_screen.dart';
 class ReelsScreen extends StatefulWidget {
   final int initialIndex;
   final VoidCallback? onRefresh;
-  final bool isVisible; // Add this parameter
-  final bool disableShuffle; // ✅ NEW: Add this parameter
+  final bool isVisible;
+  final bool disableShuffle;
 
   const ReelsScreen({
     super.key,
     this.initialIndex = 0,
     this.onRefresh,
-    this.isVisible = true, // Default to visible
-    this.disableShuffle = false, // ✅ NEW: Default is false
+    this.isVisible = true,
+    this.disableShuffle = false,
   });
 
   @override
@@ -51,8 +51,6 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
     }
   }
 
-  // In _ReelsScreenState, update the _loadReels method to sync repost status:
-
   void _loadReels({bool shuffle = false}) {
     if (!mounted) return;
 
@@ -66,7 +64,6 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
     setState(() {
       reels = List.from(DummyData.reels);
 
-      // ✅ NEW: Sync repost status for current user
       for (var reel in reels) {
         reel.isReposted = DummyData.hasUserReposted(
           reel.id,
@@ -92,11 +89,8 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
   @override
   void didUpdateWidget(ReelsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // When widget key changes (tab tapped), shuffle only if not disabled
     if (widget.key != oldWidget.key) {
       _screenId = DateTime.now().millisecondsSinceEpoch.toString();
-
-      // ✅ FIX: Don't shuffle if coming from profile
       _loadReels(shuffle: !widget.disableShuffle);
       _currentIndex = 0;
 
@@ -136,9 +130,7 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
           return ReelItem(
             key: ValueKey('${reels[index].id}_$_screenId'),
             reel: reels[index],
-            isActive:
-                index == _currentIndex &&
-                widget.isVisible, // Check both conditions
+            isActive: index == _currentIndex && widget.isVisible,
             onReelUpdated: () => setState(() {}),
           );
         },
@@ -173,8 +165,13 @@ class _ReelItemState extends State<ReelItem>
   bool _isLongPressing = false;
   bool _isPausedByUser = false;
 
+  // ✅ NEW: Swipe animation variables
+  double _horizontalDragOffset = 0.0;
+  bool _isDraggingHorizontally = false;
+
   late AnimationController _likeAnimationController;
   late Animation<double> _likeAnimation;
+
   void _loadUserData() {
     _cachedUser = DummyData.getUserById(widget.reel.userId);
   }
@@ -256,7 +253,6 @@ class _ReelItemState extends State<ReelItem>
       return;
     }
 
-    // Handle play/pause based on isActive
     if (widget.isActive && !oldWidget.isActive) {
       if (!_isPausedByUser) {
         _controller.play();
@@ -345,7 +341,6 @@ class _ReelItemState extends State<ReelItem>
   void _handleRepost() {
     setState(() {
       if (widget.reel.isReposted) {
-        // Remove repost
         widget.reel.isReposted = false;
         widget.reel.shares = widget.reel.shares > 0
             ? widget.reel.shares - 1
@@ -360,7 +355,6 @@ class _ReelItemState extends State<ReelItem>
           ),
         );
       } else {
-        // Add repost
         widget.reel.isReposted = true;
         widget.reel.shares++;
         DummyData.addRepost(widget.reel.id, DummyData.currentUser.id);
@@ -507,12 +501,62 @@ class _ReelItemState extends State<ReelItem>
 
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              SwipeableProfileScreen(user: user),
+          transitionDuration: Duration.zero, // Instant transition
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+        ),
       ).then((_) {
         _isPausedByUser = false;
         if (widget.isActive && mounted) {
           _controller.play();
         }
+      });
+    }
+  }
+
+  // ✅ NEW: Handle horizontal drag start
+  void _onHorizontalDragStart(DragStartDetails details) {
+    setState(() {
+      _isDraggingHorizontally = true;
+    });
+  }
+
+  // ✅ NEW: Handle horizontal drag update
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    setState(() {
+      _horizontalDragOffset += details.delta.dx;
+      // Limit the drag offset (negative for left swipe)
+      _horizontalDragOffset = _horizontalDragOffset.clamp(
+        -MediaQuery.of(context).size.width,
+        0.0,
+      );
+    });
+  }
+
+  // ✅ NEW: Handle horizontal drag end
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // If dragged more than 30% of screen width to the left, navigate to profile
+    if (_horizontalDragOffset < -screenWidth * 0.3) {
+      // Keep the offset while navigating to avoid jitter
+      _openProfile();
+      // Reset after navigation completes
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (mounted) {
+          setState(() {
+            _horizontalDragOffset = 0.0;
+            _isDraggingHorizontally = false;
+          });
+        }
+      });
+    } else {
+      // Animate back to original position
+      setState(() {
+        _horizontalDragOffset = 0.0;
+        _isDraggingHorizontally = false;
       });
     }
   }
@@ -549,292 +593,340 @@ class _ReelItemState extends State<ReelItem>
       onDoubleTap: _handleDoubleTap,
       onLongPressStart: (_) => _onLongPressStart(),
       onLongPressEnd: (_) => _onLongPressEnd(),
+      // ✅ NEW: Add horizontal drag gestures
+      onHorizontalDragStart: _onHorizontalDragStart,
+      onHorizontalDragUpdate: _onHorizontalDragUpdate,
+      onHorizontalDragEnd: _onHorizontalDragEnd,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          SizedBox.expand(
-            child: FittedBox(
-              fit: BoxFit.cover,
-              child: SizedBox(
-                width: _controller.value.size.width,
-                height: _controller.value.size.height,
-                child: VideoPlayer(_controller),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 200,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.4),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 200,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.7),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          if (_showVolumeIndicator)
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  widget.reel.isMuted ? Icons.volume_off : Icons.volume_up,
-                  color: Colors.white,
-                  size: 40,
-                ),
-              ),
-            ),
-          if (_showLikeAnimation)
-            Center(
-              child: AnimatedBuilder(
-                animation: _likeAnimation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: _likeAnimation.value,
-                    child: const Icon(
-                      Icons.favorite,
-                      color: Colors.white,
-                      size: 100,
+          // ✅ NEW: Animated video container that moves with swipe
+          AnimatedContainer(
+            duration: _isDraggingHorizontally
+                ? Duration.zero
+                : const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            transform: Matrix4.translationValues(_horizontalDragOffset, 0, 0),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller.value.size.width,
+                      height: _controller.value.size.height,
+                      child: VideoPlayer(_controller),
                     ),
-                  );
-                },
-              ),
-            ),
-          if (_isLongPressing)
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  shape: BoxShape.circle,
+                  ),
                 ),
-                child: const Icon(Icons.pause, color: Colors.white, size: 40),
-              ),
-            ),
-          Positioned(
-            bottom: 20,
-            left: 12,
-            right: 80,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
-                  onTap: _openProfile,
-                  child: Row(
-                    children: [
-                      // ✅ FIX: Use ValueKey to force rebuild when profile image changes
-                      CircleAvatar(
-                        key: ValueKey(user?.profileImage ?? ''),
-                        radius: 18,
-                        backgroundImage: user?.profileImage != null
-                            ? NetworkImage(user!.profileImage)
-                            : null,
-                        backgroundColor: Colors.grey[300],
-                        child: user?.profileImage == null
-                            ? const Icon(
-                                Icons.person,
-                                size: 18,
-                                color: Colors.white,
-                              )
-                            : null,
+                // Top gradient
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 200,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.4),
+                          Colors.transparent,
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          user?.username ?? 'Unknown',
-                          style: const TextStyle(
+                    ),
+                  ),
+                ),
+                // Bottom gradient
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 200,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.7),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Volume indicator
+                if (_showVolumeIndicator)
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        widget.reel.isMuted
+                            ? Icons.volume_off
+                            : Icons.volume_up,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                    ),
+                  ),
+                // Like animation
+                if (_showLikeAnimation)
+                  Center(
+                    child: AnimatedBuilder(
+                      animation: _likeAnimation,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: _likeAnimation.value,
+                          child: const Icon(
+                            Icons.favorite,
                             color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            size: 100,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        );
+                      },
+                    ),
+                  ),
+                // Long press indicator
+                if (_isLongPressing)
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 8),
-                      if (user?.id != DummyData.currentUser.id)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white, width: 1.5),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            user?.isFollowing == true ? 'Following' : 'Follow',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                      child: const Icon(
+                        Icons.pause,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                    ),
+                  ),
+                // Bottom info section
+                Positioned(
+                  bottom: 20,
+                  left: 12,
+                  right: 80,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: _openProfile,
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              key: ValueKey(user?.profileImage ?? ''),
+                              radius: 18,
+                              backgroundImage: user?.profileImage != null
+                                  ? NetworkImage(user!.profileImage)
+                                  : null,
+                              backgroundColor: Colors.grey[300],
+                              child: user?.profileImage == null
+                                  ? const Icon(
+                                      Icons.person,
+                                      size: 18,
+                                      color: Colors.white,
+                                    )
+                                  : null,
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                user?.username ?? 'Unknown',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            if (user?.id != DummyData.currentUser.id)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 1.5,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  user?.isFollowing == true
+                                      ? 'Following'
+                                      : 'Follow',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.reel.caption,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (widget.reel.location != null) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                widget.reel.location!,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  widget.reel.caption,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (widget.reel.location != null) ...[
-                  const SizedBox(height: 4),
-                  Row(
+                // Right side action buttons
+                Positioned(
+                  bottom: 20,
+                  right: 12,
+                  child: Column(
                     children: [
-                      const Icon(
-                        Icons.location_on,
-                        color: Colors.white,
-                        size: 12,
+                      GestureDetector(
+                        onTap: _toggleLike,
+                        child: Column(
+                          children: [
+                            Icon(
+                              widget.reel.isLiked
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: widget.reel.isLiked
+                                  ? Colors.red
+                                  : Colors.white,
+                              size: 32,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _formatCount(widget.reel.likes),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          widget.reel.location!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 24),
+                      GestureDetector(
+                        onTap: _openComments,
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.chat_bubble_outline,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _formatCount(widget.reel.comments),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      GestureDetector(
+                        onTap: _handleRepost,
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.repeat,
+                              color: widget.reel.isReposted
+                                  ? Colors.green
+                                  : Colors.white,
+                              size: 30,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _formatCount(widget.reel.shares),
+                              style: TextStyle(
+                                color: widget.reel.isReposted
+                                    ? Colors.green
+                                    : Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      GestureDetector(
+                        onTap: _showShareSheet,
+                        child: const Column(
+                          children: [
+                            Icon(Icons.send, color: Colors.white, size: 28),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      GestureDetector(
+                        onTap: _showMoreOptions,
+                        child: const Icon(
+                          Icons.more_vert,
+                          color: Colors.white,
+                          size: 28,
                         ),
                       ),
                     ],
                   ),
-                ],
+                ),
               ],
             ),
           ),
-          Positioned(
-            bottom: 20,
-            right: 12,
-            child: Column(
-              children: [
-                GestureDetector(
-                  onTap: _toggleLike,
-                  child: Column(
-                    children: [
-                      Icon(
-                        widget.reel.isLiked
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-                        color: widget.reel.isLiked ? Colors.red : Colors.white,
-                        size: 32,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _formatCount(widget.reel.likes),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                GestureDetector(
-                  onTap: _openComments,
-                  child: Column(
-                    children: [
-                      const Icon(
-                        Icons.chat_bubble_outline,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _formatCount(widget.reel.comments),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                GestureDetector(
-                  onTap: _handleRepost,
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.repeat,
-                        color: widget.reel.isReposted
-                            ? Colors
-                                  .green // ✅ Green when reposted
-                            : Colors.white,
-                        size: 30,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _formatCount(widget.reel.shares),
-                        style: TextStyle(
-                          color: widget.reel.isReposted
-                              ? Colors
-                                    .green // ✅ Green text when reposted
-                              : Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                GestureDetector(
-                  onTap: _showShareSheet,
-                  child: const Column(
-                    children: [Icon(Icons.send, color: Colors.white, size: 28)],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                GestureDetector(
-                  onTap: _showMoreOptions,
-                  child: const Icon(
-                    Icons.more_vert,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-              ],
+          // ✅ NEW: Profile preview on the right (visible when swiping left)
+          if (_horizontalDragOffset < 0)
+            Positioned(
+              left: MediaQuery.of(context).size.width + _horizontalDragOffset,
+              top: 0,
+              bottom: 0,
+              width: MediaQuery.of(context).size.width,
+              child: UserProfileScreen(user: user!),
             ),
-          ),
         ],
       ),
     );
@@ -847,5 +939,94 @@ class _ReelItemState extends State<ReelItem>
       return '${(count / 1000).toStringAsFixed(1)}K';
     }
     return count.toString();
+  }
+}
+
+// ✅ NEW: Swipeable wrapper for profile screen
+class SwipeableProfileScreen extends StatefulWidget {
+  final UserModel user;
+
+  const SwipeableProfileScreen({super.key, required this.user});
+
+  @override
+  State<SwipeableProfileScreen> createState() => _SwipeableProfileScreenState();
+}
+
+class _SwipeableProfileScreenState extends State<SwipeableProfileScreen> {
+  double _horizontalDragOffset = 0.0;
+  bool _isDraggingHorizontally = false;
+
+  void _onHorizontalDragStart(DragStartDetails details) {
+    setState(() {
+      _isDraggingHorizontally = true;
+    });
+  }
+
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    setState(() {
+      _horizontalDragOffset += details.delta.dx;
+      // Only allow dragging to the right (positive values)
+      _horizontalDragOffset = _horizontalDragOffset.clamp(
+        0.0,
+        MediaQuery.of(context).size.width,
+      );
+    });
+  }
+
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // If dragged more than 30% of screen width to the right, go back
+    if (_horizontalDragOffset > screenWidth * 0.3) {
+      Navigator.pop(context);
+    } else {
+      // Animate back to original position
+      setState(() {
+        _horizontalDragOffset = 0.0;
+        _isDraggingHorizontally = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onHorizontalDragStart: _onHorizontalDragStart,
+      onHorizontalDragUpdate: _onHorizontalDragUpdate,
+      onHorizontalDragEnd: _onHorizontalDragEnd,
+      child: Stack(
+        children: [
+          // The profile screen
+          AnimatedContainer(
+            duration: _isDraggingHorizontally
+                ? Duration.zero
+                : const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            transform: Matrix4.translationValues(_horizontalDragOffset, 0, 0),
+            child: UserProfileScreen(user: widget.user),
+          ),
+          // Optional: Add a shadow effect on the left edge while dragging
+          if (_horizontalDragOffset > 0)
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 20,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Colors.black.withValues(alpha: .3),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
