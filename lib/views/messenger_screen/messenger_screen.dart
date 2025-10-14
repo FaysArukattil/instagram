@@ -181,7 +181,10 @@ class _MessengerScreenState extends State<MessengerScreen>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
+          ),
         ),
         title: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
