@@ -1,3 +1,5 @@
+import 'package:video_player/video_player.dart';
+
 class ReelModel {
   final String id;
   final String userId;
@@ -12,6 +14,7 @@ class ReelModel {
   bool isLiked;
   bool isMuted;
   bool isReposted;
+  VideoPlayerController? controller;
 
   ReelModel({
     required this.id,

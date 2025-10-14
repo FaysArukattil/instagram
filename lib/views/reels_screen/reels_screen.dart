@@ -579,15 +579,6 @@ class _ReelItemState extends State<ReelItem>
   Widget build(BuildContext context) {
     final user = _cachedUser ?? DummyData.getUserById(widget.reel.userId);
 
-    if (!_isInitialized) {
-      return Container(
-        color: Colors.black,
-        child: const Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
-      );
-    }
-
     return GestureDetector(
       onTap: _toggleMute,
       onDoubleTap: _handleDoubleTap,
