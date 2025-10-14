@@ -236,7 +236,10 @@ class _ReelItemState extends State<ReelItem>
 
       await _controller.initialize();
       _controller.setLooping(true);
-      _controller.setVolume(widget.reel.isMuted ? 0 : 1);
+
+      // ✅ Always start unmuted
+      widget.reel.isMuted = false;
+      _controller.setVolume(1);
 
       if (mounted) {
         setState(() {

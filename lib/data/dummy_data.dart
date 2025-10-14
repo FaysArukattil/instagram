@@ -303,7 +303,7 @@ class DummyData {
     ),
     ReelModel(
       id: 'reel_13',
-      userId: 'user_1',
+      userId: 'user_14',
       videoUrl: 'assets/videos/reelsample12.mp4',
       thumbnailUrl:
           'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800',
@@ -433,7 +433,7 @@ class DummyData {
     ),
     ReelModel(
       id: 'reel_23',
-      userId: 'user_1',
+      userId: 'user_13',
       videoUrl: 'assets/videos/reelsample22.mp4',
       thumbnailUrl:
           'https://images.unsplash.com/photo-1520975918318-7a41ce80b2c6?w=800',
