@@ -48,22 +48,20 @@ class DummyData {
     ReelModel(
       id: 'reel_1',
       userId: 'user_2',
-      videoUrl:
-          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      videoUrl: 'assets/videos/mkbhd1.mp4',
       thumbnailUrl:
           'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
-      caption: 'Beautiful sunset views 🌅 #nature #sunset',
+      caption: 'The most unnecessary Easter egg. Well played.',
       likes: 15234,
       comments: 234,
       shares: 45,
       timeAgo: '2h',
-      location: 'Thamarasseri Churam',
+      location: 'NewYork,USA',
     ),
     ReelModel(
       id: 'reel_2',
       userId: 'user_3',
-      videoUrl:
-          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+      videoUrl: 'assets/videos/reelsample1.mp4',
       thumbnailUrl:
           'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800',
       caption: 'Trying new recipes today! 🍕🔥',
@@ -75,8 +73,7 @@ class DummyData {
     ReelModel(
       id: 'reel_3',
       userId: 'user_11',
-      videoUrl:
-          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      videoUrl: 'assets/videos/reelsample2.mp4',
       thumbnailUrl:
           'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800',
       caption: 'Travel vibes ✈️ #wanderlust',
@@ -89,8 +86,7 @@ class DummyData {
     ReelModel(
       id: 'reel_4',
       userId: 'user_12',
-      videoUrl:
-          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+      videoUrl: 'assets/videos/reelsample3.mp4',
       thumbnailUrl:
           'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800',
       caption: 'Workout motivation 💪 #fitness #gym',
@@ -102,8 +98,7 @@ class DummyData {
     ReelModel(
       id: 'reel_5',
       userId: 'user_7',
-      videoUrl:
-          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+      videoUrl: 'assets/videos/reelsample4.mp4',
       thumbnailUrl:
           'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
       caption: 'Kashmir beauty 🏔️❄️',
@@ -116,8 +111,7 @@ class DummyData {
     ReelModel(
       id: 'reel_6',
       userId: 'user_13',
-      videoUrl:
-          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+      videoUrl: 'assets/videos/reelsample5.mp4',
       thumbnailUrl:
           'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800',
       caption: 'Coding life 💻 #developer',
@@ -129,8 +123,7 @@ class DummyData {
     ReelModel(
       id: 'reel_7',
       userId: 'user_14',
-      videoUrl:
-          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+      videoUrl: 'assets/videos/reelsample6.mp4',
       thumbnailUrl:
           'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800',
       caption: 'Nature therapy 🌲🌿',
@@ -142,8 +135,7 @@ class DummyData {
     ReelModel(
       id: 'reel_8',
       userId: 'user_15',
-      videoUrl:
-          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+      videoUrl: 'assets/videos/reelsample7.mp4',
       thumbnailUrl:
           'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800',
       caption: 'Art in motion 🎨✨',
@@ -155,8 +147,7 @@ class DummyData {
     ReelModel(
       id: 'reel_9',
       userId: 'user_4',
-      videoUrl:
-          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+      videoUrl: 'assets/videos/reelsample8.mp4',
       thumbnailUrl:
           'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
       caption: 'Beach life 🌊☀️',
@@ -169,8 +160,7 @@ class DummyData {
     ReelModel(
       id: 'reel_10',
       userId: 'user_5',
-      videoUrl:
-          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+      videoUrl: 'assets/videos/reelsample9.mp4',
       thumbnailUrl:
           'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800',
       caption: 'Living my best life 😎',
@@ -178,6 +168,294 @@ class DummyData {
       comments: 1234,
       shares: 456,
       timeAgo: '3d',
+    ),
+    ReelModel(
+      id: 'reel_11',
+      userId: 'user_2',
+      videoUrl: 'assets/videos/mkbhd2.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
+      caption: 'Great idea. Mid execution.',
+      likes: 15234,
+      comments: 234,
+      shares: 45,
+      timeAgo: '2h',
+      location: 'NewYork,USA',
+    ),
+    ReelModel(
+      id: 'reel_12',
+      userId: 'user_2',
+      videoUrl: 'assets/videos/mkbhd3.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
+      caption: 'As seen on the NFL opening day broadcast tonight 🤓',
+      likes: 15234,
+      comments: 234,
+      shares: 45,
+      timeAgo: '2h',
+      location: 'NewYork,USA',
+    ),
+    ReelModel(
+      id: 'reel_12',
+      userId: 'user_2',
+      videoUrl: 'assets/videos/mkbhd4.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
+      caption: 'Maybe a bit sacreligious… and I love it',
+      likes: 15234,
+      comments: 234,
+      shares: 45,
+      timeAgo: '2h',
+      location: 'NewYork,USA',
+    ),
+    ReelModel(
+      id: 'reel_13',
+      userId: 'user_2',
+      videoUrl: 'assets/videos/mkbhd5.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
+      caption: "The \$900 massaging shoes actually make sense",
+      likes: 15234,
+      comments: 234,
+      shares: 45,
+      timeAgo: '2h',
+      location: 'NewYork,USA',
+    ),
+    ReelModel(
+      id: 'reel_14',
+      userId: 'user_2',
+      videoUrl: 'assets/videos/mkbhd6.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
+      caption:
+          "Your scientists were so preoccupied with whether or not they could…",
+      likes: 15234,
+      comments: 234,
+      shares: 45,
+      timeAgo: '2h',
+      location: 'NewYork,USA',
+    ),
+    ReelModel(
+      id: 'reel_14',
+      userId: 'user_2',
+      videoUrl: 'assets/videos/mkbhd7.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
+      caption:
+          "There’s a lot more to say about this electric VW bus, but I can’t help but notice… this thing is absolutely LOADED with storage",
+      likes: 15234,
+      comments: 234,
+      shares: 45,
+      timeAgo: '2h',
+      location: 'NewYork,USA',
+    ),
+    ReelModel(
+      id: 'reel_9',
+      userId: 'user_4',
+      videoUrl: 'assets/videos/reelsample8.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
+      caption: 'Beach life 🌊☀️',
+      likes: 34567,
+      comments: 891,
+      shares: 234,
+      timeAgo: '3d',
+      location: 'Kovalam Beach',
+    ),
+    ReelModel(
+      id: 'reel_10',
+      userId: 'user_2',
+      videoUrl: 'assets/videos/reelsample9.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=800',
+      caption: 'City lights and late nights 🌃✨',
+      likes: 29876,
+      comments: 645,
+      shares: 120,
+      timeAgo: '5h',
+      location: 'New York City',
+    ),
+    ReelModel(
+      id: 'reel_11',
+      userId: 'user_3',
+      videoUrl: 'assets/videos/reelsample10.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=800',
+      caption: 'Coffee and code ☕💻',
+      likes: 20345,
+      comments: 523,
+      shares: 178,
+      timeAgo: '1d',
+      location: 'Bangalore',
+    ),
+    ReelModel(
+      id: 'reel_12',
+      userId: 'user_5',
+      videoUrl: 'assets/videos/reelsample11.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800',
+      caption: 'Mountains calling 🏔️❤️',
+      likes: 41230,
+      comments: 982,
+      shares: 245,
+      timeAgo: '12h',
+      location: 'Manali',
+    ),
+    ReelModel(
+      id: 'reel_13',
+      userId: 'user_1',
+      videoUrl: 'assets/videos/reelsample12.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800',
+      caption: 'Chasing sunsets 🌅',
+      likes: 37654,
+      comments: 754,
+      shares: 210,
+      timeAgo: '2d',
+      location: 'Goa',
+    ),
+    ReelModel(
+      id: 'reel_14',
+      userId: 'user_6',
+      videoUrl: 'assets/videos/reelsample13.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1533038590840-1cde6e668a91?w=800',
+      caption: 'Street food diaries 🌮🍜',
+      likes: 28450,
+      comments: 630,
+      shares: 198,
+      timeAgo: '6h',
+      location: 'Bangkok',
+    ),
+    ReelModel(
+      id: 'reel_15',
+      userId: 'user_2',
+      videoUrl: 'assets/videos/reelsample14.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1553531888-9400baccb19c?w=800',
+      caption: 'Night rides and good vibes 🏍️💨',
+      likes: 32110,
+      comments: 702,
+      shares: 233,
+      timeAgo: '7h',
+      location: 'Mumbai',
+    ),
+    ReelModel(
+      id: 'reel_16',
+      userId: 'user_5',
+      videoUrl: 'assets/videos/reelsample15.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800',
+      caption: 'Minimal setup goals ⚡💡',
+      likes: 22345,
+      comments: 412,
+      shares: 89,
+      timeAgo: '4h',
+      location: 'Kochi',
+    ),
+    ReelModel(
+      id: 'reel_17',
+      userId: 'user_7',
+      videoUrl: 'assets/videos/reelsample16.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800',
+      caption: 'Good books, better mood 📚☕',
+      likes: 16543,
+      comments: 432,
+      shares: 130,
+      timeAgo: '8h',
+      location: 'Paris',
+    ),
+    ReelModel(
+      id: 'reel_18',
+      userId: 'user_3',
+      videoUrl: 'assets/videos/reelsample17.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800',
+      caption: 'Smiles are contagious 😄❤️',
+      likes: 45210,
+      comments: 1002,
+      shares: 301,
+      timeAgo: '1d',
+      location: 'London',
+    ),
+    ReelModel(
+      id: 'reel_19',
+      userId: 'user_8',
+      videoUrl: 'assets/videos/reelsample18.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1549887534-4c1d03c3c0f4?w=800',
+      caption: 'Rainy days & cozy playlists ☔🎶',
+      likes: 18970,
+      comments: 520,
+      shares: 99,
+      timeAgo: '9h',
+      location: 'Chennai',
+    ),
+    ReelModel(
+      id: 'reel_20',
+      userId: 'user_2',
+      videoUrl: 'assets/videos/reelsample19.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?w=800',
+      caption: 'The grind never stops 💪🔥',
+      likes: 33210,
+      comments: 765,
+      shares: 210,
+      timeAgo: '11h',
+      location: 'Dubai',
+    ),
+    ReelModel(
+      id: 'reel_21',
+      userId: 'user_4',
+      videoUrl: 'assets/videos/reelsample20.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800',
+      caption: 'Work hard, brunch harder 🥐☕',
+      likes: 26500,
+      comments: 590,
+      shares: 112,
+      timeAgo: '5h',
+      location: 'Singapore',
+    ),
+    ReelModel(
+      id: 'reel_22',
+      userId: 'user_6',
+      videoUrl: 'assets/videos/reelsample21.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1518893494013-481c1d8ed3fd?w=800',
+      caption: 'Adventure mode: ON 🚙🌍',
+      likes: 34580,
+      comments: 880,
+      shares: 205,
+      timeAgo: '2d',
+      location: 'Nepal',
+    ),
+    ReelModel(
+      id: 'reel_23',
+      userId: 'user_1',
+      videoUrl: 'assets/videos/reelsample22.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1520975918318-7a41ce80b2c6?w=800',
+      caption: 'Tech talk Tuesdays 🎥🔋',
+      likes: 18760,
+      comments: 410,
+      shares: 94,
+      timeAgo: '1d',
+      location: 'San Francisco',
+    ),
+    ReelModel(
+      id: 'reel_24',
+      userId: 'user_9',
+      videoUrl: 'assets/videos/reelsample23.mp4',
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1600180758890-6a7b1e2f5d25?w=800',
+      caption: 'Just vibes. No worries 🌈😌',
+      likes: 25540,
+      comments: 530,
+      shares: 145,
+      timeAgo: '3d',
+      location: 'Bali',
     ),
   ];
 
@@ -447,15 +725,15 @@ class DummyData {
     // Original users
     UserModel(
       id: 'user_2',
-      username: 'sayyid_hussain_shihab',
-      name: 'Sayyid Hussain Shihab',
+      username: 'mkbhd',
+      name: 'Marques Brownlee',
       profileImage:
-          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+          'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Marques_Brownlee_cropped.jpg/500px-Marques_Brownlee_cropped.jpg',
       hasStory: true,
-      followers: 1234,
-      following: 567,
+      followers: 5009,
+      following: 533,
       posts: 89,
-      bio: 'Panakkad',
+      bio: "I promise I Wont't overdo the filters",
       isFollowing: true,
     ),
     UserModel(
@@ -1175,11 +1453,11 @@ class DummyData {
       images: [
         'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800',
       ],
-      caption: 'Beautiful sunset at Thamarasseri Churam 🌅',
+      caption: 'Beautiful sunset at NewYork🌅',
       likes: 1234,
       comments: 4,
       timeAgo: '59m',
-      location: 'Thamarasseri Churam',
+      location: 'USA,New York',
       isLiked: false,
     ),
     PostModel(
@@ -1417,13 +1695,87 @@ class DummyData {
       id: 'post_20',
       userId: 'user_2',
       images: [
-        'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800',
+        'assets/images/splashscreen_images/mkbhdpost1-1.jpg',
+        'assets/images/splashscreen_images/mkbhdpost1-2.jpg',
+        'assets/images/splashscreen_images/mkbhdpost1-3.jpg',
       ],
-      caption: 'Adventure awaits 🏔️⛰️',
+      caption:
+          '''A few weeks ago, @Instagram asked if I’d like to help with a new award that would give some recognition to select creators on the platform who take creative chances. Similar to what YouTube has done with subscriber milestone plaques, but with judges.
+I couldn’t say yes fast enough. Now Instagram Rings has come to life, and I’m honored to be a Judge!
+Check @creators for the full list of winners on 10/16
+I hope more platforms continue to recognize the creators that make them great! #ad''',
       likes: 3456,
       comments: 145,
       timeAgo: '4d',
-      location: 'Wayanad',
+      location: 'Usa,NewYork',
+      isLiked: true,
+    ),
+    PostModel(
+      id: 'post_21',
+      userId: 'user_2',
+      images: ['assets/images/splashscreen_images/mkbhdpost2.jpg'],
+      caption:
+          'Just dropped my unboxing and second look at every new iPhone 17 👀',
+      likes: 3456,
+      comments: 145,
+      timeAgo: '4d',
+      location: 'Usa,NewYork',
+      isLiked: true,
+    ),
+    PostModel(
+      id: 'post_22',
+      userId: 'user_2',
+      images: [
+        'assets/images/splashscreen_images/mkbhdpost3-1.jpg',
+        'assets/images/splashscreen_images/mkbhdpost3-2.jpg',
+      ],
+      caption:
+          '''Apple Park Cupertino \n Orange is the new black? iPhone 17 Pro''',
+      likes: 3456,
+      comments: 145,
+      timeAgo: '4d',
+      location: 'Usa,NewYork',
+      isLiked: true,
+    ),
+    PostModel(
+      id: 'post_23',
+      userId: 'user_2',
+      images: ['assets/images/splashscreen_images/mkbhdpost4.jpg'],
+      caption: '''Shot on Pixel 10 Pro''',
+      likes: 3456,
+      comments: 145,
+      timeAgo: '4d',
+      location: 'Usa,NewYork',
+      isLiked: true,
+    ),
+    PostModel(
+      id: 'post_24',
+      userId: 'user_2',
+      images: [
+        'assets/images/splashscreen_images/mkbhdpost5-1.jpg',
+        'assets/images/splashscreen_images/mkbhdpost5-2.jpg',
+        'assets/images/splashscreen_images/mkbhdpost5-3.jpg',
+        'assets/images/splashscreen_images/mkbhdpost5-4.jpg',
+        'assets/images/splashscreen_images/mkbhdpost5-5.jpg',
+        'assets/images/splashscreen_images/mkbhdpost5-6.jpg',
+      ],
+      caption: '''Nothing Phone 3 Review is up, go watch it... 👀''',
+      likes: 3456,
+      comments: 145,
+      timeAgo: '1d',
+      location: 'Usa,NewYork',
+      isLiked: true,
+    ),
+    PostModel(
+      id: 'post_25',
+      userId: 'user_2',
+      images: ['assets/images/splashscreen_images/mkbhdpost6.jpg'],
+      caption:
+          '''2025. Back to basics. Clearly define goals. Say no to anything that dilutes your focus. Execute. Continually refine.''',
+      likes: 3456,
+      comments: 145,
+      timeAgo: '1d',
+      location: 'Usa,NewYork',
       isLiked: true,
     ),
   ];
@@ -1432,7 +1784,7 @@ class DummyData {
     StoryModel(
       id: 'story_1',
       userId: 'user_2',
-      username: 'Emily Johnson',
+      username: '',
       profileImageUrl: 'https://i.pravatar.cc/150?img=5',
       images: [
         'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200', // ocean

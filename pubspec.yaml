@@ -38,6 +38,7 @@ flutter:
   assets:
     - assets/images/splashscreen_images/
     - assets/images/
+    - assets/videos/
 
 # =======================
 # Flutter Launcher Icons

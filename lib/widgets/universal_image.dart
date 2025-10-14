@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
-/// Universal Image Widget that handles both local files and network URLs
+/// Universal Image Widget that handles network, asset, and local file images
 class UniversalImage extends StatelessWidget {
   final String imagePath;
   final BoxFit fit;
@@ -27,6 +27,8 @@ class UniversalImage extends StatelessWidget {
   bool get isNetworkImage =>
       imagePath.startsWith('http://') || imagePath.startsWith('https://');
 
+  bool get isAssetImage => imagePath.startsWith('assets/');
+
   @override
   Widget build(BuildContext context) {
     if (isNetworkImage) {
@@ -41,6 +43,16 @@ class UniversalImage extends StatelessWidget {
           if (loadingProgress == null) return child;
           return placeholder ?? _defaultPlaceholder();
         },
+        errorBuilder: (context, error, stackTrace) {
+          return errorWidget ?? _defaultErrorWidget();
+        },
+      );
+    } else if (isAssetImage) {
+      return Image.asset(
+        imagePath,
+        fit: fit,
+        width: width,
+        height: height,
         errorBuilder: (context, error, stackTrace) {
           return errorWidget ?? _defaultErrorWidget();
         },

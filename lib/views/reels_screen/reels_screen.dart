@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/reel_model.dart';
 import 'package:instagram/views/profile_screen/profile_screen.dart';
+import 'dart:io';
 
 class ReelsScreen extends StatefulWidget {
   final int initialIndex;
@@ -220,22 +221,34 @@ class _ReelItemState extends State<ReelItem>
   }
 
   Future<void> _initializeVideo() async {
-    _controller = VideoPlayerController.networkUrl(
-      Uri.parse(widget.reel.videoUrl),
-    );
-
-    await _controller.initialize();
-    _controller.setLooping(true);
-    _controller.setVolume(widget.reel.isMuted ? 0 : 1);
-
-    if (mounted) {
-      setState(() {
-        _isInitialized = true;
-      });
-
-      if (widget.isActive) {
-        _controller.play();
+    try {
+      // ✅ Decide controller type based on videoUrl
+      if (widget.reel.videoUrl.startsWith('http') ||
+          widget.reel.videoUrl.startsWith('https')) {
+        _controller = VideoPlayerController.networkUrl(
+          Uri.parse(widget.reel.videoUrl),
+        );
+      } else if (widget.reel.videoUrl.startsWith('assets/')) {
+        _controller = VideoPlayerController.asset(widget.reel.videoUrl);
+      } else {
+        _controller = VideoPlayerController.file(File(widget.reel.videoUrl));
       }
+
+      await _controller.initialize();
+      _controller.setLooping(true);
+      _controller.setVolume(widget.reel.isMuted ? 0 : 1);
+
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+
+        if (widget.isActive) {
+          _controller.play();
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ Video initialization error: $e');
     }
   }
 
