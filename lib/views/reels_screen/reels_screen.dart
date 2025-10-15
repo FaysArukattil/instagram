@@ -555,25 +555,71 @@ class _ReelItemState extends State<ReelItem>
   void _onHorizontalDragEnd(DragEndDetails details) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // If dragged more than 30% of screen width to the left, navigate to profile
     if (_horizontalDragOffset < -screenWidth * 0.3) {
-      // Keep the offset while navigating to avoid jitter
-      _openProfile();
-      // Reset after navigation completes
-      Future.delayed(const Duration(milliseconds: 50), () {
-        if (mounted) {
-          setState(() {
-            _horizontalDragOffset = 0.0;
-            _isDraggingHorizontally = false;
+      // Animate off-screen left before navigating
+      final start = _horizontalDragOffset;
+      final end = -screenWidth;
+
+      final controller = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 300),
+      );
+
+      final animation = Tween<double>(
+        begin: start,
+        end: end,
+      ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOut));
+
+      animation.addListener(() {
+        if (!mounted) return;
+        setState(() => _horizontalDragOffset = animation.value);
+      });
+
+      controller.addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          controller.dispose();
+          // Navigate after animation completes
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => UserProfileScreen(
+                user: DummyData.users.firstWhere(
+                  (u) => u.id == widget.reel.userId,
+                ),
+              ),
+              transitionDuration: Duration.zero,
+            ),
+          ).then((_) {
+            // Reset offset when returning
+            if (mounted) setState(() => _horizontalDragOffset = 0.0);
           });
         }
       });
+
+      controller.forward();
     } else {
-      // Animate back to original position
-      setState(() {
-        _horizontalDragOffset = 0.0;
-        _isDraggingHorizontally = false;
+      // Animate back to original position if threshold not passed
+      final start = _horizontalDragOffset;
+      final controller = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 300),
+      );
+
+      final animation = Tween<double>(
+        begin: start,
+        end: 0.0,
+      ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOut));
+
+      animation.addListener(() {
+        if (!mounted) return;
+        setState(() => _horizontalDragOffset = animation.value);
       });
+
+      controller.addStatusListener((status) {
+        if (status == AnimationStatus.completed) controller.dispose();
+      });
+
+      controller.forward();
     }
   }
 
@@ -611,7 +657,7 @@ class _ReelItemState extends State<ReelItem>
           AnimatedContainer(
             duration: _isDraggingHorizontally
                 ? Duration.zero
-                : const Duration(milliseconds: 200),
+                : const Duration(milliseconds: 400),
             curve: Curves.easeOut,
             transform: Matrix4.translationValues(_horizontalDragOffset, 0, 0),
             child: Stack(
@@ -959,11 +1005,21 @@ class SwipeableProfileScreen extends StatefulWidget {
   State<SwipeableProfileScreen> createState() => _SwipeableProfileScreenState();
 }
 
-class _SwipeableProfileScreenState extends State<SwipeableProfileScreen> {
+class _SwipeableProfileScreenState extends State<SwipeableProfileScreen>
+    with SingleTickerProviderStateMixin {
   double _horizontalDragOffset = 0.0;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
   bool _isDraggingHorizontally = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(vsync: this);
+  }
+
   void _onHorizontalDragStart(DragStartDetails details) {
+    _animationController.stop();
     setState(() {
       _isDraggingHorizontally = true;
     });
@@ -972,7 +1028,7 @@ class _SwipeableProfileScreenState extends State<SwipeableProfileScreen> {
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
     setState(() {
       _horizontalDragOffset += details.delta.dx;
-      // Only allow dragging to the right (positive values)
+      // Only allow dragging to the right
       _horizontalDragOffset = _horizontalDragOffset.clamp(
         0.0,
         MediaQuery.of(context).size.width,
@@ -983,16 +1039,47 @@ class _SwipeableProfileScreenState extends State<SwipeableProfileScreen> {
   void _onHorizontalDragEnd(DragEndDetails details) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // If dragged more than 30% of screen width to the right, go back
     if (_horizontalDragOffset > screenWidth * 0.3) {
+      // Dragged enough → pop the screen
       Navigator.pop(context);
     } else {
-      // Animate back to original position
-      setState(() {
-        _horizontalDragOffset = 0.0;
-        _isDraggingHorizontally = false;
+      // Animate back smoothly
+      _animationController.dispose();
+      _animationController = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 300),
+      );
+
+      _animation = Tween<double>(begin: _horizontalDragOffset, end: 0.0)
+          .animate(
+            CurvedAnimation(
+              parent: _animationController,
+              curve: Curves.easeOut,
+            ),
+          );
+
+      _animation.addListener(() {
+        if (!mounted) return;
+        setState(() {
+          _horizontalDragOffset = _animation.value;
+        });
       });
+
+      _animation.addStatusListener((status) {
+        if (status == AnimationStatus.completed ||
+            status == AnimationStatus.dismissed) {
+          _isDraggingHorizontally = false;
+        }
+      });
+
+      _animationController.forward();
     }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -1003,7 +1090,7 @@ class _SwipeableProfileScreenState extends State<SwipeableProfileScreen> {
       onHorizontalDragEnd: _onHorizontalDragEnd,
       child: Stack(
         children: [
-          // The profile screen
+          // Profile screen slides with drag
           AnimatedContainer(
             duration: _isDraggingHorizontally
                 ? Duration.zero
@@ -1012,7 +1099,8 @@ class _SwipeableProfileScreenState extends State<SwipeableProfileScreen> {
             transform: Matrix4.translationValues(_horizontalDragOffset, 0, 0),
             child: UserProfileScreen(user: widget.user),
           ),
-          // Optional: Add a shadow effect on the left edge while dragging
+
+          // Optional: shadow on the left edge
           if (_horizontalDragOffset > 0)
             Positioned(
               left: 0,
@@ -1024,10 +1112,7 @@ class _SwipeableProfileScreenState extends State<SwipeableProfileScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
-                    colors: [
-                      Colors.black.withValues(alpha: .3),
-                      Colors.transparent,
-                    ],
+                    colors: [Colors.black.withOpacity(0.3), Colors.transparent],
                   ),
                 ),
               ),
