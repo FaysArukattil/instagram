@@ -7,6 +7,7 @@ import 'package:instagram/views/auth/signup/signup_with_email.dart';
 import 'package:instagram/views/bottomnavbarscreens/bottomnavbarscreen.dart';
 import 'package:instagram/widgets/primary_button.dart';
 import 'package:instagram/widgets/secondary_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -36,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void handleLogin() {
+  Future<void> handleLogin() async {
     if (usernameController.text.isEmpty) {
       _showValidationDialog(
         'Enter your username, email address or mobile number to log in',
@@ -49,7 +50,15 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    final username = usernameController.text.trim();
+    final password = passwordController.text.trim();
+    final pref = await SharedPreferences.getInstance();
+
+    pref.setString("username", username);
+    pref.setString("password", password);
+
     Navigator.push(
+      // ignore: use_build_context_synchronously
       context,
       MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
     );

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/core/constants/app_images.dart';
 import 'package:instagram/views/auth/login/login_screen.dart';
+import 'package:instagram/views/bottomnavbarscreens/bottomnavbarscreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,16 +16,27 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    checklogin();
+  }
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) {
-        //To  check if widget is still in tree and not disposed
-        return;
+  Future<void> checklogin() async {
+    final pref = await SharedPreferences.getInstance();
+    Future.delayed(Duration(seconds: 2), () {
+      if (pref.getString("username") != null) {
+        if (pref.getString("password") != null) {
+          Navigator.pushReplacement(
+            // ignore: use_build_context_synchronously
+            context,
+            MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
+          );
+        }
+      } else {
+        Navigator.pushReplacement(
+          // ignore: use_build_context_synchronously
+          context,
+          MaterialPageRoute(builder: (context) => LoginScreen()),
+        );
       }
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
     });
   }
 

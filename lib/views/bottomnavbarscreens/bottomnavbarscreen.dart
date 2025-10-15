@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/views/Home/home_screen.dart';
 import 'package:instagram/views/add_post_screen/add_post_screen.dart';
@@ -22,14 +23,61 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
 
   List<Widget> _getScreens() {
     return [
-      HomeScreen(key: ValueKey('home_$_homeRefreshKey')),
-      const SearchScreen(),
-      const SizedBox(), // Placeholder for Add Post
-      ReelsScreen(
-        key: ValueKey('reels_$_reelsRefreshKey'),
-        isVisible: _currentIndex == 3, // Pass visibility status
+      // 🏠 HOME — pressing back exits app (only when visible)
+      PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (_currentIndex == 0) {
+            SystemNavigator.pop();
+          }
+        },
+        child: HomeScreen(key: ValueKey('home_$_homeRefreshKey')),
       ),
-      ProfileTabScreen(key: ValueKey('profile_$_profileRefreshKey')),
+
+      // 🔍 SEARCH — pressing back returns to home (only when visible)
+      PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (_currentIndex == 1) {
+            setState(() {
+              _currentIndex = 0;
+            });
+          }
+        },
+        child: const SearchScreen(),
+      ),
+
+      // ➕ ADD POST placeholder
+      const SizedBox(),
+
+      // 🎥 REELS — pressing back returns to home (only when visible)
+      PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (_currentIndex == 3) {
+            setState(() {
+              _currentIndex = 0;
+            });
+          }
+        },
+        child: ReelsScreen(
+          key: ValueKey('reels_$_reelsRefreshKey'),
+          isVisible: _currentIndex == 3,
+        ),
+      ),
+
+      // 👤 PROFILE — pressing back returns to home (only when visible)
+      PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (_currentIndex == 4) {
+            setState(() {
+              _currentIndex = 0;
+            });
+          }
+        },
+        child: ProfileTabScreen(key: ValueKey('profile_$_profileRefreshKey')),
+      ),
     ];
   }
 
