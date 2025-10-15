@@ -1,24 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
-import 'package:instagram/views/bottomnavbarscreens/bottomnavbarscreen.dart';
 import 'package:instagram/views/chatscreen/chatscreen.dart';
 
 class MessengerScreen extends StatefulWidget {
-  const MessengerScreen({super.key});
+  final VoidCallback? onSwipeBack;
+
+  const MessengerScreen({super.key, this.onSwipeBack});
 
   @override
   State<MessengerScreen> createState() => _MessengerScreenState();
 }
 
-class _MessengerScreenState extends State<MessengerScreen>
-    with SingleTickerProviderStateMixin {
+class _MessengerScreenState extends State<MessengerScreen> {
   String selectedTab = 'Primary';
   final TextEditingController _searchController = TextEditingController();
   String searchQuery = '';
-
-  late AnimationController _animationController;
-  late Animation<Offset> _slideAnimation;
 
   final Map<String, List<Map<String, dynamic>>> tabMessages = {
     'Primary': [
@@ -95,50 +92,9 @@ class _MessengerScreenState extends State<MessengerScreen>
   };
 
   @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-
-    _slideAnimation =
-        Tween<Offset>(
-          begin: Offset.zero,
-          end: const Offset(1.0, 0.0), // slide right
-        ).animate(
-          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-        );
-  }
-
-  @override
   void dispose() {
     _searchController.dispose();
-    _animationController.dispose();
     super.dispose();
-  }
-
-  void _onHorizontalDragUpdate(DragUpdateDetails details) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final delta = details.primaryDelta! / screenWidth;
-    _animationController.value = (_animationController.value + delta).clamp(
-      0.0,
-      1.0,
-    );
-  }
-
-  void _onHorizontalDragEnd(DragEndDetails details) {
-    if (_animationController.value > 0.3 ||
-        (details.primaryVelocity ?? 0) > 500) {
-      _animationController.forward().then((_) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const BottomNavBarScreen()),
-        );
-      });
-    } else {
-      _animationController.reverse();
-    }
   }
 
   List<UserModel> _getFilteredUsers() {
@@ -181,10 +137,7 @@ class _MessengerScreenState extends State<MessengerScreen>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
-          ),
+          onPressed: widget.onSwipeBack ?? () => Navigator.pop(context),
         ),
         title: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -227,18 +180,7 @@ class _MessengerScreenState extends State<MessengerScreen>
           ),
         ],
       ),
-      body: GestureDetector(
-        onHorizontalDragUpdate: _onHorizontalDragUpdate,
-        onHorizontalDragEnd: _onHorizontalDragEnd,
-        child: Stack(
-          children: [
-            SlideTransition(
-              position: _slideAnimation,
-              child: _buildContent(filteredMessages, searchResults),
-            ),
-          ],
-        ),
-      ),
+      body: _buildContent(filteredMessages, searchResults),
     );
   }
 

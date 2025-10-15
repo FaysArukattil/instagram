@@ -520,7 +520,7 @@ class _ReelItemState extends State<ReelItem>
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
               SwipeableProfileScreen(user: user),
-          transitionDuration: Duration.zero, // Instant transition
+          transitionDuration: Duration(seconds: 2), // Instant transition
           reverseTransitionDuration: const Duration(milliseconds: 300),
         ),
       ).then((_) {
