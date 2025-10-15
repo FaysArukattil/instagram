@@ -258,6 +258,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   maxLines: null,
                   textCapitalization: TextCapitalization.sentences,
+                  onChanged: (value) {
+                    setState(() {});
+                  },
                 ),
               ),
             ),

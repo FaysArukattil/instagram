@@ -211,6 +211,22 @@ class _HomeScreenState extends State<HomeScreen>
                 onSwipeBack: () {
                   _animationController.reverse();
                 },
+                onHorizontalDragUpdate: (details) {
+                  setState(() {
+                    final newValue =
+                        _animationController.value +
+                        (details.primaryDelta! / -screenWidth);
+                    _animationController.value = newValue.clamp(0.0, 1.0);
+                  });
+                },
+                onHorizontalDragEnd: (details) {
+                  final velocity = details.primaryVelocity ?? 0;
+                  if (_animationController.value < 0.6 || velocity > 700) {
+                    _animationController.reverse();
+                  } else {
+                    _animationController.forward();
+                  }
+                },
               ),
             ),
           ],
@@ -233,10 +249,8 @@ class _HomeScreenState extends State<HomeScreen>
         final velocity = details.primaryVelocity ?? 0;
 
         if (_animationController.value > 0.4 || velocity < -700) {
-          // Complete swipe to messenger
           _animationController.forward();
         } else {
-          // Cancel swipe, return to home
           _animationController.reverse();
         }
       },

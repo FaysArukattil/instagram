@@ -5,8 +5,15 @@ import 'package:instagram/views/chatscreen/chatscreen.dart';
 
 class MessengerScreen extends StatefulWidget {
   final VoidCallback? onSwipeBack;
+  final ValueChanged<DragUpdateDetails>? onHorizontalDragUpdate;
+  final ValueChanged<DragEndDetails>? onHorizontalDragEnd;
 
-  const MessengerScreen({super.key, this.onSwipeBack});
+  const MessengerScreen({
+    super.key,
+    this.onSwipeBack,
+    this.onHorizontalDragUpdate,
+    this.onHorizontalDragEnd,
+  });
 
   @override
   State<MessengerScreen> createState() => _MessengerScreenState();
@@ -107,48 +114,48 @@ class _MessengerScreenState extends State<MessengerScreen> {
   }
 
   List<Map<String, dynamic>> _getFilteredMessages() {
-    if (searchQuery.isEmpty) {
-      return tabMessages[selectedTab] ?? [];
-    }
+    if (searchQuery.isEmpty) return tabMessages[selectedTab] ?? [];
     final query = searchQuery.toLowerCase();
     final messages = tabMessages[selectedTab] ?? [];
-
-    return messages.where((messageData) {
-      final user = DummyData.getUserById(messageData['userId']);
+    return messages.where((msg) {
+      final user = DummyData.getUserById(msg['userId']);
       if (user == null) return false;
-
       return user.username.toLowerCase().contains(query) ||
           user.name.toLowerCase().contains(query) ||
-          messageData['message'].toString().toLowerCase().contains(query);
+          msg['message'].toString().toLowerCase().contains(query);
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final filteredMessages = _getFilteredMessages();
-    final List<UserModel> searchResults = searchQuery.isNotEmpty
-        ? List<UserModel>.from(_getFilteredUsers())
+    final searchResults = searchQuery.isNotEmpty
+        ? _getFilteredUsers()
         : <UserModel>[];
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return GestureDetector(
+      onHorizontalDragUpdate: widget.onHorizontalDragUpdate,
+      onHorizontalDragEnd: widget.onHorizontalDragEnd,
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: widget.onSwipeBack ?? () => Navigator.pop(context),
-        ),
-        title: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: widget.onSwipeBack ?? () => Navigator.pop(context),
+          ),
+          title: Row(
             children: [
-              Text(
-                DummyData.currentUser.username,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  DummyData.currentUser.username,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
                 ),
               ),
               const SizedBox(width: 4),
@@ -164,278 +171,166 @@ class _MessengerScreenState extends State<MessengerScreen> {
               ),
             ],
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.more_vert, color: Colors.black),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: const Icon(Icons.trending_up, color: Colors.black),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit_square, color: Colors.black),
+              onPressed: () {},
+            ),
+          ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () {},
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildSearchBar(),
+              if (searchQuery.isEmpty) _buildStoriesAndTabs(),
+              _buildMessageList(filteredMessages, searchResults),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.trending_up, color: Colors.black),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit_square, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
+        ),
       ),
-      body: _buildContent(filteredMessages, searchResults),
     );
   }
 
-  Widget _buildContent(
-    List<Map<String, dynamic>> filteredMessages,
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (val) => setState(() => searchQuery = val),
+                decoration: InputDecoration(
+                  hintText: 'Search',
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  suffixIcon: searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 20),
+                          onPressed: () {
+                            setState(() {
+                              _searchController.clear();
+                              searchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Icon(Icons.video_call, size: 32, color: Colors.black),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStoriesAndTabs() {
+    return Column(
+      children: [
+        SizedBox(
+          height: 110,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: [
+              _buildNoteItem(
+                image: DummyData.currentUser.profileImage,
+                label: 'Your note',
+                noteText: 'Weekend\nplans?',
+              ),
+              _buildStoryItem(
+                image: DummyData.users[1].profileImage,
+                label: DummyData.users[1].name.split(' ')[0],
+                noteText: 'Blabla...\npt829!',
+              ),
+              _buildStoryItem(
+                image: DummyData.users[2].profileImage,
+                label: DummyData.users[2].name.split(' ')[0],
+                isOnline: true,
+              ),
+              _buildStoryItem(
+                image: DummyData.users[9].profileImage,
+                label: DummyData.users[9].name.split(' ')[0],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 44,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: tabMessages.keys.map((tab) {
+              final isSelected = selectedTab == tab;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _buildTab(tab, isSelected),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMessageList(
+    List<Map<String, dynamic>> messages,
     List<UserModel> searchResults,
   ) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (value) {
-                        setState(() {
-                          searchQuery = value;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Search',
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: Colors.grey[600],
-                          size: 20,
-                        ),
-                        suffixIcon: searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(
-                                  Icons.clear,
-                                  color: Colors.grey[600],
-                                  size: 20,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _searchController.clear();
-                                    searchQuery = '';
-                                  });
-                                },
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Filter',
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Search results
-          if (searchQuery.isNotEmpty && searchResults.isNotEmpty) ...[
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                'Users',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-            ...List.generate(searchResults.length, (index) {
-              final user = searchResults[index];
-              return _buildMessageItem(
-                user: user,
-                message: user.bio.isEmpty ? 'Tap to message' : user.bio,
-                time: '',
-                hasUnread: false,
-              );
-            }),
-          ],
-
-          // Stories & tabs
-          if (searchQuery.isEmpty) ...[
-            SizedBox(
-              height: 110,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: [
-                  _buildNoteItem(
-                    image: DummyData.currentUser.profileImage,
-                    label: 'Your note',
-                    noteText: 'Weekend\nplans?',
-                  ),
-                  _buildStoryItem(
-                    image: DummyData.users[1].profileImage,
-                    label: DummyData.users[1].name.split(' ')[0],
-                    noteText: 'Blabla...\npt829!',
-                  ),
-                  _buildStoryItem(
-                    image: DummyData.users[2].profileImage,
-                    label: DummyData.users[2].name.split(' ')[0],
-                    isOnline: true,
-                  ),
-                  _buildStoryItem(
-                    image: DummyData.users[9].profileImage,
-                    label: DummyData.users[9].name.split(' ')[0],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 44,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: [
-                  _buildTab('Primary', 14),
-                  const SizedBox(width: 8),
-                  _buildTab('General', 0),
-                  const SizedBox(width: 8),
-                  _buildTab('Requests', 1),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-
-          // Messages
-          if (searchQuery.isEmpty || filteredMessages.isNotEmpty) ...[
-            if (searchQuery.isNotEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Text(
-                  'Messages',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ...List.generate(filteredMessages.length, (index) {
-              final messageData = filteredMessages[index];
-              final user = DummyData.getUserById(messageData['userId']);
-              if (user == null) return const SizedBox.shrink();
-              return _buildMessageItem(
-                user: user,
-                message: messageData['message'],
-                time: messageData['time'],
-                hasUnread: messageData['hasUnread'] ?? false,
-                isMuted: messageData['isMuted'] ?? false,
-                showCamera: messageData['showCamera'] ?? false,
-                showPlay: messageData['showPlay'] ?? false,
-              );
-            }),
-          ],
-
-          // No results
-          if (searchQuery.isNotEmpty &&
-              searchResults.isEmpty &&
-              filteredMessages.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(32),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No results found',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Try searching for people or messages',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
+    final itemCount = searchResults.isNotEmpty
+        ? searchResults.length
+        : messages.length;
+    return ListView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        if (searchResults.isNotEmpty) {
+          return _buildMessageItemFromUser(searchResults[index]);
+        }
+        return _buildMessageItemFromData(messages[index]);
+      },
     );
   }
 
-  // ----------------- Tabs -----------------
-  Widget _buildTab(String label, int count) {
-    final isSelected = selectedTab == label;
+  Widget _buildTab(String label, bool isSelected) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedTab = label;
-        });
-      },
+      onTap: () => setState(() => selectedTab = label),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? Colors.blue[50] : Colors.grey[100],
           borderRadius: BorderRadius.circular(22),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (count > 0 && isSelected)
-              Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.only(right: 6),
-                decoration: const BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.blue : Colors.black,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                fontSize: 15,
-              ),
-            ),
-            if (count > 0)
-              Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(
-                  count.toString(),
-                  style: TextStyle(
-                    color: isSelected ? Colors.blue : Colors.black,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-          ],
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.blue : Colors.black,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+          ),
         ),
       ),
     );
   }
 
-  // ----------------- Note -----------------
   Widget _buildNoteItem({
     required String image,
     required String label,
@@ -445,13 +340,67 @@ class _MessengerScreenState extends State<MessengerScreen> {
       padding: const EdgeInsets.only(right: 16),
       child: Column(
         children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              CircleAvatar(radius: 32, backgroundImage: NetworkImage(image)),
+              Positioned(
+                top: -18,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    noteText,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w500,
+                      height: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
           SizedBox(
             width: 64,
-            height: 64,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                CircleAvatar(radius: 32, backgroundImage: NetworkImage(image)),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStoryItem({
+    required String image,
+    required String label,
+    String? noteText,
+    bool isOnline = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 16),
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              CircleAvatar(radius: 32, backgroundImage: NetworkImage(image)),
+              if (noteText != null)
                 Positioned(
                   top: -18,
                   left: 0,
@@ -477,15 +426,27 @@ class _MessengerScreenState extends State<MessengerScreen> {
                     ),
                   ),
                 ),
-              ],
-            ),
+              if (isOnline)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
           SizedBox(
             width: 64,
             child: Text(
               label,
-              style: const TextStyle(fontSize: 12),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -496,100 +457,35 @@ class _MessengerScreenState extends State<MessengerScreen> {
     );
   }
 
-  // ----------------- Story -----------------
-  Widget _buildStoryItem({
-    required String image,
-    required String label,
-    String? noteText,
-    bool isOnline = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: Column(
-        children: [
-          SizedBox(
-            width: 64,
-            height: 64,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                CircleAvatar(radius: 32, backgroundImage: NetworkImage(image)),
-                if (noteText != null)
-                  Positioned(
-                    top: -18,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        noteText,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w500,
-                          height: 1.2,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                if (isOnline)
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          SizedBox(
-            width: 64,
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 12),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
+  Widget _buildMessageItemFromUser(UserModel user) {
+    return ListTile(
+      leading: CircleAvatar(
+        radius: 28,
+        backgroundImage: NetworkImage(user.profileImage),
+      ),
+      title: Text(user.username),
+      subtitle: Text(user.bio.isEmpty ? 'Tap to message' : user.bio),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatScreen(user: user)),
       ),
     );
   }
 
-  // ----------------- Message -----------------
-  Widget _buildMessageItem({
-    required UserModel user,
-    required String message,
-    required String time,
-    bool hasUnread = false,
-    bool isMuted = false,
-    bool showCamera = false,
-    bool showPlay = false,
-  }) {
+  Widget _buildMessageItemFromData(Map<String, dynamic> msgData) {
+    final user = DummyData.getUserById(msgData['userId']);
+    if (user == null) return const SizedBox.shrink();
+
+    final bool hasUnread = msgData['hasUnread'] ?? false;
+    final bool isMuted = msgData['isMuted'] ?? false;
+    final bool showCamera = msgData['showCamera'] ?? false;
+    final bool showPlay = msgData['showPlay'] ?? false;
+
     return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ChatScreen(user: user)),
-        );
-      },
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatScreen(user: user)),
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
@@ -625,7 +521,6 @@ class _MessengerScreenState extends State<MessengerScreen> {
                     user.username,
                     style: TextStyle(
                       fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
-                      fontSize: 15,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -633,10 +528,9 @@ class _MessengerScreenState extends State<MessengerScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          message,
+                          msgData['message'],
                           style: TextStyle(
                             color: hasUnread ? Colors.black : Colors.grey[600],
-                            fontSize: 14,
                             fontWeight: hasUnread
                                 ? FontWeight.w600
                                 : FontWeight.normal,
@@ -645,65 +539,58 @@ class _MessengerScreenState extends State<MessengerScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (time.isNotEmpty)
-                        Text(
-                          ' · $time',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
+                      if (isMuted)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4),
+                          child: Icon(
+                            Icons.volume_off,
+                            size: 16,
+                            color: Colors.grey,
                           ),
                         ),
-                      if (isMuted) ...[
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.volume_off,
-                          size: 16,
-                          color: Colors.grey[600],
-                        ),
-                      ],
                     ],
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 12),
-            if (showPlay)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  msgData['time'],
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
+                const SizedBox(height: 4),
+                Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.play_arrow, color: Colors.white, size: 16),
-                    SizedBox(width: 4),
-                    Text(
-                      'PLAY',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                  children: [
+                    if (showPlay)
+                      const Icon(
+                        Icons.play_arrow,
+                        color: Colors.grey,
+                        size: 20,
                       ),
-                    ),
+                    if (showCamera)
+                      const Icon(
+                        Icons.camera_alt_outlined,
+                        color: Colors.grey,
+                        size: 20,
+                      ),
+                    if (hasUnread && !showPlay && !showCamera)
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
                   ],
                 ),
-              )
-            else if (showCamera)
-              Icon(Icons.camera_alt_outlined, color: Colors.grey[600], size: 24)
-            else if (hasUnread)
-              Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
-                ),
-              ),
+              ],
+            ),
           ],
         ),
       ),
