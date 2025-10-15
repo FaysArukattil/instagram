@@ -1112,7 +1112,10 @@ class _SwipeableProfileScreenState extends State<SwipeableProfileScreen>
                   gradient: LinearGradient(
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
-                    colors: [Colors.black.withOpacity(0.3), Colors.transparent],
+                    colors: [
+                      Colors.black.withValues(alpha: .3),
+                      Colors.transparent,
+                    ],
                   ),
                 ),
               ),
