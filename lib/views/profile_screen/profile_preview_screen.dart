@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:instagram/views/share_profile_screen/share_profile_screen.dart';
 import 'package:instagram/widgets/universal_image.dart';
 import 'package:share_plus/share_plus.dart';
 
-class ProfilePreviewScreen extends StatelessWidget {
+class ProfilePreviewScreen extends StatefulWidget {
   final String imagePath;
   final String username;
   final String profileLink;
@@ -14,6 +15,15 @@ class ProfilePreviewScreen extends StatelessWidget {
     required this.username,
     required this.profileLink,
   });
+
+  @override
+  State<ProfilePreviewScreen> createState() => _ProfilePreviewScreenState();
+}
+
+class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
+    with SingleTickerProviderStateMixin {
+  double _scale = 1.0;
+  double _previousScale = 1.0;
 
   void _showShareOptions(BuildContext context) {
     showModalBottomSheet(
@@ -33,7 +43,7 @@ class ProfilePreviewScreen extends StatelessWidget {
                   style: TextStyle(color: Colors.white),
                 ),
                 onTap: () {
-                  Share.share(profileLink);
+                  Share.share(widget.profileLink);
                   Navigator.pop(context);
                 },
               ),
@@ -44,7 +54,9 @@ class ProfilePreviewScreen extends StatelessWidget {
                   style: TextStyle(color: Colors.white),
                 ),
                 onTap: () async {
-                  await Clipboard.setData(ClipboardData(text: profileLink));
+                  await Clipboard.setData(
+                    ClipboardData(text: widget.profileLink),
+                  );
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Profile link copied!')),
@@ -62,7 +74,13 @@ class ProfilePreviewScreen extends StatelessWidget {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  _showQRCode(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ShareProfileScreen(username: widget.username),
+                    ),
+                  );
                 },
               ),
             ],
@@ -72,126 +90,129 @@ class ProfilePreviewScreen extends StatelessWidget {
     );
   }
 
-  void _showQRCode(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) {
-        return Dialog(
-          backgroundColor: Colors.black87,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.qr_code_2_outlined,
-                  color: Colors.white,
-                  size: 120,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  username,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  profileLink,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Close',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  void _onScaleStart(ScaleStartDetails details) {
+    _previousScale = _scale;
+  }
+
+  void _onScaleUpdate(ScaleUpdateDetails details) {
+    setState(() {
+      _scale = (_previousScale * details.scale).clamp(1.0, 4.0);
+    });
+  }
+
+  void _onScaleEnd(ScaleEndDetails details) {
+    // Animate back to original size
+    Future.delayed(Duration.zero, () {
+      setState(() {
+        _scale = 1.0;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final double baseSize = MediaQuery.of(context).size.width * 0.85;
+
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.95),
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Tap background to dismiss
+            // Tap outside to close
             Positioned.fill(
               child: GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: Container(color: Colors.transparent),
+                child: Container(color: Colors.black.withOpacity(0.85)),
               ),
             ),
 
-            // Main content
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Hero(
-                  tag: 'profile_${username}_image',
-                  child: ClipOval(
-                    child: InteractiveViewer(
-                      minScale: 1.0,
-                      maxScale: 3.5,
-                      panEnabled: false,
-                      child: UniversalImage(
-                        imagePath: imagePath,
-                        width: 180,
-                        height: 180,
-                        fit: BoxFit.cover,
+            // ✅ Zoomable circular profile picture (returns to normal)
+            Center(
+              child: Hero(
+                tag: 'profile_${widget.username}_image',
+                child: GestureDetector(
+                  onScaleStart: _onScaleStart,
+                  onScaleUpdate: _onScaleUpdate,
+                  onScaleEnd: _onScaleEnd,
+                  child: AnimatedScale(
+                    scale: _scale,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOut,
+                    child: ClipOval(
+                      child: Container(
+                        width: baseSize,
+                        height: baseSize,
+                        decoration: const BoxDecoration(shape: BoxShape.circle),
+                        child: UniversalImage(
+                          imagePath: widget.imagePath,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  username,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 24),
+              ),
+            ),
 
-                // Action buttons (Instagram-like)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildOption(Icons.person_add, 'Following', () {}),
-                    const SizedBox(width: 24),
-                    _buildOption(Icons.send_outlined, 'Share', () {
-                      _showShareOptions(context);
-                    }),
-                    const SizedBox(width: 24),
-                    _buildOption(Icons.link, 'Copy link', () async {
-                      await Clipboard.setData(ClipboardData(text: profileLink));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Profile link copied!')),
-                      );
-                    }),
-                    const SizedBox(width: 24),
-                    _buildOption(Icons.qr_code_2_outlined, 'QR', () {
-                      _showQRCode(context);
-                    }),
-                  ],
-                ),
-              ],
+            // Username & options
+            Positioned(
+              bottom: 80,
+              left: 0,
+              right: 0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.username,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildOption(Icons.person_add, 'Following', () {}),
+                      const SizedBox(width: 28),
+                      _buildOption(Icons.send_outlined, 'Share', () {
+                        _showShareOptions(context);
+                      }),
+                      const SizedBox(width: 28),
+                      _buildOption(Icons.link, 'Copy link', () async {
+                        await Clipboard.setData(
+                          ClipboardData(text: widget.profileLink),
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Profile link copied!')),
+                        );
+                      }),
+                      const SizedBox(width: 28),
+                      _buildOption(Icons.qr_code_2_outlined, 'QR', () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ShareProfileScreen(username: widget.username),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Close button
+            Positioned(
+              top: 20,
+              right: 20,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: const Icon(Icons.close, color: Colors.white, size: 28),
+              ),
             ),
           ],
         ),
