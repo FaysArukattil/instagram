@@ -8,6 +8,7 @@ import 'package:instagram/views/edit_profile_screen/edit_profil_screen.dart';
 import 'package:instagram/views/follower_screen/follower_screen.dart';
 import 'package:instagram/views/post_screen/post_screen.dart';
 import 'package:instagram/views/reels_screen/reels_screen.dart';
+import 'package:instagram/views/settings_screen/settingscreen.dart';
 import 'package:instagram/views/share_profile_screen/share_profile_screen.dart';
 import 'package:instagram/views/story_viewer_screen/story_viewer_screen.dart';
 import 'package:instagram/widgets/universal_image.dart';
@@ -93,13 +94,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
       // ✅ FIX: Load user's reposts
       userReposts = DummyData.getRepostsForUser(currentUser.id);
 
-      // Debug output
-      debugPrint('=== Profile Data Loaded ===');
-      debugPrint('User Posts: ${userPosts.length}');
-      debugPrint('User Reels: ${userReels.length}');
-      debugPrint('User Reposts: ${userReposts.length}');
-      debugPrint('Repost IDs: ${DummyData.userReposts[currentUser.id]}');
-
       // Update counts
       _updateFollowerCounts();
 
@@ -180,57 +174,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
       // No story, navigate to add post/story
       _navigateToAddPost();
     }
-  }
-
-  void _showOptionsMenu() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.archive),
-              title: const Text('Archive'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.access_time),
-              title: const Text('Your activity'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.qr_code),
-              title: const Text('QR code'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.bookmark_border),
-              title: const Text('Saved'),
-              onTap: () => Navigator.pop(context),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
   }
 
   String _formatCount(int count) {
@@ -325,7 +268,14 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                   ),
                   IconButton(
                     icon: const Icon(Icons.menu, color: Colors.black),
-                    onPressed: _showOptionsMenu,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Settingscreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
