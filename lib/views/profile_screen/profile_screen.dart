@@ -4,10 +4,11 @@ import 'package:instagram/models/post_model.dart';
 import 'package:instagram/models/reel_model.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/views/follower_screen/follower_screen.dart';
+import 'package:instagram/views/profile_screen/profile_preview_screen.dart';
 import 'package:instagram/views/reels_screen/reels_screen.dart';
 import 'package:instagram/views/post_screen/post_screen.dart';
 import 'package:instagram/views/chatscreen/chatscreen.dart';
-import 'package:instagram/widgets/universal_image.dart'; // ✅ Added import
+import 'package:instagram/widgets/universal_image.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -34,11 +35,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     setState(() {
       isFollowing = !isFollowing;
       widget.user.isFollowing = isFollowing;
-      if (isFollowing) {
-        widget.user.followers += 1;
-      } else {
-        widget.user.followers -= 1;
-      }
+      widget.user.followers += isFollowing ? 1 : -1;
     });
   }
 
@@ -86,6 +83,21 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     );
   }
 
+  void _openProfilePreview() {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 400),
+        reverseTransitionDuration: const Duration(milliseconds: 250),
+        pageBuilder: (_, __, ___) => ProfilePreviewScreen(
+          imagePath: widget.user.profileImage,
+          username: widget.user.username,
+          profileLink: "https://instagram.com/${widget.user.username}",
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final userPosts = DummyData.posts
@@ -117,20 +129,26 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       ),
       body: Column(
         children: [
-          // Profile Header
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
                 Row(
                   children: [
-                    /// ✅ Changed to UniversalImage (CircleAvatar replaced)
-                    ClipOval(
-                      child: UniversalImage(
-                        imagePath: widget.user.profileImage,
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
+                    /// ✅ Profile image with Hero
+                    GestureDetector(
+                      onTap: _openProfilePreview,
+                      onLongPress: _openProfilePreview,
+                      child: Hero(
+                        tag: 'profile_${widget.user.username}_image',
+                        child: ClipOval(
+                          child: UniversalImage(
+                            imagePath: widget.user.profileImage,
+                            width: 85,
+                            height: 85,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 24),
@@ -212,8 +230,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
               ],
             ),
           ),
-
-          // Tabs
           TabBar(
             controller: _tabController,
             indicatorColor: Colors.black,
@@ -260,7 +276,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     if (posts.isEmpty) {
       return const Center(child: Text('No posts yet'));
     }
-
     return GridView.builder(
       padding: EdgeInsets.zero,
       physics: const BouncingScrollPhysics(),
@@ -274,8 +289,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         final post = posts[index];
         return GestureDetector(
           onTap: () => _openPostScreen(posts, index),
-
-          /// ✅ Replaced Image.network → UniversalImage
           child: UniversalImage(imagePath: post.images[0], fit: BoxFit.cover),
         );
       },
@@ -286,7 +299,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     if (reels.isEmpty) {
       return const Center(child: Text('No reels yet'));
     }
-
     return GridView.builder(
       padding: EdgeInsets.zero,
       physics: const BouncingScrollPhysics(),
@@ -298,7 +310,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       itemCount: reels.length,
       itemBuilder: (context, index) {
         final reel = reels[index];
-
         return GestureDetector(
           onTap: () {
             final fullReelIndex = DummyData.reels.indexWhere(
@@ -309,7 +320,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              /// ✅ Replaced Image.network → UniversalImage
               UniversalImage(imagePath: reel.thumbnailUrl, fit: BoxFit.cover),
               const Icon(
                 Icons.play_circle_outline,
