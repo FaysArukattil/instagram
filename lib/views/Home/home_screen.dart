@@ -10,8 +10,6 @@ import 'package:instagram/views/share_bottom_sheet/share_bottom_sheet.dart';
 import 'package:instagram/views/story_viewer_screen/story_viewer_screen.dart';
 import 'package:instagram/widgets/post_widget.dart';
 import 'package:instagram/widgets/story_avatar.dart';
-
-// RouteObserver from profile_tab_screen
 import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,7 +23,6 @@ class _HomeScreenState extends State<HomeScreen>
     with RouteAware, SingleTickerProviderStateMixin {
   late List<PostModel> posts;
   late AnimationController _animationController;
-  late Animation<double> _animation;
 
   @override
   void initState() {
@@ -35,10 +32,6 @@ class _HomeScreenState extends State<HomeScreen>
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
-    );
-
-    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
   }
 
@@ -54,12 +47,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   @override
-  void didUpdateWidget(HomeScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _loadData();
-  }
-
-  @override
   void dispose() {
     routeObserver.unsubscribe(this);
     _animationController.dispose();
@@ -68,7 +55,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void didPopNext() => _loadData();
-
   @override
   void didPush() => _loadData();
 
@@ -184,6 +170,14 @@ class _HomeScreenState extends State<HomeScreen>
     _loadData(shuffle: true);
   }
 
+  void _runSmoothAnimation({required bool open}) {
+    _animationController.animateTo(
+      open ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -191,203 +185,190 @@ class _HomeScreenState extends State<HomeScreen>
       (s) => s.userId == DummyData.currentUser.id,
     );
 
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        final offset = -screenWidth * _animation.value;
-
-        return Stack(
-          children: [
-            // HomeScreen slides left
-            Transform.translate(
-              offset: Offset(offset, 0),
-              child: _buildHomeContent(currentUserHasStory, screenWidth),
-            ),
-
-            // Messenger slides in from right
-            Transform.translate(
-              offset: Offset(screenWidth + offset, 0),
-              child: MessengerScreen(
-                onSwipeBack: () {
-                  _animationController.reverse();
-                },
-                onHorizontalDragUpdate: (details) {
-                  setState(() {
-                    final newValue =
-                        _animationController.value +
-                        (details.primaryDelta! / -screenWidth);
-                    _animationController.value = newValue.clamp(0.0, 1.0);
-                  });
-                },
-                onHorizontalDragEnd: (details) {
-                  final velocity = details.primaryVelocity ?? 0;
-                  if (_animationController.value < 0.6 || velocity > 700) {
-                    _animationController.reverse();
-                  } else {
-                    _animationController.forward();
-                  }
-                },
-              ),
-            ),
-          ],
-        );
+    return GestureDetector(
+      onHorizontalDragUpdate: (details) {
+        final delta = details.primaryDelta ?? 0;
+        final newValue = _animationController.value + (delta / -screenWidth);
+        _animationController.value = newValue.clamp(0.0, 1.0);
       },
+      onHorizontalDragEnd: (details) {
+        final velocity = details.primaryVelocity ?? 0.0;
+
+        if (velocity.abs() > 150) {
+          // fling in the swipe direction
+          final open = velocity < 0; // left swipe opens messenger
+          _animationController.fling(velocity: open ? 1.0 : -1.0);
+        } else {
+          // snap based on current position
+          if (_animationController.value > 0.2) {
+            _animationController.forward();
+          } else {
+            _animationController.reverse();
+          }
+        }
+      },
+
+      child: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          final offset = -screenWidth * _animationController.value;
+          final scale = 1 - (0.05 * _animationController.value);
+          final borderRadius = 20.0 * _animationController.value;
+
+          return Stack(
+            children: [
+              Transform.translate(
+                offset: Offset(offset, 0),
+                child: Transform.scale(
+                  scale: scale,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(borderRadius),
+                    child: _buildHomeContent(currentUserHasStory, screenWidth),
+                  ),
+                ),
+              ),
+              Transform.translate(
+                offset: Offset(screenWidth + offset, 0),
+                child: MessengerScreen(
+                  onSwipeBack: () => _runSmoothAnimation(open: false),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
   Widget _buildHomeContent(bool currentUserHasStory, double screenWidth) {
-    return GestureDetector(
-      onHorizontalDragUpdate: (details) {
-        setState(() {
-          final newValue =
-              _animationController.value +
-              (details.primaryDelta! / -screenWidth);
-          _animationController.value = newValue.clamp(0.0, 1.0);
-        });
-      },
-      onHorizontalDragEnd: (details) {
-        final velocity = details.primaryVelocity ?? 0;
-
-        if (_animationController.value > 0.4 || velocity < -700) {
-          _animationController.forward();
-        } else {
-          _animationController.reverse();
-        }
-      },
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          title: const Text(
-            'Instagram',
-            style: TextStyle(
-              fontFamily: 'Billabong',
-              fontSize: 32,
-              color: Colors.black,
-            ),
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: const Text(
+          'Instagram',
+          style: TextStyle(
+            fontFamily: 'Billabong',
+            fontSize: 32,
+            color: Colors.black,
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.favorite_border, color: Colors.black),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationsScreen(),
-                  ),
-                );
-              },
-            ),
-            Stack(
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.messenger_outline,
-                    color: Colors.black,
-                  ),
-                  onPressed: () {
-                    _animationController.forward();
-                  },
-                ),
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 18,
-                      minHeight: 18,
-                    ),
-                    child: const Text(
-                      '15',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
         ),
-        body: RefreshIndicator(
-          onRefresh: _refreshPosts,
-          displacement: 60,
-          edgeOffset: 10,
-          color: Colors.grey[700],
-          backgroundColor: Colors.white,
-          strokeWidth: 2.2,
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
-              SliverToBoxAdapter(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.favorite_border, color: Colors.black),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsScreen(),
+                ),
+              );
+            },
+          ),
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.messenger_outline, color: Colors.black),
+                onPressed: () {
+                  _runSmoothAnimation(open: true);
+                },
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
                 child: Container(
-                  height: 110,
-                  margin: const EdgeInsets.only(bottom: 2),
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  child: const Text(
+                    '15',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                     ),
-                    itemCount:
-                        1 + DummyData.users.where((u) => u.hasStory).length,
-                    itemBuilder: (context, storyIndex) {
-                      if (storyIndex == 0) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: StoryAvatar(
-                            user: DummyData.currentUser,
-                            hasStory: currentUserHasStory,
-                            isCurrentUser: true,
-                            onTap: _openMyStory,
-                            onAddStory: _addToStory,
-                          ),
-                        );
-                      }
-                      final storiesUsers = DummyData.users
-                          .where((u) => u.hasStory)
-                          .toList();
-                      final user = storiesUsers[storyIndex - 1];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: StoryAvatar(
-                          user: user,
-                          hasStory: true,
-                          onTap: () => _openStory(user.id),
-                        ),
-                      );
-                    },
                   ),
                 ),
-              ),
-              const SliverToBoxAdapter(
-                child: Divider(height: 1, thickness: 0.5),
-              ),
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  return PostWidget(
-                    post: posts[index],
-                    onLike: _handleLike,
-                    onProfileTap: _openProfile,
-                    onComment: _openComments,
-                    onShare: _openShare,
-                  );
-                }, childCount: posts.length),
               ),
             ],
           ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _refreshPosts,
+        displacement: 60,
+        edgeOffset: 10,
+        color: Colors.grey[700],
+        backgroundColor: Colors.white,
+        strokeWidth: 2.2,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Container(
+                height: 110,
+                margin: const EdgeInsets.only(bottom: 2),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 8,
+                  ),
+                  itemCount:
+                      1 + DummyData.users.where((u) => u.hasStory).length,
+                  itemBuilder: (context, storyIndex) {
+                    if (storyIndex == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: StoryAvatar(
+                          user: DummyData.currentUser,
+                          hasStory: currentUserHasStory,
+                          isCurrentUser: true,
+                          onTap: _openMyStory,
+                          onAddStory: _addToStory,
+                        ),
+                      );
+                    }
+                    final storiesUsers = DummyData.users
+                        .where((u) => u.hasStory)
+                        .toList();
+                    final user = storiesUsers[storyIndex - 1];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: StoryAvatar(
+                        user: user,
+                        hasStory: true,
+                        onTap: () => _openStory(user.id),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: Divider(height: 1, thickness: 0.5)),
+            SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                return PostWidget(
+                  post: posts[index],
+                  onLike: _handleLike,
+                  onProfileTap: _openProfile,
+                  onComment: _openComments,
+                  onShare: _openShare,
+                );
+              }, childCount: posts.length),
+            ),
+          ],
         ),
       ),
     );
