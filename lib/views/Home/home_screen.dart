@@ -188,19 +188,27 @@ class _HomeScreenState extends State<HomeScreen>
     return GestureDetector(
       onHorizontalDragUpdate: (details) {
         final delta = details.primaryDelta ?? 0;
-        final newValue = _animationController.value + (delta / -screenWidth);
+        final newValue =
+            _animationController.value + (delta / -(screenWidth * 0.8));
+
         _animationController.value = newValue.clamp(0.0, 1.0);
       },
       onHorizontalDragEnd: (details) {
         final velocity = details.primaryVelocity ?? 0.0;
 
-        if (velocity.abs() > 150) {
-          // fling in the swipe direction
-          final open = velocity < 0; // left swipe opens messenger
-          _animationController.fling(velocity: open ? 1.0 : -1.0);
+        if (velocity.abs() > 100) {
+          // Swipe requires less flick speed now
+          final velocity = details.primaryVelocity ?? 0.0;
+          final open = _animationController.value > 0.5 || velocity < -200;
+
+          _animationController.animateTo(
+            open ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeOutCubic,
+          );
         } else {
-          // snap based on current position
-          if (_animationController.value > 0.2) {
+          if (_animationController.value > 0.15) {
+            // lower threshold, opens easier
             _animationController.forward();
           } else {
             _animationController.reverse();
