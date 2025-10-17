@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/views/commentscreen/commentscreen.dart';
@@ -188,57 +189,67 @@ class _HomeScreenState extends State<HomeScreen>
     return GestureDetector(
       onHorizontalDragUpdate: (details) {
         final delta = details.primaryDelta ?? 0;
-        final newValue =
-            _animationController.value + (delta / -(screenWidth * 0.8));
-
-        _animationController.value = newValue.clamp(0.0, 1.0);
+        _animationController.value -= delta / MediaQuery.of(context).size.width;
       },
       onHorizontalDragEnd: (details) {
-        final velocity = details.primaryVelocity ?? 0.0;
+        final velocity = details.velocity.pixelsPerSecond.dx;
 
-        if (velocity.abs() > 100) {
-          // Swipe requires less flick speed now
-          final velocity = details.primaryVelocity ?? 0.0;
-          final open = _animationController.value > 0.5 || velocity < -200;
-
+        if (velocity < -100) {
+          // swipe left → open
           _animationController.animateTo(
-            open ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeOutCubic,
+            1.0,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        } else if (velocity > 100) {
+          // swipe right → close
+          _animationController.animateTo(
+            0.0,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
           );
         } else {
-          if (_animationController.value > 0.15) {
-            // lower threshold, opens easier
-            _animationController.forward();
+          // snap to nearest
+          if (_animationController.value >= 0.5) {
+            _animationController.animateTo(
+              1.0,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+            );
           } else {
-            _animationController.reverse();
+            _animationController.animateTo(
+              0.0,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+            );
           }
         }
       },
-
       child: AnimatedBuilder(
         animation: _animationController,
         builder: (context, child) {
+          final screenWidth = MediaQuery.of(context).size.width;
           final offset = -screenWidth * _animationController.value;
-          final scale = 1 - (0.05 * _animationController.value);
-          final borderRadius = 20.0 * _animationController.value;
 
           return Stack(
             children: [
               Transform.translate(
                 offset: Offset(offset, 0),
-                child: Transform.scale(
-                  scale: scale,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(borderRadius),
-                    child: _buildHomeContent(currentUserHasStory, screenWidth),
+                child: _buildHomeContent(
+                  DummyData.stories.any(
+                    (s) => s.userId == DummyData.currentUser.id,
                   ),
+                  screenWidth,
                 ),
               ),
               Transform.translate(
                 offset: Offset(screenWidth + offset, 0),
                 child: MessengerScreen(
-                  onSwipeBack: () => _runSmoothAnimation(open: false),
+                  onSwipeBack: () => _animationController.animateTo(
+                    0.0,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOut,
+                  ),
                 ),
               ),
             ],
