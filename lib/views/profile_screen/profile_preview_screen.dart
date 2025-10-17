@@ -8,12 +8,16 @@ class ProfilePreviewScreen extends StatefulWidget {
   final String imagePath;
   final String username;
   final String profileLink;
+  final bool isFollowing;
+  final VoidCallback onFollowToggle;
 
   const ProfilePreviewScreen({
     super.key,
     required this.imagePath,
     required this.username,
     required this.profileLink,
+    required this.isFollowing,
+    required this.onFollowToggle,
   });
 
   @override
@@ -24,6 +28,20 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
     with SingleTickerProviderStateMixin {
   double _scale = 1.0;
   double _previousScale = 1.0;
+  late bool _isFollowing;
+
+  @override
+  void initState() {
+    super.initState();
+    _isFollowing = widget.isFollowing;
+  }
+
+  void _toggleFollowing() {
+    setState(() {
+      _isFollowing = !_isFollowing;
+    });
+    widget.onFollowToggle();
+  }
 
   void _showShareOptions(BuildContext context) {
     showModalBottomSheet(
@@ -43,7 +61,7 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
                   style: TextStyle(color: Colors.white),
                 ),
                 onTap: () {
-                  Share.share(widget.profileLink);
+                  SharePlus.instance.share(ShareParams());
                   Navigator.pop(context);
                 },
               ),
@@ -57,6 +75,7 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
                   await Clipboard.setData(
                     ClipboardData(text: widget.profileLink),
                   );
+                  if (!context.mounted) return;
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Profile link copied!')),
@@ -123,7 +142,7 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
             Positioned.fill(
               child: GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: Container(color: Colors.black.withOpacity(0.85)),
+                child: Container(color: Colors.black.withValues(alpha: .85)),
               ),
             ),
 
@@ -175,8 +194,14 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildOption(Icons.person_add, 'Following', () {}),
-                      const SizedBox(width: 28),
+                      ...[
+                        _buildOption(
+                          _isFollowing ? Icons.check_circle : Icons.person_add,
+                          _isFollowing ? 'Following' : 'Follow',
+                          _toggleFollowing,
+                        ),
+                        const SizedBox(width: 28),
+                      ],
                       _buildOption(Icons.send_outlined, 'Share', () {
                         _showShareOptions(context);
                       }),
@@ -185,6 +210,7 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
                         await Clipboard.setData(
                           ClipboardData(text: widget.profileLink),
                         );
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Profile link copied!')),
                         );

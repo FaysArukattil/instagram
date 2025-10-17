@@ -7,6 +7,7 @@ import 'package:instagram/views/add_post_screen/add_post_screen.dart';
 import 'package:instagram/views/edit_profile_screen/edit_profil_screen.dart';
 import 'package:instagram/views/follower_screen/follower_screen.dart';
 import 'package:instagram/views/post_screen/post_screen.dart';
+import 'package:instagram/views/profile_screen/profile_preview_screen.dart';
 import 'package:instagram/views/reels_screen/reels_screen.dart';
 import 'package:instagram/views/settings_screen/settingscreen.dart';
 import 'package:instagram/views/share_profile_screen/share_profile_screen.dart';
@@ -171,9 +172,54 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
         ),
       ).then((_) => _loadData());
     } else {
-      // No story, navigate to add post/story
-      _navigateToAddPost();
+      // No story, open profile preview
+      _openProfilePreview();
     }
+  }
+
+  void _handleProfilePictureLongPress() {
+    // Always open profile preview on long press
+    _openProfilePreview();
+  }
+
+  void _openProfilePreview() {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 450), // slower push
+        reverseTransitionDuration: const Duration(
+          milliseconds: 450,
+        ), // slower pop
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return ProfilePreviewScreen(
+            imagePath: currentUser.profileImage,
+            username: currentUser.username,
+            profileLink: "https://instagram.com/${currentUser.username}",
+            isFollowing: false,
+            onFollowToggle: () {},
+          );
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Smooth cubic curve for 60fps feel
+          final curvedAnimation = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeInOutCubic,
+          );
+
+          // Combine scaling + fading for zoom effect
+          return FadeTransition(
+            opacity: curvedAnimation,
+            child: ScaleTransition(
+              scale: Tween<double>(
+                begin: 0.9,
+                end: 1.0,
+              ).animate(curvedAnimation),
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
   }
 
   String _formatCount(int count) {
@@ -296,59 +342,72 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                             children: [
                               GestureDetector(
                                 onTap: _handleProfilePictureTap,
+                                onLongPress: _handleProfilePictureLongPress,
                                 child: Stack(
+                                  alignment: Alignment.center,
                                   children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: currentUser.hasStory
-                                            ? const LinearGradient(
-                                                colors: [
-                                                  Color(0xFFFBAA47),
-                                                  Color(0xFFD91A46),
-                                                  Color(0xFFA60F93),
-                                                ],
-                                                begin: Alignment.topRight,
-                                                end: Alignment.bottomLeft,
-                                              )
-                                            : null,
-                                      ),
-                                      padding: const EdgeInsets.all(3),
-                                      child: Container(
+                                    // Gradient border for story (outside Hero)
+                                    if (currentUser.hasStory)
+                                      Container(
+                                        width: 90,
+                                        height: 90,
                                         decoration: const BoxDecoration(
-                                          color: Colors.white,
                                           shape: BoxShape.circle,
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Color(0xFFFBAA47),
+                                              Color(0xFFD91A46),
+                                              Color(0xFFA60F93),
+                                            ],
+                                            begin: Alignment.topRight,
+                                            end: Alignment.bottomLeft,
+                                          ),
                                         ),
-                                        padding: const EdgeInsets.all(3),
-                                        child: ClipOval(
-                                          child: SizedBox(
-                                            width: 84,
-                                            height: 84,
-                                            child: UniversalImage(
-                                              imagePath:
-                                                  currentUser.profileImage,
-                                              fit: BoxFit.cover,
-                                              placeholder: Container(
-                                                color: Colors.grey[300],
-                                                child: const Center(
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                      ),
-                                                ),
+                                      ),
+
+                                    // White inner border
+                                    Container(
+                                      width: 84,
+                                      height: 84,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+
+                                    // Hero image (minimal widget for smooth animation)
+                                    Hero(
+                                      tag:
+                                          'profile_${currentUser.username}_image',
+                                      child: ClipOval(
+                                        child: SizedBox(
+                                          width: 80,
+                                          height: 80,
+                                          child: UniversalImage(
+                                            imagePath: currentUser.profileImage,
+                                            fit: BoxFit.cover,
+                                            placeholder: Container(
+                                              color: Colors.grey[300],
+                                              child: const Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
                                               ),
-                                              errorWidget: Container(
-                                                color: Colors.grey[200],
-                                                child: const Icon(
-                                                  Icons.person,
-                                                  size: 42,
-                                                ),
+                                            ),
+                                            errorWidget: Container(
+                                              color: Colors.grey[200],
+                                              child: const Icon(
+                                                Icons.person,
+                                                size: 42,
                                               ),
                                             ),
                                           ),
                                         ),
                                       ),
                                     ),
+
+                                    // Optional add post button at bottom right
                                     Positioned(
                                       right: 0,
                                       bottom: 0,
@@ -731,9 +790,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
       itemBuilder: (context, index) {
         final reel = userReels[index];
 
-        // ✅ FIX: Find the index in the FULL reels list, not the filtered list
-        DummyData.reels.indexWhere((r) => r.id == reel.id);
-
         return GestureDetector(
           onTap: () {
             final fullReelIndex = DummyData.reels.indexWhere(
@@ -746,13 +802,11 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                 builder: (context) => ReelsScreen(
                   initialIndex: fullReelIndex >= 0 ? fullReelIndex : 0,
                   isVisible: true,
-                  disableShuffle:
-                      true, // ✅ NEW: Disable shuffle when from profile
+                  disableShuffle: true,
                 ),
               ),
             ).then((_) => _loadData());
           },
-
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -840,7 +894,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
       itemCount: userReposts.length,
       itemBuilder: (context, index) {
         final reel = userReposts[index];
-        DummyData.reels.indexWhere((r) => r.id == reel.id);
 
         return GestureDetector(
           onTap: () {
@@ -854,8 +907,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                 builder: (context) => ReelsScreen(
                   initialIndex: fullReelIndex >= 0 ? fullReelIndex : 0,
                   isVisible: true,
-                  disableShuffle:
-                      true, // ✅ NEW: Disable shuffle when from profile
+                  disableShuffle: true,
                 ),
               ),
             ).then((_) => _loadData());

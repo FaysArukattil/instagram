@@ -93,6 +93,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           imagePath: widget.user.profileImage,
           username: widget.user.username,
           profileLink: "https://instagram.com/${widget.user.username}",
+          isFollowing: isFollowing,
+          onFollowToggle: _toggleFollow,
         ),
       ),
     );
@@ -312,10 +314,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         final reel = reels[index];
         return GestureDetector(
           onTap: () {
-            final fullReelIndex = DummyData.reels.indexWhere(
-              (r) => r.id == reel.id,
-            );
-            _openReelsScreen(reels, fullReelIndex >= 0 ? fullReelIndex : 0);
+            _openReelsScreen(reels, index);
           },
           child: Stack(
             alignment: Alignment.center,
