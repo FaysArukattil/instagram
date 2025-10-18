@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
+import 'package:instagram/models/reel_model.dart';
 import 'package:instagram/views/commentscreen/commentscreen.dart';
 import 'package:instagram/views/messenger_screen/messenger_screen.dart';
 import 'package:instagram/views/my_story_screen/my_story_screen.dart';
@@ -9,6 +10,7 @@ import 'package:instagram/views/profile_screen/profile_screen.dart';
 import 'package:instagram/views/share_bottom_sheet/share_bottom_sheet.dart';
 import 'package:instagram/views/story_viewer_screen/story_viewer_screen.dart';
 import 'package:instagram/widgets/post_widget.dart';
+import 'package:instagram/widgets/reel_widget.dart';
 import 'package:instagram/widgets/story_avatar.dart';
 import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
 
@@ -22,6 +24,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with RouteAware, SingleTickerProviderStateMixin {
   late List<PostModel> posts;
+  late List<ReelModel> reels;
   late AnimationController _animationController;
 
   @override
@@ -62,7 +65,11 @@ class _HomeScreenState extends State<HomeScreen>
     if (!mounted) return;
     setState(() {
       posts = List.from(DummyData.posts);
-      if (shuffle) posts.shuffle();
+      reels = List.from(DummyData.reels);
+      if (shuffle) {
+        posts.shuffle();
+        reels.shuffle();
+      }
     });
   }
 
@@ -178,11 +185,46 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Widget _buildFeedItem(BuildContext context, int index) {
+    // Calculate the pattern: every 3 items, insert a reel (pattern: post, post, reel)
+    final itemPosition = index % 3;
+
+    if (itemPosition == 2 && reels.isNotEmpty) {
+      // Display reel
+      final reelIndex = (index ~/ 3);
+      if (reelIndex < reels.length) {
+        return ReelWidget(
+          reel: reels[reelIndex],
+          onReelUpdated: () => _loadData(),
+        );
+      }
+    }
+
+    // Display post
+    final postIndex = index - (index ~/ 3);
+    if (postIndex < posts.length) {
+      return PostWidget(
+        post: posts[postIndex],
+        onLike: _handleLike,
+        onProfileTap: _openProfile,
+        onComment: _openComments,
+        onShare: _openShare,
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  int _calculateTotalItems() {
+    final postCount = posts.length;
+    final reelCount = reels.length;
+    // Total items = posts + reels (reels distributed every 3 items)
+    return postCount + reelCount;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final currentUserHasStory = DummyData.stories.any(
-      (s) => s.userId == DummyData.currentUser.id,
-    );
+    DummyData.stories.any((s) => s.userId == DummyData.currentUser.id);
 
     return GestureDetector(
       onHorizontalDragUpdate: (details) {
@@ -375,15 +417,10 @@ class _HomeScreenState extends State<HomeScreen>
             ),
             const SliverToBoxAdapter(child: Divider(height: 1, thickness: 0.5)),
             SliverList(
-              delegate: SliverChildBuilderDelegate((context, index) {
-                return PostWidget(
-                  post: posts[index],
-                  onLike: _handleLike,
-                  onProfileTap: _openProfile,
-                  onComment: _openComments,
-                  onShare: _openShare,
-                );
-              }, childCount: posts.length),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildFeedItem(context, index),
+                childCount: _calculateTotalItems(),
+              ),
             ),
           ],
         ),
