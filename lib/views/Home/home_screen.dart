@@ -15,7 +15,10 @@ import 'package:instagram/widgets/story_avatar.dart';
 import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final void Function(int, int, Duration)?
+  onNavigateToReels; // (tabIndex, reelIndex, startPosition)
+
+  const HomeScreen({super.key, this.onNavigateToReels});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -196,6 +199,8 @@ class _HomeScreenState extends State<HomeScreen>
         return ReelWidget(
           reel: reels[reelIndex],
           onReelUpdated: () => _loadData(),
+          onNavigateToReels: widget
+              .onNavigateToReels, // Pass the callback with both parameters
         );
       }
     }

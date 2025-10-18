@@ -20,6 +20,31 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   int _homeRefreshKey = 0;
   int _reelsRefreshKey = 0;
   int _profileRefreshKey = 0;
+  int _reelsInitialIndex = 0; // Track which reel to start at
+  Duration _reelsStartPosition = Duration.zero; // Track playback position
+
+  // Public method to navigate to a specific tab from child widgets
+  void _navigateToTab(int tabIndex, int reelIndex, Duration startPosition) {
+    debugPrint('📱 BottomNavBar: Received navigation request');
+    debugPrint(
+      '📱 Tab Index: $tabIndex, Reel Index: $reelIndex, Start Position: ${startPosition.inSeconds}s',
+    );
+
+    setState(() {
+      if (tabIndex == 3) {
+        // Navigating to reels tab
+        _reelsInitialIndex = reelIndex;
+        _reelsStartPosition = startPosition;
+        _reelsRefreshKey++;
+        debugPrint('📱 Set _reelsInitialIndex to: $reelIndex');
+        debugPrint(
+          '📱 Set _reelsStartPosition to: ${startPosition.inSeconds}s',
+        );
+        debugPrint('📱 Refresh key: $_reelsRefreshKey');
+      }
+      _currentIndex = tabIndex;
+    });
+  }
 
   List<Widget> _getScreens() {
     return [
@@ -31,7 +56,10 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
             SystemNavigator.pop();
           }
         },
-        child: HomeScreen(key: ValueKey('home_$_homeRefreshKey')),
+        child: HomeScreen(
+          key: ValueKey('home_$_homeRefreshKey'),
+          onNavigateToReels: _navigateToTab,
+        ),
       ),
 
       // 🔍 SEARCH — pressing back returns to home (only when visible)
@@ -63,6 +91,9 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
         child: ReelsScreen(
           key: ValueKey('reels_$_reelsRefreshKey'),
           isVisible: _currentIndex == 3,
+          initialIndex: _reelsInitialIndex,
+          disableShuffle: true, // Don't shuffle when navigating from home feed
+          startPosition: _reelsStartPosition,
         ),
       ),
 
@@ -106,7 +137,8 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
             // Refresh home
             _homeRefreshKey++;
           } else if (index == 3) {
-            // Refresh reels
+            // Refresh reels - start from beginning
+            _reelsInitialIndex = 0;
             _reelsRefreshKey++;
           } else if (index == 4) {
             // Refresh profile
@@ -117,6 +149,8 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
           if (index == 0) {
             _homeRefreshKey++;
           } else if (index == 3) {
+            // When manually switching to reels tab, start from beginning
+            _reelsInitialIndex = 0;
             _reelsRefreshKey++;
           } else if (index == 4) {
             // Always refresh profile when switching to it

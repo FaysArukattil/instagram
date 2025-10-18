@@ -3,21 +3,22 @@ import 'package:video_player/video_player.dart';
 import 'package:instagram/models/reel_model.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/data/dummy_data.dart';
-import 'package:instagram/views/reels_screen/reels_screen.dart';
 import 'package:instagram/views/commentscreen/commentscreen.dart';
 import 'package:instagram/views/share_bottom_sheet/share_bottom_sheet.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import 'dart:io';
 
 class ReelWidget extends StatefulWidget {
   final ReelModel reel;
   final VoidCallback? onReelUpdated;
-  final bool isVisible;
+  final void Function(int, int, Duration)?
+  onNavigateToReels; // (tabIndex, reelIndex, startPosition)
 
   const ReelWidget({
     super.key,
     required this.reel,
     this.onReelUpdated,
-    this.isVisible = true,
+    this.onNavigateToReels,
   });
 
   @override
@@ -33,6 +34,7 @@ class _ReelWidgetState extends State<ReelWidget>
   late Animation<double> _likeAnimation;
   bool _isPausedByUser = false;
   bool _showHeartAnimation = false;
+  bool _isVisible = false;
 
   @override
   void initState() {
@@ -77,12 +79,29 @@ class _ReelWidgetState extends State<ReelWidget>
           _isInitialized = true;
         });
 
-        if (widget.isVisible && !_isPausedByUser) {
+        // Only play if visible
+        if (_isVisible && !_isPausedByUser) {
           _controller.play();
         }
       }
     } catch (e) {
       debugPrint('Video initialization error: $e');
+    }
+  }
+
+  void _onVisibilityChanged(VisibilityInfo info) {
+    if (!mounted) return;
+
+    final wasVisible = _isVisible;
+    // Video is visible if more than 50% is on screen
+    _isVisible = info.visibleFraction > 0.5;
+
+    if (_isVisible != wasVisible) {
+      if (_isVisible && _isInitialized && !_isPausedByUser) {
+        _controller.play();
+      } else if (!_isVisible && _isInitialized) {
+        _controller.pause();
+      }
     }
   }
 
@@ -94,7 +113,7 @@ class _ReelWidgetState extends State<ReelWidget>
         _controller.pause();
       }
     } else if (state == AppLifecycleState.resumed) {
-      if (_isInitialized && widget.isVisible && !_isPausedByUser) {
+      if (_isInitialized && _isVisible && !_isPausedByUser) {
         _controller.play();
       }
     }
@@ -109,14 +128,6 @@ class _ReelWidgetState extends State<ReelWidget>
       _isInitialized = false;
       _initializeVideo();
       return;
-    }
-
-    if (widget.isVisible && !oldWidget.isVisible) {
-      if (!_isPausedByUser) {
-        _controller.play();
-      }
-    } else if (!widget.isVisible && oldWidget.isVisible) {
-      _controller.pause();
     }
   }
 
@@ -173,6 +184,29 @@ class _ReelWidgetState extends State<ReelWidget>
     }
   }
 
+  void _toggleFollow() {
+    setState(() {
+      final user = DummyData.getUserById(widget.reel.userId);
+      if (user != null) {
+        user.isFollowing = !user.isFollowing;
+        user.followers += user.isFollowing ? 1 : -1;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              user.isFollowing
+                  ? 'Following ${user.username}'
+                  : 'Unfollowed ${user.username}',
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: user.isFollowing ? Colors.blue : Colors.grey[700],
+          ),
+        );
+      }
+    });
+    widget.onReelUpdated?.call();
+  }
+
   void _openComments() {
     if (_controller.value.isPlaying) {
       _controller.pause();
@@ -198,7 +232,7 @@ class _ReelWidgetState extends State<ReelWidget>
       builder: (context) => CommentsScreen(post: tempPost),
     ).then((_) {
       _isPausedByUser = false;
-      if (widget.isVisible && mounted) {
+      if (_isVisible && mounted) {
         _controller.play();
       }
       setState(() {
@@ -268,40 +302,44 @@ class _ReelWidgetState extends State<ReelWidget>
       builder: (context) => ShareBottomSheet(post: tempPost),
     ).then((_) {
       _isPausedByUser = false;
-      if (widget.isVisible && mounted) {
+      if (_isVisible && mounted) {
         _controller.play();
       }
     });
   }
 
   void _openReelScreen() {
-    final reelIndex = DummyData.reels.indexWhere((r) => r.id == widget.reel.id);
-    if (reelIndex != -1) {
-      // Store the current playback position
-      final currentPosition = _controller.value.position;
+    if (widget.onNavigateToReels != null) {
+      // Store the current playback position before navigating
+      final currentPosition = _isInitialized
+          ? _controller.value.position
+          : Duration.zero;
 
-      if (_controller.value.isPlaying) {
+      // Find the index of this specific reel in the main reels list
+      final reelIndex = DummyData.reels.indexWhere(
+        (r) => r.id == widget.reel.id,
+      );
+
+      debugPrint('🎬 Tapped Reel ID: ${widget.reel.id}');
+      debugPrint('🎬 Current Position: ${currentPosition.inSeconds}s');
+      debugPrint('🎬 Found at index: $reelIndex in DummyData.reels');
+
+      // Pause the video before navigating
+      if (_isInitialized && _controller.value.isPlaying) {
         _controller.pause();
-        _isPausedByUser = true;
       }
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ReelsScreen(
-            initialIndex: reelIndex,
-            isVisible: true,
-            disableShuffle: true,
-            startPosition: currentPosition,
-          ),
-        ),
-      ).then((_) {
-        _isPausedByUser = false;
-        if (mounted && widget.isVisible) {
-          _controller.play();
-        }
-        widget.onReelUpdated?.call();
-      });
+      if (reelIndex != -1) {
+        debugPrint('🎬 Navigating to reels tab with index: $reelIndex');
+        widget.onNavigateToReels!(3, reelIndex, currentPosition);
+      } else {
+        debugPrint(
+          '⚠️ Reel not found in DummyData.reels, defaulting to index 0',
+        );
+        widget.onNavigateToReels!(3, 0, currentPosition);
+      }
+    } else {
+      debugPrint('⚠️ onNavigateToReels callback is null');
     }
   }
 
@@ -318,7 +356,7 @@ class _ReelWidgetState extends State<ReelWidget>
       builder: (context) => _buildMoreOptionsSheet(),
     ).then((_) {
       _isPausedByUser = false;
-      if (widget.isVisible && mounted) {
+      if (_isVisible && mounted) {
         _controller.play();
       }
     });
@@ -440,146 +478,184 @@ class _ReelWidgetState extends State<ReelWidget>
   @override
   Widget build(BuildContext context) {
     final user = DummyData.getUserById(widget.reel.userId);
+    final isCurrentUser = user?.id == DummyData.currentUser.id;
 
-    return GestureDetector(
-      onDoubleTap: _handleDoubleTapLike,
-      onTap: _openReelScreen,
-      child: Container(
-        color: Colors.white,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundImage: user?.profileImage != null
-                        ? NetworkImage(user!.profileImage)
-                        : null,
-                    backgroundColor: Colors.grey[300],
-                    child: user?.profileImage == null
-                        ? const Icon(Icons.person, size: 18)
-                        : null,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user?.username ?? 'Unknown',
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
+    return VisibilityDetector(
+      key: Key('reel_${widget.reel.id}'),
+      onVisibilityChanged: _onVisibilityChanged,
+      child: GestureDetector(
+        onDoubleTap: _handleDoubleTapLike,
+        onTap: _openReelScreen,
+        child: Container(
+          color: Colors.white,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundImage: user?.profileImage != null
+                          ? NetworkImage(user!.profileImage)
+                          : null,
+                      backgroundColor: Colors.grey[300],
+                      child: user?.profileImage == null
+                          ? const Icon(Icons.person, size: 18)
+                          : null,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?.username ?? 'Unknown',
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          if (widget.reel.location != null)
+                            Text(
+                              widget.reel.location!,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 11,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    // Show follow button only if not current user
+                    if (!isCurrentUser) ...[
+                      GestureDetector(
+                        onTap: _toggleFollow,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: user?.isFollowing == true
+                                ? Colors.grey[200]
+                                : Colors.blue,
+                            border: user?.isFollowing == true
+                                ? Border.all(color: Colors.grey[300]!)
+                                : null,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            user?.isFollowing == true ? 'Following' : 'Follow',
+                            style: TextStyle(
+                              color: user?.isFollowing == true
+                                  ? Colors.black
+                                  : Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
-                        if (widget.reel.location != null)
-                          Text(
-                            widget.reel.location!,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 11,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'Follow',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    GestureDetector(
+                      onTap: _showMoreOptions,
+                      child: Icon(
+                        Icons.more_vert,
+                        color: Colors.grey[600],
+                        size: 18,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: _showMoreOptions,
-                    child: Icon(
-                      Icons.more_vert,
-                      color: Colors.grey[600],
-                      size: 18,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            // Music info
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              child: Row(
+              // Music info
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.music_note, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        widget.reel.caption.length > 40
+                            ? '${widget.reel.caption.substring(0, 40)}...'
+                            : widget.reel.caption,
+                        style: TextStyle(
+                          color: Colors.grey[700],
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Video Container
+              Stack(
+                alignment: Alignment.center,
                 children: [
-                  Icon(Icons.music_note, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      widget.reel.caption.length > 40
-                          ? '${widget.reel.caption.substring(0, 40)}...'
-                          : widget.reel.caption,
-                      style: TextStyle(
-                        color: Colors.grey[700],
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Video Container
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                if (_isInitialized)
-                  SizedBox(
-                    width: double.infinity,
-                    child: AspectRatio(
-                      aspectRatio: _controller.value.aspectRatio,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          VideoPlayer(_controller),
-                          // Heart Animation
-                          if (_showHeartAnimation && _likeAnimation.value > 0)
-                            AnimatedBuilder(
-                              animation: _likeAnimation,
-                              builder: (context, child) {
-                                return Transform.scale(
-                                  scale: _likeAnimation.value,
-                                  child: const Icon(
-                                    Icons.favorite,
-                                    color: Colors.white,
-                                    size: 80,
+                  if (_isInitialized)
+                    SizedBox(
+                      width: double.infinity,
+                      child: AspectRatio(
+                        aspectRatio: _controller.value.aspectRatio,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            VideoPlayer(_controller),
+                            // Heart Animation
+                            if (_showHeartAnimation && _likeAnimation.value > 0)
+                              AnimatedBuilder(
+                                animation: _likeAnimation,
+                                builder: (context, child) {
+                                  return Transform.scale(
+                                    scale: _likeAnimation.value,
+                                    child: const Icon(
+                                      Icons.favorite,
+                                      color: Colors.white,
+                                      size: 80,
+                                    ),
+                                  );
+                                },
+                              ),
+                            // Mute Button (Bottom Right)
+                            Positioned(
+                              bottom: 16,
+                              right: 16,
+                              child: GestureDetector(
+                                onTap: _toggleMute,
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.5),
+                                    shape: BoxShape.circle,
                                   ),
-                                );
-                              },
+                                  child: Icon(
+                                    widget.reel.isMuted
+                                        ? Icons.volume_off
+                                        : Icons.volume_up,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
                             ),
-                          // Mute Button (Bottom Right)
-                          Positioned(
-                            bottom: 16,
-                            right: 16,
-                            child: GestureDetector(
-                              onTap: _toggleMute,
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
+                            // Volume Indicator
+                            if (_showVolumeIndicator)
+                              Container(
+                                padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.5),
+                                  color: Colors.black.withValues(alpha: 0.6),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
@@ -587,127 +663,113 @@ class _ReelWidgetState extends State<ReelWidget>
                                       ? Icons.volume_off
                                       : Icons.volume_up,
                                   color: Colors.white,
-                                  size: 18,
+                                  size: 28,
                                 ),
                               ),
-                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      color: Colors.grey[200],
+                      height: 400,
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                ],
+              ),
+              // Action buttons
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: _toggleLike,
+                          child: Icon(
+                            widget.reel.isLiked
+                                ? Icons.favorite
+                                : Icons.favorite_outline,
+                            color: widget.reel.isLiked
+                                ? Colors.red
+                                : Colors.black,
+                            size: 24,
                           ),
-                          // Volume Indicator
-                          if (_showVolumeIndicator)
-                            Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.6),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                widget.reel.isMuted
-                                    ? Icons.volume_off
-                                    : Icons.volume_up,
-                                color: Colors.white,
-                                size: 28,
-                              ),
-                            ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          onTap: _openComments,
+                          child: const Icon(
+                            Icons.chat_bubble_outline,
+                            color: Colors.black,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          onTap: _handleRepost,
+                          child: Icon(
+                            Icons.repeat,
+                            color: widget.reel.isReposted
+                                ? Colors.green
+                                : Colors.black,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          onTap: _openShare,
+                          child: const Icon(
+                            Icons.send,
+                            color: Colors.black,
+                            size: 24,
+                          ),
+                        ),
+                      ],
                     ),
-                  )
-                else
-                  Container(
-                    color: Colors.grey[200],
-                    height: 400,
-                    child: const Center(child: CircularProgressIndicator()),
-                  ),
-              ],
-            ),
-            // Action buttons
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: _toggleLike,
-                        child: Icon(
-                          widget.reel.isLiked
-                              ? Icons.favorite
-                              : Icons.favorite_outline,
-                          color: widget.reel.isLiked
-                              ? Colors.red
-                              : Colors.black,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      GestureDetector(
-                        onTap: _openComments,
-                        child: const Icon(
-                          Icons.chat_bubble_outline,
-                          color: Colors.black,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      GestureDetector(
-                        onTap: _handleRepost,
-                        child: Icon(
-                          Icons.repeat,
-                          color: widget.reel.isReposted
-                              ? Colors.green
-                              : Colors.black,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      GestureDetector(
-                        onTap: _openShare,
-                        child: const Icon(
-                          Icons.send,
-                          color: Colors.black,
-                          size: 24,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            // Stats
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${_formatCount(widget.reel.likes)} likes',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+              // Stats
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${_formatCount(widget.reel.likes)} likes',
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.reel.caption,
-                    style: const TextStyle(color: Colors.black, fontSize: 12),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  GestureDetector(
-                    onTap: _openComments,
-                    child: Text(
-                      'View all ${_formatCount(widget.reel.comments)} comments',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.reel.caption,
+                      style: const TextStyle(color: Colors.black, fontSize: 12),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    GestureDetector(
+                      onTap: _openComments,
+                      child: Text(
+                        'View all ${_formatCount(widget.reel.comments)} comments',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Divider(height: 1),
-          ],
+              const Divider(height: 1),
+            ],
+          ),
         ),
       ),
     );

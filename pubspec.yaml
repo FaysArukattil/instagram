@@ -24,6 +24,7 @@ dependencies:
   path_provider: ^2.1.5
   permission_handler: ^12.0.1
   gal: ^2.3.2
+  visibility_detector: ^0.4.0+2
 
 dev_dependencies:
   flutter_test:

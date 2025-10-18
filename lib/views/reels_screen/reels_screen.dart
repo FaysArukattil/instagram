@@ -378,6 +378,23 @@ class _ReelItemState extends State<ReelItem>
     widget.onReelUpdated();
   }
 
+  void _toggleFollow() {
+    final user = DummyData.getUserById(widget.reel.userId);
+    if (user != null) {
+      setState(() {
+        user.isFollowing = !(user.isFollowing);
+        if (user.isFollowing == true) {
+          user.followers++;
+        } else {
+          user.followers = user.followers > 0 ? user.followers - 1 : 0;
+        }
+        // Force reload user data to reflect changes
+        _loadUserData();
+      });
+      widget.onReelUpdated();
+    }
+  }
+
   void _openComments() {
     if (_controller.value.isPlaying) {
       _controller.pause();
