@@ -74,11 +74,16 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     );
   }
 
+  // ✅ FIXED: Now passes userId to filter reels by this specific user
   void _openReelsScreen(List<ReelModel> reels, int initialIndex) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ReelsScreen(initialIndex: initialIndex),
+        builder: (_) => ReelsScreen(
+          initialIndex: initialIndex,
+          userId: widget.user.id, // ✅ ADDED: Filter by user ID
+          disableShuffle: true, // ✅ ADDED: Don't shuffle user-specific reels
+        ),
       ),
     );
   }

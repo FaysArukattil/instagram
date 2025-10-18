@@ -14,6 +14,8 @@ class ReelsScreen extends StatefulWidget {
   final bool isVisible;
   final bool disableShuffle;
   final Duration? startPosition;
+  final String? userId; // ✅ ADDED: Filter reels by user
+  final List<ReelModel>? specificReels; // ✅ ADDED: Use specific reels list
 
   const ReelsScreen({
     super.key,
@@ -22,6 +24,8 @@ class ReelsScreen extends StatefulWidget {
     this.isVisible = true,
     this.disableShuffle = false,
     this.startPosition,
+    this.userId, // ✅ ADDED
+    this.specificReels, // ✅ ADDED
   });
 
   @override
@@ -65,7 +69,16 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
     }
 
     setState(() {
-      reels = List.from(DummyData.reels);
+      // ✅ MODIFIED: Use specific reels if provided, otherwise filter by userId, otherwise use all
+      if (widget.specificReels != null) {
+        reels = List.from(widget.specificReels!);
+      } else if (widget.userId != null) {
+        reels = DummyData.reels
+            .where((reel) => reel.userId == widget.userId)
+            .toList();
+      } else {
+        reels = List.from(DummyData.reels);
+      }
 
       for (var reel in reels) {
         reel.isReposted = DummyData.hasUserReposted(
