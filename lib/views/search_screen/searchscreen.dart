@@ -1,9 +1,12 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
+import 'package:instagram/models/post_model.dart';
 import 'package:instagram/views/profile_screen/profile_screen.dart';
 import 'package:instagram/views/post_screen/post_screen.dart';
+import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
 import 'package:instagram/widgets/universal_image.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -13,15 +16,54 @@ class SearchScreen extends StatefulWidget {
   State<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class _SearchScreenState extends State<SearchScreen> with RouteAware {
   final TextEditingController _searchController = TextEditingController();
+  final GlobalKey<RefreshIndicatorState> _refreshKey =
+      GlobalKey<RefreshIndicatorState>();
   List<UserModel> _searchResults = [];
+  List<PostModel> _shuffledPosts = [];
   bool _isSearching = false;
 
   @override
+  void initState() {
+    super.initState();
+    // ✅ Load and shuffle posts immediately
+    _shuffledPosts = List.from(DummyData.posts);
+    _shuffledPosts.shuffle(Random());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) routeObserver.subscribe(this, route);
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    // ✅ Trigger refresh when returning to this screen
+    _triggerAutoRefresh();
+  }
+
+  @override
+  void didPush() {
+    // ✅ Trigger refresh when first pushed
+    _triggerAutoRefresh();
+  }
+
+  void _triggerAutoRefresh() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_isSearching) {
+        _refreshKey.currentState?.show();
+      }
+    });
   }
 
   void _searchUsers(String query) {
@@ -53,13 +95,18 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _refreshContent() async {
-    await Future.delayed(const Duration(milliseconds: 800));
-    setState(() {
-      for (var post in DummyData.posts) {
-        post.images.shuffle();
-      }
-      _searchResults.shuffle();
-    });
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (mounted) {
+      setState(() {
+        // ✅ Shuffle posts using Random (like HomeScreen)
+        _shuffledPosts = List.from(DummyData.posts);
+        _shuffledPosts.shuffle(Random());
+
+        if (_isSearching && _searchResults.isNotEmpty) {
+          _searchResults.shuffle(Random());
+        }
+      });
+    }
   }
 
   @override
@@ -68,6 +115,7 @@ class _SearchScreenState extends State<SearchScreen> {
       child: Scaffold(
         backgroundColor: Colors.white,
         body: RefreshIndicator(
+          key: _refreshKey,
           onRefresh: _refreshContent,
           displacement: 60,
           edgeOffset: 10,
@@ -170,11 +218,13 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildExploreGridSliver() {
     final List<Map<String, dynamic>> imageData = [];
 
-    for (var post in DummyData.posts) {
+    // ✅ Use shuffled posts instead of DummyData.posts directly
+    for (var post in _shuffledPosts) {
       for (var image in post.images) {
         imageData.add({
           'imageUrl': image,
           'userId': post.userId,
+          'postId': post.id,
           'hasMultiple': post.images.length > 1,
         });
       }
@@ -210,14 +260,18 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  /// ✅ Fixed User Tile (UniversalImage used for both local + network images)
   Widget _buildUserTile(UserModel user) {
     return InkWell(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => UserProfileScreen(user: user)),
-        );
+        ).then((_) {
+          // ✅ Refresh when returning from profile
+          if (mounted && !_isSearching) {
+            _triggerAutoRefresh();
+          }
+        });
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -316,7 +370,8 @@ class _SearchScreenState extends State<SearchScreen> {
     final String userId = data['userId'];
     final bool hasMultiple = data['hasMultiple'];
 
-    final userPosts = DummyData.posts.where((p) => p.userId == userId).toList();
+    // ✅ Use shuffled posts to find the correct index
+    final userPosts = _shuffledPosts.where((p) => p.userId == userId).toList();
     final postIndex = userPosts.indexWhere((p) => p.images.contains(imageUrl));
 
     return GestureDetector(
@@ -329,7 +384,12 @@ class _SearchScreenState extends State<SearchScreen> {
               initialIndex: postIndex >= 0 ? postIndex : 0,
             ),
           ),
-        );
+        ).then((_) {
+          // ✅ Refresh when returning from post screen
+          if (mounted && !_isSearching) {
+            _triggerAutoRefresh();
+          }
+        });
       },
       child: Stack(
         fit: StackFit.expand,

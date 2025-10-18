@@ -19,6 +19,7 @@ class BottomNavBarScreen extends StatefulWidget {
 class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   int _currentIndex = 0;
   int _homeRefreshKey = 0;
+  int _searchRefreshKey = 0; // ✅ ADDED: Search refresh key
   int _reelsRefreshKey = 0;
   int _profileRefreshKey = 0;
   int _reelsInitialIndex = 0;
@@ -58,7 +59,11 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
             });
           }
         },
-        child: const SearchScreen(),
+        child: SearchScreen(
+          key: ValueKey(
+            'search_$_searchRefreshKey',
+          ), // ✅ ADDED: Key for refresh
+        ),
       ),
       const SizedBox(),
       PopScope(
@@ -103,22 +108,21 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
       ).then((_) {
         setState(() {
           _homeRefreshKey++;
+          _searchRefreshKey++; // ✅ ADDED: Refresh search after adding post
           _profileRefreshKey++;
           _reelsRefreshKey++;
         });
       });
     } else {
-      // Always increment key when tapping home to force complete rebuild
-      if (index == 0) {
-        setState(() {
+      setState(() {
+        // ✅ MODIFIED: Increment key for both home AND search tabs
+        if (index == 0) {
           _homeRefreshKey++;
-          _currentIndex = index;
-        });
-      } else {
-        setState(() {
-          _currentIndex = index;
-        });
-      }
+        } else if (index == 1) {
+          _searchRefreshKey++; // ✅ ADDED: Refresh search when tapping tab
+        }
+        _currentIndex = index;
+      });
     }
   }
 
