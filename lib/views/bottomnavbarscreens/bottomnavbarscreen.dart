@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:instagram/data/dummy_data.dart';
@@ -25,22 +26,12 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
 
   // Public method to navigate to a specific tab from child widgets
   void _navigateToTab(int tabIndex, int reelIndex, Duration startPosition) {
-    debugPrint('📱 BottomNavBar: Received navigation request');
-    debugPrint(
-      '📱 Tab Index: $tabIndex, Reel Index: $reelIndex, Start Position: ${startPosition.inSeconds}s',
-    );
-
     setState(() {
       if (tabIndex == 3) {
         // Navigating to reels tab
         _reelsInitialIndex = reelIndex;
         _reelsStartPosition = startPosition;
         _reelsRefreshKey++;
-        debugPrint('📱 Set _reelsInitialIndex to: $reelIndex');
-        debugPrint(
-          '📱 Set _reelsStartPosition to: ${startPosition.inSeconds}s',
-        );
-        debugPrint('📱 Refresh key: $_reelsRefreshKey');
       }
       _currentIndex = tabIndex;
     });
@@ -215,7 +206,34 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   }) {
     final isSelected = _currentIndex == index;
     return GestureDetector(
-      onTap: () => _onTabTapped(index),
+      onTap: () {
+        if (index == 3) {
+          // 🎥 USER tapped the movie icon -> shuffle behaviour
+          final reelCount = DummyData.reels.length;
+          if (reelCount <= 1) {
+            // Nothing to shuffle if only 0/1 reel
+            setState(() => _currentIndex = 3);
+            return;
+          }
+
+          // pick a random starting index different from the current initial index
+          final rnd = Random();
+          int newStart = rnd.nextInt(reelCount);
+          // If the random equals the last starting index, try again once
+          if (newStart == _reelsInitialIndex) {
+            newStart = (newStart + 1) % reelCount;
+          }
+
+          setState(() {
+            _reelsInitialIndex = newStart;
+            _reelsStartPosition = Duration.zero;
+            _reelsRefreshKey++; // force ReelsScreen to rebuild and use new index
+            _currentIndex = 3;
+          });
+        } else {
+          _onTabTapped(index);
+        }
+      },
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(8.0),

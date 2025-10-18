@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
@@ -26,6 +28,17 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with RouteAware, SingleTickerProviderStateMixin {
+  void _triggerAutoRefresh() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _refreshKey.currentState?.show();
+      }
+    });
+  }
+
+  final GlobalKey<RefreshIndicatorState> _refreshKey =
+      GlobalKey<RefreshIndicatorState>();
+
   late List<PostModel> posts;
   late List<ReelModel> reels;
   late AnimationController _animationController;
@@ -48,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (route != null) routeObserver.subscribe(this, route);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _loadData();
+      // if (mounted) _loadData();
     });
   }
 
@@ -60,9 +73,14 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   @override
-  void didPopNext() => _loadData();
+  void didPopNext() {
+    _triggerAutoRefresh();
+  }
+
   @override
-  void didPush() => _loadData();
+  void didPush() {
+    _triggerAutoRefresh();
+  }
 
   void _loadData({bool shuffle = false}) {
     if (!mounted) return;
@@ -176,8 +194,16 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _refreshPosts() async {
-    await Future.delayed(const Duration(milliseconds: 800));
-    _loadData(shuffle: true);
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    setState(() {
+      posts = List.from(DummyData.posts);
+      reels = List.from(DummyData.reels);
+
+      // 🔀 Shuffle like reels
+      posts.shuffle(Random());
+      reels.shuffle(Random());
+    });
   }
 
   void _runSmoothAnimation({required bool open}) {
@@ -368,6 +394,7 @@ class _HomeScreenState extends State<HomeScreen>
         ],
       ),
       body: RefreshIndicator(
+        key: _refreshKey,
         onRefresh: _refreshPosts,
         displacement: 60,
         edgeOffset: 10,
