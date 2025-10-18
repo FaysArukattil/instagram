@@ -21,14 +21,12 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   int _homeRefreshKey = 0;
   int _reelsRefreshKey = 0;
   int _profileRefreshKey = 0;
-  int _reelsInitialIndex = 0; // Track which reel to start at
-  Duration _reelsStartPosition = Duration.zero; // Track playback position
+  int _reelsInitialIndex = 0;
+  Duration _reelsStartPosition = Duration.zero;
 
-  // Public method to navigate to a specific tab from child widgets
   void _navigateToTab(int tabIndex, int reelIndex, Duration startPosition) {
     setState(() {
       if (tabIndex == 3) {
-        // Navigating to reels tab
         _reelsInitialIndex = reelIndex;
         _reelsStartPosition = startPosition;
         _reelsRefreshKey++;
@@ -39,7 +37,6 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
 
   List<Widget> _getScreens() {
     return [
-      // 🏠 HOME — pressing back exits app (only when visible)
       PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -52,8 +49,6 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
           onNavigateToReels: _navigateToTab,
         ),
       ),
-
-      // 🔍 SEARCH — pressing back returns to home (only when visible)
       PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -65,11 +60,7 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
         },
         child: const SearchScreen(),
       ),
-
-      // ➕ ADD POST placeholder
       const SizedBox(),
-
-      // 🎥 REELS — pressing back returns to home (only when visible)
       PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -83,12 +74,10 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
           key: ValueKey('reels_$_reelsRefreshKey'),
           isVisible: _currentIndex == 3,
           initialIndex: _reelsInitialIndex,
-          disableShuffle: true, // Don't shuffle when navigating from home feed
+          disableShuffle: true,
           startPosition: _reelsStartPosition,
         ),
       ),
-
-      // 👤 PROFILE — pressing back returns to home (only when visible)
       PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -105,7 +94,6 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
 
   void _onTabTapped(int index) {
     if (index == 2) {
-      // Open Add Post screen as a modal
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -113,7 +101,6 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
           fullscreenDialog: true,
         ),
       ).then((_) {
-        // ✅ FIX: Refresh both home and profile screens after returning from add post
         setState(() {
           _homeRefreshKey++;
           _profileRefreshKey++;
@@ -121,35 +108,17 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
         });
       });
     } else {
-      setState(() {
-        // If tapping the same tab, refresh it
-        if (_currentIndex == index) {
-          if (index == 0) {
-            // Refresh home
-            _homeRefreshKey++;
-          } else if (index == 3) {
-            // Refresh reels - start from beginning
-            _reelsInitialIndex = 0;
-            _reelsRefreshKey++;
-          } else if (index == 4) {
-            // Refresh profile
-            _profileRefreshKey++;
-          }
-        } else {
-          // Switching to different tab
-          if (index == 0) {
-            _homeRefreshKey++;
-          } else if (index == 3) {
-            // When manually switching to reels tab, start from beginning
-            _reelsInitialIndex = 0;
-            _reelsRefreshKey++;
-          } else if (index == 4) {
-            // Always refresh profile when switching to it
-            _profileRefreshKey++;
-          }
-        }
-        _currentIndex = index;
-      });
+      // Always increment key when tapping home to force complete rebuild
+      if (index == 0) {
+        setState(() {
+          _homeRefreshKey++;
+          _currentIndex = index;
+        });
+      } else {
+        setState(() {
+          _currentIndex = index;
+        });
+      }
     }
   }
 
@@ -208,18 +177,14 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
     return GestureDetector(
       onTap: () {
         if (index == 3) {
-          // 🎥 USER tapped the movie icon -> shuffle behaviour
           final reelCount = DummyData.reels.length;
           if (reelCount <= 1) {
-            // Nothing to shuffle if only 0/1 reel
             setState(() => _currentIndex = 3);
             return;
           }
 
-          // pick a random starting index different from the current initial index
           final rnd = Random();
           int newStart = rnd.nextInt(reelCount);
-          // If the random equals the last starting index, try again once
           if (newStart == _reelsInitialIndex) {
             newStart = (newStart + 1) % reelCount;
           }
@@ -227,7 +192,7 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
           setState(() {
             _reelsInitialIndex = newStart;
             _reelsStartPosition = Duration.zero;
-            _reelsRefreshKey++; // force ReelsScreen to rebuild and use new index
+            _reelsRefreshKey++;
             _currentIndex = 3;
           });
         } else {

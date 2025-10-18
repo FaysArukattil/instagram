@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
@@ -17,8 +16,7 @@ import 'package:instagram/widgets/story_avatar.dart';
 import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final void Function(int, int, Duration)?
-  onNavigateToReels; // (tabIndex, reelIndex, startPosition)
+  final void Function(int, int, Duration)? onNavigateToReels;
 
   const HomeScreen({super.key, this.onNavigateToReels});
 
@@ -46,7 +44,11 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // Load data immediately with no delay
+    posts = List.from(DummyData.posts);
+    reels = List.from(DummyData.reels);
+    posts.shuffle(Random());
+    reels.shuffle(Random());
 
     _animationController = AnimationController(
       vsync: this,
@@ -80,6 +82,12 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void didPush() {
     _triggerAutoRefresh();
+  }
+
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _triggerAutoRefresh();
+    }
   }
 
   void _loadData({bool shuffle = false}) {
@@ -200,7 +208,6 @@ class _HomeScreenState extends State<HomeScreen>
       posts = List.from(DummyData.posts);
       reels = List.from(DummyData.reels);
 
-      // 🔀 Shuffle like reels
       posts.shuffle(Random());
       reels.shuffle(Random());
     });
@@ -215,23 +222,19 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildFeedItem(BuildContext context, int index) {
-    // Calculate the pattern: every 3 items, insert a reel (pattern: post, post, reel)
     final itemPosition = index % 3;
 
     if (itemPosition == 2 && reels.isNotEmpty) {
-      // Display reel
       final reelIndex = (index ~/ 3);
       if (reelIndex < reels.length) {
         return ReelWidget(
           reel: reels[reelIndex],
           onReelUpdated: () => _loadData(),
-          onNavigateToReels: widget
-              .onNavigateToReels, // Pass the callback with both parameters
+          onNavigateToReels: widget.onNavigateToReels,
         );
       }
     }
 
-    // Display post
     final postIndex = index - (index ~/ 3);
     if (postIndex < posts.length) {
       return PostWidget(
@@ -249,7 +252,6 @@ class _HomeScreenState extends State<HomeScreen>
   int _calculateTotalItems() {
     final postCount = posts.length;
     final reelCount = reels.length;
-    // Total items = posts + reels (reels distributed every 3 items)
     return postCount + reelCount;
   }
 
@@ -266,21 +268,18 @@ class _HomeScreenState extends State<HomeScreen>
         final velocity = details.velocity.pixelsPerSecond.dx;
 
         if (velocity < -100) {
-          // swipe left → open
           _animationController.animateTo(
             1.0,
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOut,
           );
         } else if (velocity > 100) {
-          // swipe right → close
           _animationController.animateTo(
             0.0,
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOut,
           );
         } else {
-          // snap to nearest
           if (_animationController.value >= 0.5) {
             _animationController.animateTo(
               1.0,
