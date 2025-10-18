@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:instagram/data/dummy_data.dart';
@@ -19,18 +18,29 @@ class BottomNavBarScreen extends StatefulWidget {
 class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   int _currentIndex = 0;
   int _homeRefreshKey = 0;
-  int _searchRefreshKey = 0; // ✅ ADDED: Search refresh key
   int _reelsRefreshKey = 0;
   int _profileRefreshKey = 0;
-  int _reelsInitialIndex = 0;
-  Duration _reelsStartPosition = Duration.zero;
+  int _reelsInitialIndex = 0; // Track which reel to start at
+  Duration _reelsStartPosition = Duration.zero; // Track playback position
 
+  // Public method to navigate to a specific tab from child widgets
   void _navigateToTab(int tabIndex, int reelIndex, Duration startPosition) {
+    debugPrint('📱 BottomNavBar: Received navigation request');
+    debugPrint(
+      '📱 Tab Index: $tabIndex, Reel Index: $reelIndex, Start Position: ${startPosition.inSeconds}s',
+    );
+
     setState(() {
       if (tabIndex == 3) {
+        // Navigating to reels tab
         _reelsInitialIndex = reelIndex;
         _reelsStartPosition = startPosition;
         _reelsRefreshKey++;
+        debugPrint('📱 Set _reelsInitialIndex to: $reelIndex');
+        debugPrint(
+          '📱 Set _reelsStartPosition to: ${startPosition.inSeconds}s',
+        );
+        debugPrint('📱 Refresh key: $_reelsRefreshKey');
       }
       _currentIndex = tabIndex;
     });
@@ -38,6 +48,7 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
 
   List<Widget> _getScreens() {
     return [
+      // 🏠 HOME — pressing back exits app (only when visible)
       PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -50,6 +61,8 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
           onNavigateToReels: _navigateToTab,
         ),
       ),
+
+      // 🔍 SEARCH — pressing back returns to home (only when visible)
       PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -59,13 +72,13 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
             });
           }
         },
-        child: SearchScreen(
-          key: ValueKey(
-            'search_$_searchRefreshKey',
-          ), // ✅ ADDED: Key for refresh
-        ),
+        child: const SearchScreen(),
       ),
+
+      // ➕ ADD POST placeholder
       const SizedBox(),
+
+      // 🎥 REELS — pressing back returns to home (only when visible)
       PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -79,10 +92,12 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
           key: ValueKey('reels_$_reelsRefreshKey'),
           isVisible: _currentIndex == 3,
           initialIndex: _reelsInitialIndex,
-          disableShuffle: true,
+          disableShuffle: true, // Don't shuffle when navigating from home feed
           startPosition: _reelsStartPosition,
         ),
       ),
+
+      // 👤 PROFILE — pressing back returns to home (only when visible)
       PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -99,6 +114,7 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
 
   void _onTabTapped(int index) {
     if (index == 2) {
+      // Open Add Post screen as a modal
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -106,20 +122,40 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
           fullscreenDialog: true,
         ),
       ).then((_) {
+        // ✅ FIX: Refresh both home and profile screens after returning from add post
         setState(() {
           _homeRefreshKey++;
-          _searchRefreshKey++; // ✅ ADDED: Refresh search after adding post
           _profileRefreshKey++;
           _reelsRefreshKey++;
         });
       });
     } else {
       setState(() {
-        // ✅ MODIFIED: Increment key for both home AND search tabs
-        if (index == 0) {
-          _homeRefreshKey++;
-        } else if (index == 1) {
-          _searchRefreshKey++; // ✅ ADDED: Refresh search when tapping tab
+        // If tapping the same tab, refresh it
+        if (_currentIndex == index) {
+          if (index == 0) {
+            // Refresh home
+            _homeRefreshKey++;
+          } else if (index == 3) {
+            // Refresh reels - start from beginning
+            _reelsInitialIndex = 0;
+            _reelsRefreshKey++;
+          } else if (index == 4) {
+            // Refresh profile
+            _profileRefreshKey++;
+          }
+        } else {
+          // Switching to different tab
+          if (index == 0) {
+            _homeRefreshKey++;
+          } else if (index == 3) {
+            // When manually switching to reels tab, start from beginning
+            _reelsInitialIndex = 0;
+            _reelsRefreshKey++;
+          } else if (index == 4) {
+            // Always refresh profile when switching to it
+            _profileRefreshKey++;
+          }
         }
         _currentIndex = index;
       });
@@ -179,30 +215,7 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   }) {
     final isSelected = _currentIndex == index;
     return GestureDetector(
-      onTap: () {
-        if (index == 3) {
-          final reelCount = DummyData.reels.length;
-          if (reelCount <= 1) {
-            setState(() => _currentIndex = 3);
-            return;
-          }
-
-          final rnd = Random();
-          int newStart = rnd.nextInt(reelCount);
-          if (newStart == _reelsInitialIndex) {
-            newStart = (newStart + 1) % reelCount;
-          }
-
-          setState(() {
-            _reelsInitialIndex = newStart;
-            _reelsStartPosition = Duration.zero;
-            _reelsRefreshKey++;
-            _currentIndex = 3;
-          });
-        } else {
-          _onTabTapped(index);
-        }
-      },
+      onTap: () => _onTabTapped(index),
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(8.0),

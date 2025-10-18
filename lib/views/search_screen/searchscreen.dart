@@ -4,9 +4,11 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/models/post_model.dart';
+import 'package:instagram/models/reel_model.dart';
 import 'package:instagram/views/profile_screen/profile_screen.dart';
 import 'package:instagram/views/post_screen/post_screen.dart';
 import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
+import 'package:instagram/views/reels_screen/reels_screen.dart';
 import 'package:instagram/widgets/universal_image.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -21,15 +23,31 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
   final GlobalKey<RefreshIndicatorState> _refreshKey =
       GlobalKey<RefreshIndicatorState>();
   List<UserModel> _searchResults = [];
-  List<PostModel> _shuffledPosts = [];
+  List<dynamic> _shuffledContent = []; // ✅ Mix of posts and reels
   bool _isSearching = false;
 
   @override
   void initState() {
     super.initState();
-    // ✅ Load and shuffle posts immediately
-    _shuffledPosts = List.from(DummyData.posts);
-    _shuffledPosts.shuffle(Random());
+    // ✅ Load and shuffle both posts and reels
+    _loadContent();
+  }
+
+  void _loadContent() {
+    final List<dynamic> content = [];
+
+    // Add all posts
+    content.addAll(List<PostModel>.from(DummyData.posts));
+
+    // Add all reels
+    content.addAll(List<ReelModel>.from(DummyData.reels));
+
+    // Shuffle the mixed content
+    content.shuffle(Random());
+
+    setState(() {
+      _shuffledContent = content;
+    });
   }
 
   @override
@@ -98,9 +116,7 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
     await Future.delayed(const Duration(milliseconds: 600));
     if (mounted) {
       setState(() {
-        // ✅ Shuffle posts using Random (like HomeScreen)
-        _shuffledPosts = List.from(DummyData.posts);
-        _shuffledPosts.shuffle(Random());
+        _loadContent(); // ✅ Reload and reshuffle content
 
         if (_isSearching && _searchResults.isNotEmpty) {
           _searchResults.shuffle(Random());
@@ -216,24 +232,37 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
   }
 
   Widget _buildExploreGridSliver() {
-    final List<Map<String, dynamic>> imageData = [];
-
-    // ✅ Use shuffled posts instead of DummyData.posts directly
-    for (var post in _shuffledPosts) {
-      for (var image in post.images) {
-        imageData.add({
-          'imageUrl': image,
-          'userId': post.userId,
-          'postId': post.id,
-          'hasMultiple': post.images.length > 1,
-        });
-      }
+    if (_shuffledContent.isEmpty) {
+      return const SliverFillRemaining(
+        child: Center(child: Text('No content yet')),
+      );
     }
 
-    if (imageData.isEmpty) {
-      return const SliverFillRemaining(
-        child: Center(child: Text('No posts yet')),
-      );
+    // ✅ Create grid items from mixed content
+    final List<Map<String, dynamic>> gridItems = [];
+
+    for (var item in _shuffledContent) {
+      if (item is PostModel) {
+        // Add post images
+        for (var image in item.images) {
+          gridItems.add({
+            'type': 'post',
+            'imageUrl': image,
+            'userId': item.userId,
+            'postId': item.id,
+            'hasMultiple': item.images.length > 1,
+          });
+        }
+      } else if (item is ReelModel) {
+        // Add reel
+        gridItems.add({
+          'type': 'reel',
+          'imageUrl': item.thumbnailUrl,
+          'userId': item.userId,
+          'reelId': item.id,
+          'hasMultiple': false,
+        });
+      }
     }
 
     return SliverPadding(
@@ -253,8 +282,8 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
           ],
         ),
         delegate: SliverChildBuilderDelegate(
-          (context, index) => _buildImageTile(imageData[index]),
-          childCount: imageData.length,
+          (context, index) => _buildGridTile(gridItems[index]),
+          childCount: gridItems.length,
         ),
       ),
     );
@@ -365,54 +394,110 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
     );
   }
 
-  Widget _buildImageTile(Map<String, dynamic> data) {
+  // ✅ Build grid tile for both posts and reels
+  Widget _buildGridTile(Map<String, dynamic> data) {
+    final String type = data['type'];
     final String imageUrl = data['imageUrl'];
     final String userId = data['userId'];
     final bool hasMultiple = data['hasMultiple'];
 
-    // ✅ Use shuffled posts to find the correct index
-    final userPosts = _shuffledPosts.where((p) => p.userId == userId).toList();
-    final postIndex = userPosts.indexWhere((p) => p.images.contains(imageUrl));
+    if (type == 'post') {
+      // Handle post click
+      final userPosts = _shuffledContent
+          .whereType<PostModel>()
+          .where((p) => p.userId == userId)
+          .toList();
+      final postIndex = userPosts.indexWhere(
+        (p) => p.images.contains(imageUrl),
+      );
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PostScreen(
-              userId: userId,
-              initialIndex: postIndex >= 0 ? postIndex : 0,
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PostScreen(
+                userId: userId,
+                initialIndex: postIndex >= 0 ? postIndex : 0,
+              ),
             ),
-          ),
-        ).then((_) {
-          // ✅ Refresh when returning from post screen
-          if (mounted && !_isSearching) {
-            _triggerAutoRefresh();
-          }
-        });
-      },
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          UniversalImage(
-            imagePath: imageUrl,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
-          ),
-          if (hasMultiple)
+          ).then((_) {
+            if (mounted && !_isSearching) {
+              _triggerAutoRefresh();
+            }
+          });
+        },
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            UniversalImage(
+              imagePath: imageUrl,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            ),
+            if (hasMultiple)
+              const Positioned(
+                top: 8,
+                right: 8,
+                child: Icon(
+                  Icons.collections,
+                  color: Colors.white,
+                  size: 20,
+                  shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
+                ),
+              ),
+          ],
+        ),
+      );
+    } else {
+      // Handle reel click
+      final userReels = _shuffledContent
+          .whereType<ReelModel>()
+          .where((r) => r.userId == userId)
+          .toList();
+      final reelIndex = userReels.indexWhere((r) => r.id == data['reelId']);
+
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ReelsScreen(
+                initialIndex: reelIndex >= 0 ? reelIndex : 0,
+                userId: userId,
+                disableShuffle: true,
+              ),
+            ),
+          ).then((_) {
+            if (mounted && !_isSearching) {
+              _triggerAutoRefresh();
+            }
+          });
+        },
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            UniversalImage(
+              imagePath: imageUrl,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            ),
+            // ✅ Reel icon overlay
             const Positioned(
               top: 8,
               right: 8,
               child: Icon(
-                Icons.collections,
+                Icons.play_arrow,
                 color: Colors.white,
-                size: 20,
+                size: 24,
                 shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
               ),
             ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    }
   }
 }
