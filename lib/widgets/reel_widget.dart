@@ -6,6 +6,7 @@ import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/views/commentscreen/commentscreen.dart';
 import 'package:instagram/views/share_bottom_sheet/share_bottom_sheet.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:io';
 
 class ReelWidget extends StatefulWidget {
@@ -333,7 +334,6 @@ class _ReelWidgetState extends State<ReelWidget>
         debugPrint(
           '🎬 Navigating to reels tab (index 1) with reel index: $reelIndex',
         );
-        // FIXED: Changed from 3 to 1 (Reels tab is at index 1)
         widget.onNavigateToReels!(1, reelIndex, currentPosition);
       } else {
         debugPrint(
@@ -704,10 +704,16 @@ class _ReelWidgetState extends State<ReelWidget>
                         const SizedBox(width: 16),
                         GestureDetector(
                           onTap: _openComments,
-                          child: const Icon(
-                            Icons.chat_bubble_outline,
-                            color: Colors.black,
-                            size: 24,
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: SvgPicture.asset(
+                              'assets/Icons/comment_icon_outline.svg',
+                              colorFilter: const ColorFilter.mode(
+                                Colors.black,
+                                BlendMode.srcIn,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -724,10 +730,16 @@ class _ReelWidgetState extends State<ReelWidget>
                         const SizedBox(width: 16),
                         GestureDetector(
                           onTap: _openShare,
-                          child: Icon(
-                            Icons.send,
-                            color: Colors.black,
-                            size: 24,
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: SvgPicture.asset(
+                              'assets/Icons/share_icon_outline.svg',
+                              colorFilter: const ColorFilter.mode(
+                                Colors.black,
+                                BlendMode.srcIn,
+                              ),
+                            ),
                           ),
                         ),
                       ],

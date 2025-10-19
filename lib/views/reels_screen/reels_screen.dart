@@ -7,6 +7,7 @@ import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/reel_model.dart';
 import 'package:instagram/views/profile_screen/profile_screen.dart';
 import 'package:instagram/views/add_post_screen/add_post_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:io';
 
 class ReelsScreen extends StatefulWidget {
@@ -453,9 +454,7 @@ class _ReelItemState extends State<ReelItem>
     final screenWidth = MediaQuery.of(context).size.width;
     final dx = details.globalPosition.dx;
 
-    // Check if tap is on the right side action buttons area (right 80px)
     if (dx > screenWidth - 80) {
-      // Don't process tap for mute - it's on action buttons
       _tapCount = 0;
       _isProcessingTap = false;
     }
@@ -570,7 +569,6 @@ class _ReelItemState extends State<ReelItem>
     final dx = details.globalPosition.dx;
     final edgeThreshold = screenWidth * 0.2;
 
-    // Only pause if pressed in the center (not on edges)
     if (dx > edgeThreshold && dx < screenWidth - edgeThreshold) {
       setState(() {
         _isLongPressing = true;
@@ -594,13 +592,11 @@ class _ReelItemState extends State<ReelItem>
     _dragStartY = details.globalPosition.dy;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    // Check if starting in seeking area (bottom 250px)
     _isInSeekingArea = _dragStartY! >= screenHeight - 250;
 
     if (_isInSeekingArea) {
       setState(() {
         _isSeeking = true;
-        // Start from current video position, not from beginning
         _seekPreviewPosition = _controller.value.position;
       });
     }
@@ -611,13 +607,12 @@ class _ReelItemState extends State<ReelItem>
     double screenWidth,
     double screenHeight,
   ) {
-    // Only allow seeking if drag started in seeking area
     if (!_isInSeekingArea || !_isSeeking) {
       return;
     }
 
     if (_isLeftEdgePressed || _isRightEdgePressed) {
-      return; // Don't seek while edge is pressed
+      return;
     }
 
     final delta = details.delta.dx;
@@ -626,7 +621,6 @@ class _ReelItemState extends State<ReelItem>
         _seekPreviewPosition?.inMilliseconds ??
         _controller.value.position.inMilliseconds;
 
-    // Instagram-like: smaller swipes, more control (1.5x sensitivity)
     final seekDelta = (delta / screenWidth) * totalDuration * 1.5;
     final newPosition = (currentPosition + seekDelta.toInt()).clamp(
       0,
@@ -870,25 +864,21 @@ class _ReelItemState extends State<ReelItem>
                   ),
                 ),
               ),
-
-            // CRITICAL FIX: Horizontal drag only in seeking area (like Instagram)
             Positioned(
               bottom: 0,
               left: 0,
               right: 80,
-              height: 250, // Reduced seeking area
+              height: 250,
               child: GestureDetector(
-                behavior: HitTestBehavior
-                    .opaque, // Block gestures from passing through
+                behavior: HitTestBehavior.opaque,
                 onHorizontalDragStart: _handleHorizontalDragStart,
                 onHorizontalDragUpdate: (details) =>
                     _handleHorizontalDrag(details, screenWidth, screenHeight),
                 onHorizontalDragEnd: (_) => _handleHorizontalDragEnd(),
-                onTap: () {}, // Make area tappable and block tap propagation
+                onTap: () {},
                 child: Container(color: Colors.transparent),
               ),
             ),
-
             Positioned(
               bottom: 20,
               left: 12,
@@ -1026,10 +1016,16 @@ class _ReelItemState extends State<ReelItem>
                     onTap: _openComments,
                     child: Column(
                       children: [
-                        const Icon(
-                          Icons.chat_bubble_outline,
-                          color: Colors.white,
-                          size: 30,
+                        SizedBox(
+                          width: 30,
+                          height: 30,
+                          child: SvgPicture.asset(
+                            'assets/Icons/comment_icon_outline.svg',
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -1072,9 +1068,19 @@ class _ReelItemState extends State<ReelItem>
                   const SizedBox(height: 24),
                   GestureDetector(
                     onTap: _showShareSheet,
-                    child: const Column(
+                    child: Column(
                       children: [
-                        Icon(Icons.send, color: Colors.white, size: 28),
+                        SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: SvgPicture.asset(
+                            'assets/Icons/share_icon_outline.svg',
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),

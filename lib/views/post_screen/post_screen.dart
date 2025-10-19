@@ -5,6 +5,7 @@ import 'package:instagram/services/data_persistence.dart';
 import 'package:instagram/views/commentscreen/commentscreen.dart';
 import 'package:instagram/views/share_bottom_sheet/share_bottom_sheet.dart';
 import 'package:instagram/widgets/universal_image.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class PostScreen extends StatefulWidget {
   final String userId;
@@ -48,7 +49,6 @@ class _PostScreenState extends State<PostScreen> {
         userPosts[index].isLiked = !userPosts[index].isLiked;
         userPosts[index].likes += userPosts[index].isLiked ? 1 : -1;
 
-        // Update in main data
         final mainIndex = DummyData.posts.indexWhere((p) => p.id == postId);
         if (mainIndex != -1) {
           DummyData.posts[mainIndex].isLiked = userPosts[index].isLiked;
@@ -66,7 +66,6 @@ class _PostScreenState extends State<PostScreen> {
       builder: (context) => CommentsScreen(post: post),
     ).then(
       (_) => setState(() {
-        // Update comment count
         final index = userPosts.indexWhere((p) => p.id == post.id);
         if (index != -1) {
           userPosts[index].comments = DummyData.getCommentsForPost(
@@ -164,13 +163,9 @@ class _PostScreenState extends State<PostScreen> {
   }
 
   void _deletePost(PostModel post) async {
-    // Remove from main posts list
     DummyData.posts.removeWhere((p) => p.id == post.id);
-
-    // Update user post count
     DummyData.currentUser.posts--;
 
-    // Save updated data
     await DataPersistence.savePosts(DummyData.posts);
     await DataPersistence.saveUserPostCount(DummyData.currentUser.posts);
 
@@ -182,17 +177,14 @@ class _PostScreenState extends State<PostScreen> {
         ),
       );
 
-      // Navigate back if this was the only post or last post
       if (userPosts.length <= 1) {
         Navigator.pop(context);
       } else {
-        // Refresh the list
         setState(() {
           userPosts = DummyData.posts
               .where((p) => p.userId == widget.userId)
               .toList();
 
-          // Adjust current index if needed
           if (currentIndex >= userPosts.length) {
             currentIndex = userPosts.length - 1;
             _pageController.jumpToPage(currentIndex);
@@ -253,7 +245,7 @@ class _PostScreenState extends State<PostScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header with profile picture using UniversalImage
+                // Header
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -304,7 +296,7 @@ class _PostScreenState extends State<PostScreen> {
                   ),
                 ),
 
-                // Images with proper aspect ratio
+                // Images
                 SizedBox(
                   height: MediaQuery.of(context).size.width,
                   child: post.images.length == 1
@@ -327,9 +319,9 @@ class _PostScreenState extends State<PostScreen> {
                         ),
                 ),
 
-                // Action buttons
+                // Action Buttons
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Row(
                     children: [
                       IconButton(
@@ -340,13 +332,39 @@ class _PostScreenState extends State<PostScreen> {
                         ),
                         onPressed: () => _handleLike(post.id),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.chat_bubble_outline, size: 26),
-                        onPressed: () => _openComments(post),
+                      GestureDetector(
+                        onTap: () => _openComments(post),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: SvgPicture.asset(
+                              'assets/Icons/comment_icon_outline.svg',
+                              colorFilter: const ColorFilter.mode(
+                                Colors.black,
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.send_outlined, size: 26),
-                        onPressed: () => _openShare(post),
+                      GestureDetector(
+                        onTap: () => _openShare(post),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: SvgPicture.asset(
+                              'assets/Icons/share_icon_outline.svg',
+                              colorFilter: const ColorFilter.mode(
+                                Colors.black,
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                       const Spacer(),
                       IconButton(
@@ -357,7 +375,7 @@ class _PostScreenState extends State<PostScreen> {
                   ),
                 ),
 
-                // Likes and caption
+                // Likes and Caption
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
