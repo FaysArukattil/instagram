@@ -170,13 +170,10 @@ class _MessengerScreenState extends State<MessengerScreen> {
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.more_vert, color: Colors.black),
+              icon: const Icon(Icons.more_horiz, color: Colors.black),
               onPressed: () {},
             ),
-            IconButton(
-              icon: const Icon(Icons.trending_up, color: Colors.black),
-              onPressed: () {},
-            ),
+
             IconButton(
               icon: const Icon(Icons.edit_square, color: Colors.black),
               onPressed: () {},
@@ -231,8 +228,6 @@ class _MessengerScreenState extends State<MessengerScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          const Icon(Icons.video_call, size: 32, color: Colors.black),
         ],
       ),
     );
