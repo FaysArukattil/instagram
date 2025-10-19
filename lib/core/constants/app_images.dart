@@ -8,4 +8,5 @@ class AppImages {
   static const String metalogogrey = "assets/images/metaicon.png";
 
   static const String metabluelogo = "assets/images/metablue.png";
+  static const String instagramtext = "assets/images/instagram text.png";
 }

@@ -1,8 +1,6 @@
 name: instagram
 description: "A new Flutter project."
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none' 
 
 version: 1.0.0+1
 
@@ -25,6 +23,8 @@ dependencies:
   permission_handler: ^12.0.1
   gal: ^2.3.2
   visibility_detector: ^0.4.0+2
+  google_fonts: ^6.3.2
+  flutter_svg: ^2.2.1
 
 dev_dependencies:
   flutter_test:
@@ -33,13 +33,18 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
-
   uses-material-design: true
 
   assets:
     - assets/images/splashscreen_images/
     - assets/images/
     - assets/videos/
+    - assets/fonts/
+
+  fonts:
+    - family: Billabong
+      fonts:
+        - asset: assets/fonts/Billabong.otf
 
 # =======================
 # Flutter Launcher Icons

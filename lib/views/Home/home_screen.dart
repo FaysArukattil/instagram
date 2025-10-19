@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:instagram/core/constants/app_images.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/models/reel_model.dart';
@@ -255,15 +256,16 @@ class _HomeScreenState extends State<HomeScreen>
         backgroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text(
-          'Instagram',
-          style: TextStyle(
-            fontFamily: 'Billabong',
-            fontSize: 32,
-            color: Colors.black,
-            fontWeight: FontWeight.w300,
+        title: Flexible(
+          child: FittedBox(
+            fit: BoxFit.contain,
+            child: Image.asset(
+              AppImages.instagramtext,
+              height: 120, // typical Instagram text height
+            ),
           ),
         ),
+
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.add_outlined, color: Colors.black, size: 28),
@@ -287,6 +289,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ],
       ),
+
       body: PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
