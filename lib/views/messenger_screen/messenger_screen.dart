@@ -141,10 +141,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: widget.onSwipeBack ?? () => Navigator.pop(context),
-          ),
+
           title: Row(
             children: [
               Expanded(

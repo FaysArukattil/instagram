@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/reel_model.dart';
 import 'package:instagram/views/profile_screen/profile_screen.dart';
+import 'package:instagram/views/add_post_screen/add_post_screen.dart';
 import 'dart:io';
 
 class ReelsScreen extends StatefulWidget {
@@ -14,8 +15,10 @@ class ReelsScreen extends StatefulWidget {
   final bool isVisible;
   final bool disableShuffle;
   final Duration? startPosition;
-  final String? userId; // ✅ ADDED: Filter reels by user
-  final List<ReelModel>? specificReels; // ✅ ADDED: Use specific reels list
+  final String? userId;
+  final List<ReelModel>? specificReels;
+  final bool showFriendsOnly;
+  final ValueChanged<bool>? onFriendsToggle;
 
   const ReelsScreen({
     super.key,
@@ -24,8 +27,10 @@ class ReelsScreen extends StatefulWidget {
     this.isVisible = true,
     this.disableShuffle = false,
     this.startPosition,
-    this.userId, // ✅ ADDED
-    this.specificReels, // ✅ ADDED
+    this.userId,
+    this.specificReels,
+    this.showFriendsOnly = false,
+    this.onFriendsToggle,
   });
 
   @override
@@ -37,13 +42,15 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
   List<ReelModel> reels = [];
   String _screenId = '';
+  late bool _showFriendsOnly;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _screenId = DateTime.now().millisecondsSinceEpoch.toString();
-    _loadReels(shuffle: true);
+    _showFriendsOnly = widget.showFriendsOnly;
+    _loadReels(shuffle: !widget.disableShuffle);
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _currentIndex);
   }
@@ -52,9 +59,9 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      // Videos will auto-pause through their lifecycle management
+      // Videos will auto-pause
     } else if (state == AppLifecycleState.resumed) {
-      // Videos will auto-resume through their lifecycle management
+      // Videos will auto-resume
     }
   }
 
@@ -69,7 +76,6 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
     }
 
     setState(() {
-      // ✅ MODIFIED: Use specific reels if provided, otherwise filter by userId, otherwise use all
       if (widget.specificReels != null) {
         reels = List.from(widget.specificReels!);
       } else if (widget.userId != null) {
@@ -78,6 +84,13 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
             .toList();
       } else {
         reels = List.from(DummyData.reels);
+
+        if (_showFriendsOnly) {
+          reels = reels.where((reel) {
+            final user = DummyData.getUserById(reel.userId);
+            return user != null && user.isFollowing;
+          }).toList();
+        }
       }
 
       for (var reel in reels) {
@@ -87,7 +100,7 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
         );
       }
 
-      if (shuffle && !widget.disableShuffle) {
+      if (shuffle) {
         reels.shuffle();
 
         int attempts = 0;
@@ -105,8 +118,10 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
   @override
   void didUpdateWidget(ReelsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.key != oldWidget.key) {
+    if (widget.key != oldWidget.key ||
+        widget.showFriendsOnly != oldWidget.showFriendsOnly) {
       _screenId = DateTime.now().millisecondsSinceEpoch.toString();
+      _showFriendsOnly = widget.showFriendsOnly;
       _loadReels(shuffle: !widget.disableShuffle);
       _currentIndex = 0;
 
@@ -131,11 +146,69 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
     });
   }
 
+  void _openAddPost() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddPostScreen(),
+        fullscreenDialog: true,
+      ),
+    ).then((_) {
+      _loadReels(shuffle: !widget.disableShuffle);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: () {
+                if (_showFriendsOnly) {
+                  widget.onFriendsToggle?.call(false);
+                }
+              },
+              child: Text(
+                'Reels',
+                style: TextStyle(
+                  color: !_showFriendsOnly ? Colors.white : Colors.grey,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 24),
+            GestureDetector(
+              onTap: () {
+                if (!_showFriendsOnly) {
+                  widget.onFriendsToggle?.call(true);
+                }
+              },
+              child: Text(
+                'Friends',
+                style: TextStyle(
+                  color: _showFriendsOnly ? Colors.white : Colors.grey,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.add_outlined, color: Colors.white, size: 28),
+          onPressed: _openAddPost,
+        ),
+      ),
       body: PageView.builder(
         controller: _pageController,
         scrollDirection: Axis.vertical,
@@ -175,7 +248,7 @@ class ReelItem extends StatefulWidget {
 }
 
 class _ReelItemState extends State<ReelItem>
-    with TickerProviderStateMixin, WidgetsBindingObserver, RouteAware {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   UserModel? _cachedUser;
   late VideoPlayerController _controller;
   bool _isInitialized = false;
@@ -191,6 +264,7 @@ class _ReelItemState extends State<ReelItem>
   bool _isProcessingTap = false;
   bool _showMuteIndicator = false;
   double? _dragStartY;
+  bool _isInSeekingArea = false;
 
   late AnimationController _likeAnimationController;
   late Animation<double> _likeAnimation;
@@ -248,15 +322,16 @@ class _ReelItemState extends State<ReelItem>
           widget.reel.videoUrl.startsWith('https')) {
         _controller = VideoPlayerController.networkUrl(
           Uri.parse(widget.reel.videoUrl),
-        );
+        )..setLooping(true);
       } else if (widget.reel.videoUrl.startsWith('assets/')) {
-        _controller = VideoPlayerController.asset(widget.reel.videoUrl);
+        _controller = VideoPlayerController.asset(widget.reel.videoUrl)
+          ..setLooping(true);
       } else {
-        _controller = VideoPlayerController.file(File(widget.reel.videoUrl));
+        _controller = VideoPlayerController.file(File(widget.reel.videoUrl))
+          ..setLooping(true);
       }
 
       await _controller.initialize();
-      _controller.setLooping(true);
 
       widget.reel.isMuted = false;
       _controller.setVolume(1);
@@ -266,17 +341,22 @@ class _ReelItemState extends State<ReelItem>
           _isInitialized = true;
         });
 
-        // Seek to start position if provided
-        if (widget.startPosition != null) {
+        if (widget.startPosition != null &&
+            widget.startPosition!.inMilliseconds > 0) {
           await _controller.seekTo(widget.startPosition!);
         }
 
         if (widget.isActive) {
-          _controller.play();
+          await _controller.play();
         }
       }
     } catch (e) {
       debugPrint('Video initialization error: $e');
+      if (mounted) {
+        setState(() {
+          _isInitialized = false;
+        });
+      }
     }
   }
 
@@ -328,7 +408,7 @@ class _ReelItemState extends State<ReelItem>
   }
 
   void _handleDoubleTap() {
-    _tapCount = 0; // Reset tap count on double tap
+    _tapCount = 0;
     _isProcessingTap = false;
 
     setState(() {
@@ -360,10 +440,8 @@ class _ReelItemState extends State<ReelItem>
     _tapCount++;
     _isProcessingTap = true;
 
-    // Wait to see if it's a double tap
     Future.delayed(const Duration(milliseconds: 300), () {
       if (_tapCount == 1 && mounted) {
-        // Single tap confirmed - toggle mute
         _toggleMute();
       }
       _tapCount = 0;
@@ -475,7 +553,7 @@ class _ReelItemState extends State<ReelItem>
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
-              SwipeableProfileScreen(user: user),
+              UserProfileScreen(user: user),
           transitionDuration: Duration.zero,
           reverseTransitionDuration: const Duration(milliseconds: 300),
         ),
@@ -514,6 +592,10 @@ class _ReelItemState extends State<ReelItem>
 
   void _handleHorizontalDragStart(DragStartDetails details) {
     _dragStartY = details.globalPosition.dy;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    // Check if starting in seeking area (bottom 150px)
+    _isInSeekingArea = _dragStartY! >= screenHeight - 150;
   }
 
   void _handleHorizontalDrag(
@@ -521,9 +603,8 @@ class _ReelItemState extends State<ReelItem>
     double screenWidth,
     double screenHeight,
   ) {
-    // Only allow seeking in bottom 50% of screen
-    if (_dragStartY != null && _dragStartY! < screenHeight * 0.5) {
-      // Not in seeking area, allow other gestures
+    // Only allow seeking if drag started in seeking area
+    if (!_isInSeekingArea) {
       return;
     }
 
@@ -556,7 +637,7 @@ class _ReelItemState extends State<ReelItem>
   }
 
   void _handleHorizontalDragEnd() {
-    if (_seekPreviewPosition != null) {
+    if (_seekPreviewPosition != null && _isInSeekingArea) {
       _controller.seekTo(_seekPreviewPosition!);
     }
 
@@ -564,6 +645,7 @@ class _ReelItemState extends State<ReelItem>
       _isSeeking = false;
       _seekPreviewPosition = null;
       _dragStartY = null;
+      _isInSeekingArea = false;
     });
   }
 
@@ -588,10 +670,30 @@ class _ReelItemState extends State<ReelItem>
     });
   }
 
+  void _handleProgressBarTap(TapDownDetails details, double screenWidth) {
+    if (!_isInitialized) return;
+
+    final dx = details.localPosition.dx;
+    final progress = (dx / screenWidth).clamp(0.0, 1.0);
+    final duration = _controller.value.duration;
+    final newPosition = duration * progress;
+
+    _controller.seekTo(newPosition);
+  }
+
   String _formatDuration(Duration duration) {
     final minutes = duration.inMinutes;
     final seconds = duration.inSeconds % 60;
     return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  String _formatCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+    return count.toString();
   }
 
   @override
@@ -648,7 +750,6 @@ class _ReelItemState extends State<ReelItem>
                 ),
               ),
             ),
-            // Top gradient
             Positioned(
               top: 0,
               left: 0,
@@ -667,7 +768,6 @@ class _ReelItemState extends State<ReelItem>
                 ),
               ),
             ),
-            // Bottom gradient
             Positioned(
               bottom: 0,
               left: 0,
@@ -686,7 +786,6 @@ class _ReelItemState extends State<ReelItem>
                 ),
               ),
             ),
-            // Like animation
             if (_showLikeAnimation)
               Center(
                 child: AnimatedBuilder(
@@ -703,7 +802,6 @@ class _ReelItemState extends State<ReelItem>
                   },
                 ),
               ),
-            // Mute indicator
             if (_showMuteIndicator)
               Center(
                 child: Container(
@@ -719,7 +817,6 @@ class _ReelItemState extends State<ReelItem>
                   ),
                 ),
               ),
-            // Long press indicator (center only)
             if (_isLongPressing)
               Center(
                 child: Container(
@@ -777,7 +874,7 @@ class _ReelItemState extends State<ReelItem>
                   ),
                 ),
               ),
-            // Bottom info section
+
             Positioned(
               bottom: 20,
               left: 12,
@@ -880,7 +977,6 @@ class _ReelItemState extends State<ReelItem>
                 ],
               ),
             ),
-            // Right side action buttons
             Positioned(
               bottom: 20,
               right: 12,
@@ -971,7 +1067,6 @@ class _ReelItemState extends State<ReelItem>
                 ],
               ),
             ),
-            // Progress bar at bottom
             if (_isInitialized)
               Positioned(
                 bottom: 0,
@@ -980,143 +1075,12 @@ class _ReelItemState extends State<ReelItem>
                 child: CustomVideoProgressIndicator(
                   controller: _controller,
                   seekPreviewPosition: _seekPreviewPosition,
+                  onTap: (details) =>
+                      _handleProgressBarTap(details, screenWidth),
                 ),
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  String _formatCount(int count) {
-    if (count >= 1000000) {
-      return '${(count / 1000000).toStringAsFixed(1)}M';
-    } else if (count >= 1000) {
-      return '${(count / 1000).toStringAsFixed(1)}K';
-    }
-    return count.toString();
-  }
-}
-
-class SwipeableProfileScreen extends StatefulWidget {
-  final UserModel user;
-
-  const SwipeableProfileScreen({super.key, required this.user});
-
-  @override
-  State<SwipeableProfileScreen> createState() => _SwipeableProfileScreenState();
-}
-
-class _SwipeableProfileScreenState extends State<SwipeableProfileScreen>
-    with SingleTickerProviderStateMixin {
-  double _horizontalDragOffset = 0.0;
-  late AnimationController _animationController;
-  late Animation<double> _animation;
-  bool _isDraggingHorizontally = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(vsync: this);
-  }
-
-  void _onHorizontalDragStart(DragStartDetails details) {
-    _animationController.stop();
-    setState(() {
-      _isDraggingHorizontally = true;
-    });
-  }
-
-  void _onHorizontalDragUpdate(DragUpdateDetails details) {
-    setState(() {
-      _horizontalDragOffset += details.delta.dx;
-      _horizontalDragOffset = _horizontalDragOffset.clamp(
-        0.0,
-        MediaQuery.of(context).size.width,
-      );
-    });
-  }
-
-  void _onHorizontalDragEnd(DragEndDetails details) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    if (_horizontalDragOffset > screenWidth * 0.3) {
-      Navigator.pop(context);
-    } else {
-      _animationController.dispose();
-      _animationController = AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 300),
-      );
-
-      _animation = Tween<double>(begin: _horizontalDragOffset, end: 0.0)
-          .animate(
-            CurvedAnimation(
-              parent: _animationController,
-              curve: Curves.easeOut,
-            ),
-          );
-
-      _animation.addListener(() {
-        if (!mounted) return;
-        setState(() {
-          _horizontalDragOffset = _animation.value;
-        });
-      });
-
-      _animation.addStatusListener((status) {
-        if (status == AnimationStatus.completed ||
-            status == AnimationStatus.dismissed) {
-          _isDraggingHorizontally = false;
-        }
-      });
-
-      _animationController.forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onHorizontalDragStart: _onHorizontalDragStart,
-      onHorizontalDragUpdate: _onHorizontalDragUpdate,
-      onHorizontalDragEnd: _onHorizontalDragEnd,
-      child: Stack(
-        children: [
-          AnimatedContainer(
-            duration: _isDraggingHorizontally
-                ? Duration.zero
-                : const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            transform: Matrix4.translationValues(_horizontalDragOffset, 0, 0),
-            child: UserProfileScreen(user: widget.user),
-          ),
-          if (_horizontalDragOffset > 0)
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: 20,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      Colors.black.withValues(alpha: .3),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }
@@ -1125,11 +1089,13 @@ class _SwipeableProfileScreenState extends State<SwipeableProfileScreen>
 class CustomVideoProgressIndicator extends StatefulWidget {
   final VideoPlayerController controller;
   final Duration? seekPreviewPosition;
+  final void Function(TapDownDetails)? onTap;
 
   const CustomVideoProgressIndicator({
     super.key,
     required this.controller,
     this.seekPreviewPosition,
+    this.onTap,
   });
 
   @override
@@ -1178,26 +1144,34 @@ class _CustomVideoProgressIndicatorState
         widget.controller.value.position.inMilliseconds;
     final progress = position / duration;
 
-    return Container(
-      height: 2,
-      margin: const EdgeInsets.only(bottom: 2),
-      child: Stack(
-        children: [
-          // Background bar
-          Container(
-            width: double.infinity,
+    return GestureDetector(
+      onTapDown: widget.onTap,
+      child: Container(
+        height: 20,
+        margin: const EdgeInsets.only(bottom: 2),
+        color: Colors.transparent,
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: SizedBox(
             height: 2,
-            color: Colors.white.withValues(alpha: 0.3),
-          ),
-          // Progress bar
-          FractionallySizedBox(
-            widthFactor: progress.clamp(0.0, 1.0),
-            child: Container(
-              height: 2,
-              color: Colors.white.withValues(alpha: 0.9),
+            child: Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 2,
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+                FractionallySizedBox(
+                  widthFactor: progress.clamp(0.0, 1.0),
+                  child: Container(
+                    height: 2,
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

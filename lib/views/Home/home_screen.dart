@@ -1,19 +1,20 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/models/reel_model.dart';
 import 'package:instagram/views/commentscreen/commentscreen.dart';
-import 'package:instagram/views/messenger_screen/messenger_screen.dart';
+import 'package:instagram/views/add_post_screen/add_post_screen.dart';
 import 'package:instagram/views/my_story_screen/my_story_screen.dart';
 import 'package:instagram/views/notifications_screen/notifications_screen.dart';
 import 'package:instagram/views/profile_screen/profile_screen.dart';
+import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
 import 'package:instagram/views/share_bottom_sheet/share_bottom_sheet.dart';
 import 'package:instagram/views/story_viewer_screen/story_viewer_screen.dart';
 import 'package:instagram/widgets/post_widget.dart';
 import 'package:instagram/widgets/reel_widget.dart';
 import 'package:instagram/widgets/story_avatar.dart';
-import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final void Function(int, int, Duration)? onNavigateToReels;
@@ -39,21 +40,12 @@ class _HomeScreenState extends State<HomeScreen>
 
   late List<PostModel> posts;
   late List<ReelModel> reels;
-  late AnimationController _animationController;
+  List<dynamic> feedItems = [];
 
   @override
   void initState() {
     super.initState();
-    // Load data immediately with no delay
-    posts = List.from(DummyData.posts);
-    reels = List.from(DummyData.reels);
-    posts.shuffle(Random());
-    reels.shuffle(Random());
-
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 350),
-    );
+    _loadData(shuffle: true);
   }
 
   @override
@@ -61,16 +53,11 @@ class _HomeScreenState extends State<HomeScreen>
     super.didChangeDependencies();
     final route = ModalRoute.of(context);
     if (route != null) routeObserver.subscribe(this, route);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // if (mounted) _loadData();
-    });
   }
 
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
-    _animationController.dispose();
     super.dispose();
   }
 
@@ -84,20 +71,40 @@ class _HomeScreenState extends State<HomeScreen>
     _triggerAutoRefresh();
   }
 
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _triggerAutoRefresh();
-    }
-  }
-
   void _loadData({bool shuffle = false}) {
     if (!mounted) return;
+
     setState(() {
       posts = List.from(DummyData.posts);
       reels = List.from(DummyData.reels);
+
       if (shuffle) {
-        posts.shuffle();
-        reels.shuffle();
+        posts.shuffle(Random());
+        reels.shuffle(Random());
+      }
+
+      // Create feed with posts and reels interspersed
+      feedItems = [];
+      int postIndex = 0;
+      int reelIndex = 0;
+
+      // Add 2 posts, then 1 reel, repeat
+      while (postIndex < posts.length || reelIndex < reels.length) {
+        // Add 2 posts
+        if (postIndex < posts.length) {
+          feedItems.add(posts[postIndex]);
+          postIndex++;
+        }
+        if (postIndex < posts.length) {
+          feedItems.add(posts[postIndex]);
+          postIndex++;
+        }
+
+        // Add 1 reel
+        if (reelIndex < reels.length) {
+          feedItems.add(reels[reelIndex]);
+          reelIndex++;
+        }
       }
     });
   }
@@ -201,44 +208,35 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  Future<void> _refreshPosts() async {
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    setState(() {
-      posts = List.from(DummyData.posts);
-      reels = List.from(DummyData.reels);
-
-      posts.shuffle(Random());
-      reels.shuffle(Random());
-    });
+  void _openAddPost() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddPostScreen(),
+        fullscreenDialog: true,
+      ),
+    ).then((_) => _loadData());
   }
 
-  void _runSmoothAnimation({required bool open}) {
-    _animationController.animateTo(
-      open ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutCubic,
-    );
+  Future<void> _refreshPosts() async {
+    await Future.delayed(const Duration(milliseconds: 600));
+    _loadData(shuffle: true);
   }
 
   Widget _buildFeedItem(BuildContext context, int index) {
-    final itemPosition = index % 3;
+    final item = feedItems[index];
 
-    if (itemPosition == 2 && reels.isNotEmpty) {
-      final reelIndex = (index ~/ 3);
-      if (reelIndex < reels.length) {
-        return ReelWidget(
-          reel: reels[reelIndex],
-          onReelUpdated: () => _loadData(),
-          onNavigateToReels: widget.onNavigateToReels,
-        );
-      }
-    }
-
-    final postIndex = index - (index ~/ 3);
-    if (postIndex < posts.length) {
+    if (item is ReelModel) {
+      return ReelWidget(
+        key: ValueKey('reel_${item.id}'),
+        reel: item,
+        onReelUpdated: () => _loadData(),
+        onNavigateToReels: widget.onNavigateToReels,
+      );
+    } else if (item is PostModel) {
       return PostWidget(
-        post: posts[postIndex],
+        key: ValueKey('post_${item.id}'),
+        post: item,
         onLike: _handleLike,
         onProfileTap: _openProfile,
         onComment: _openComments,
@@ -249,87 +247,8 @@ class _HomeScreenState extends State<HomeScreen>
     return const SizedBox.shrink();
   }
 
-  int _calculateTotalItems() {
-    final postCount = posts.length;
-    final reelCount = reels.length;
-    return postCount + reelCount;
-  }
-
   @override
   Widget build(BuildContext context) {
-    DummyData.stories.any((s) => s.userId == DummyData.currentUser.id);
-
-    return GestureDetector(
-      onHorizontalDragUpdate: (details) {
-        final delta = details.primaryDelta ?? 0;
-        _animationController.value -= delta / MediaQuery.of(context).size.width;
-      },
-      onHorizontalDragEnd: (details) {
-        final velocity = details.velocity.pixelsPerSecond.dx;
-
-        if (velocity < -100) {
-          _animationController.animateTo(
-            1.0,
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
-          );
-        } else if (velocity > 100) {
-          _animationController.animateTo(
-            0.0,
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
-          );
-        } else {
-          if (_animationController.value >= 0.5) {
-            _animationController.animateTo(
-              1.0,
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOut,
-            );
-          } else {
-            _animationController.animateTo(
-              0.0,
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOut,
-            );
-          }
-        }
-      },
-      child: AnimatedBuilder(
-        animation: _animationController,
-        builder: (context, child) {
-          final screenWidth = MediaQuery.of(context).size.width;
-          final offset = -screenWidth * _animationController.value;
-
-          return Stack(
-            children: [
-              Transform.translate(
-                offset: Offset(offset, 0),
-                child: _buildHomeContent(
-                  DummyData.stories.any(
-                    (s) => s.userId == DummyData.currentUser.id,
-                  ),
-                  screenWidth,
-                ),
-              ),
-              Transform.translate(
-                offset: Offset(screenWidth + offset, 0),
-                child: MessengerScreen(
-                  onSwipeBack: () => _animationController.animateTo(
-                    0.0,
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOut,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildHomeContent(bool currentUserHasStory, double screenWidth) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -342,11 +261,21 @@ class _HomeScreenState extends State<HomeScreen>
             fontFamily: 'Billabong',
             fontSize: 32,
             color: Colors.black,
+            fontWeight: FontWeight.w300,
           ),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.add_outlined, color: Colors.black, size: 28),
+          onPressed: _openAddPost,
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.favorite_border, color: Colors.black),
+            icon: const Icon(
+              Icons.favorite_border,
+              color: Colors.black,
+              size: 28,
+            ),
             onPressed: () {
               Navigator.push(
                 context,
@@ -356,104 +285,81 @@ class _HomeScreenState extends State<HomeScreen>
               );
             },
           ),
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.messenger_outline, color: Colors.black),
-                onPressed: () {
-                  _runSmoothAnimation(open: true);
-                },
-              ),
-              Positioned(
-                right: 8,
-                top: 8,
+        ],
+      ),
+      body: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          SystemNavigator.pop();
+        },
+        child: RefreshIndicator(
+          key: _refreshKey,
+          onRefresh: _refreshPosts,
+          displacement: 60,
+          edgeOffset: 10,
+          color: Colors.grey[700],
+          backgroundColor: Colors.white,
+          strokeWidth: 2.2,
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            slivers: [
+              SliverToBoxAdapter(
                 child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 18,
-                    minHeight: 18,
-                  ),
-                  child: const Text(
-                    '15',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                  height: 110,
+                  margin: const EdgeInsets.only(bottom: 2),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 8,
                     ),
+                    itemCount:
+                        1 + DummyData.users.where((u) => u.hasStory).length,
+                    itemBuilder: (context, storyIndex) {
+                      if (storyIndex == 0) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: StoryAvatar(
+                            user: DummyData.currentUser,
+                            hasStory: DummyData.stories.any(
+                              (s) => s.userId == DummyData.currentUser.id,
+                            ),
+                            isCurrentUser: true,
+                            onTap: _openMyStory,
+                            onAddStory: _addToStory,
+                          ),
+                        );
+                      }
+                      final storiesUsers = DummyData.users
+                          .where((u) => u.hasStory)
+                          .toList();
+                      final user = storiesUsers[storyIndex - 1];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: StoryAvatar(
+                          user: user,
+                          hasStory: true,
+                          onTap: () => _openStory(user.id),
+                        ),
+                      );
+                    },
                   ),
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: Divider(height: 1, thickness: 0.5),
+              ),
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildFeedItem(context, index),
+                  childCount: feedItems.length,
                 ),
               ),
             ],
           ),
-        ],
-      ),
-      body: RefreshIndicator(
-        key: _refreshKey,
-        onRefresh: _refreshPosts,
-        displacement: 60,
-        edgeOffset: 10,
-        color: Colors.grey[700],
-        backgroundColor: Colors.white,
-        strokeWidth: 2.2,
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Container(
-                height: 110,
-                margin: const EdgeInsets.only(bottom: 2),
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 8,
-                  ),
-                  itemCount:
-                      1 + DummyData.users.where((u) => u.hasStory).length,
-                  itemBuilder: (context, storyIndex) {
-                    if (storyIndex == 0) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: StoryAvatar(
-                          user: DummyData.currentUser,
-                          hasStory: currentUserHasStory,
-                          isCurrentUser: true,
-                          onTap: _openMyStory,
-                          onAddStory: _addToStory,
-                        ),
-                      );
-                    }
-                    final storiesUsers = DummyData.users
-                        .where((u) => u.hasStory)
-                        .toList();
-                    final user = storiesUsers[storyIndex - 1];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: StoryAvatar(
-                        user: user,
-                        hasStory: true,
-                        onTap: () => _openStory(user.id),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: Divider(height: 1, thickness: 0.5)),
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildFeedItem(context, index),
-                childCount: _calculateTotalItems(),
-              ),
-            ),
-          ],
         ),
       ),
     );

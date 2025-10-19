@@ -330,13 +330,16 @@ class _ReelWidgetState extends State<ReelWidget>
       }
 
       if (reelIndex != -1) {
-        debugPrint('🎬 Navigating to reels tab with index: $reelIndex');
-        widget.onNavigateToReels!(3, reelIndex, currentPosition);
+        debugPrint(
+          '🎬 Navigating to reels tab (index 1) with reel index: $reelIndex',
+        );
+        // FIXED: Changed from 3 to 1 (Reels tab is at index 1)
+        widget.onNavigateToReels!(1, reelIndex, currentPosition);
       } else {
         debugPrint(
           '⚠️ Reel not found in DummyData.reels, defaulting to index 0',
         );
-        widget.onNavigateToReels!(3, 0, currentPosition);
+        widget.onNavigateToReels!(1, 0, currentPosition);
       }
     } else {
       debugPrint('⚠️ onNavigateToReels callback is null');

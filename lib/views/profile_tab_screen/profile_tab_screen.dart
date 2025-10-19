@@ -43,7 +43,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     routeObserver.subscribe(this, ModalRoute.of(context)!);
-    // Reload data every time dependencies change (when tab is switched to)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _loadData();
@@ -59,7 +58,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
 
   @override
   void didPopNext() {
-    // ✅ Called when returning from another screen
     if (mounted) {
       setState(() {
         _loadData();
@@ -67,38 +65,18 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
     }
   }
 
-  @override
-  void didPush() {
-    // Called when this route is pushed onto the navigator
-    _loadData();
-  }
-
-  @override
-  void didPushNext() {
-    // Called when a new route is pushed on top of this route
-  }
-
   void _loadData() {
     if (!mounted) return;
 
     setState(() {
       currentUser = DummyData.currentUser;
-
-      // Load user's posts
       userPosts = DummyData.posts
           .where((post) => post.userId == currentUser.id)
           .toList();
-
-      // Load user's reels (only their own reels, not reposts)
       userReels = DummyData.getReelsForUser(currentUser.id);
-
-      // ✅ FIX: Load user's reposts
       userReposts = DummyData.getRepostsForUser(currentUser.id);
-
-      // Update counts
       _updateFollowerCounts();
 
-      // Calculate friends count (mutual follows)
       final followingIds = DummyData.followingMap[currentUser.id] ?? [];
       final allUsers = DummyData.users;
       final followers = allUsers.where((u) {
@@ -155,13 +133,11 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
   }
 
   void _handleProfilePictureTap() {
-    // Check if current user has a story
     final userStoryIndex = DummyData.stories.indexWhere(
       (story) => story.userId == currentUser.id,
     );
 
     if (userStoryIndex != -1) {
-      // User has a story, navigate to story viewer
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -172,25 +148,16 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
         ),
       ).then((_) => _loadData());
     } else {
-      // No story, open profile preview
       _openProfilePreview();
     }
   }
-
-  void _handleProfilePictureLongPress() {
-    // Always open profile preview on long press
-    _openProfilePreview();
-  }
-  //hello
 
   void _openProfilePreview() {
     Navigator.push(
       context,
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 450), // slower push
-        reverseTransitionDuration: const Duration(
-          milliseconds: 450,
-        ), // slower pop
+        transitionDuration: const Duration(milliseconds: 450),
+        reverseTransitionDuration: const Duration(milliseconds: 450),
         pageBuilder: (context, animation, secondaryAnimation) {
           return ProfilePreviewScreen(
             imagePath: currentUser.profileImage,
@@ -201,13 +168,10 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
           );
         },
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          // Smooth cubic curve for 60fps feel
           final curvedAnimation = CurvedAnimation(
             parent: animation,
             curve: Curves.easeInOutCubic,
           );
-
-          // Combine scaling + fading for zoom effect
           return FadeTransition(
             opacity: curvedAnimation,
             child: ScaleTransition(
@@ -254,67 +218,27 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                 backgroundColor: Colors.white,
                 elevation: 0,
                 pinned: true,
-                title: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        currentUser.username,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 20,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const Icon(Icons.keyboard_arrow_down, color: Colors.black),
-                  ],
+                automaticallyImplyLeading: false,
+                centerTitle: true,
+                title: Text(
+                  currentUser.username,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                  ),
+                ),
+                leading: IconButton(
+                  icon: const Icon(
+                    Icons.add_outlined,
+                    color: Colors.black,
+                    size: 28,
+                  ),
+                  onPressed: _navigateToAddPost,
                 ),
                 actions: [
-                  Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.favorite_border,
-                          color: Colors.black,
-                        ),
-                        onPressed: () {},
-                      ),
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 18,
-                            minHeight: 18,
-                          ),
-                          child: const Text(
-                            '9+',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                   IconButton(
-                    icon: const Icon(
-                      Icons.add_box_outlined,
-                      color: Colors.black,
-                    ),
-                    onPressed: _navigateToAddPost,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.menu, color: Colors.black),
+                    icon: const Icon(Icons.menu, color: Colors.black, size: 28),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -338,16 +262,15 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 12),
+
                           // Profile Picture and Stats
                           Row(
                             children: [
                               GestureDetector(
                                 onTap: _handleProfilePictureTap,
-                                onLongPress: _handleProfilePictureLongPress,
                                 child: Stack(
                                   alignment: Alignment.center,
                                   children: [
-                                    // Gradient border for story (outside Hero)
                                     if (currentUser.hasStory)
                                       Container(
                                         width: 90,
@@ -365,8 +288,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                                           ),
                                         ),
                                       ),
-
-                                    // White inner border
                                     Container(
                                       width: 84,
                                       height: 84,
@@ -375,8 +296,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                                         color: Colors.white,
                                       ),
                                     ),
-
-                                    // Hero image (minimal widget for smooth animation)
                                     Hero(
                                       tag:
                                           'profile_${currentUser.username}_image',
@@ -387,51 +306,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                                           child: UniversalImage(
                                             imagePath: currentUser.profileImage,
                                             fit: BoxFit.cover,
-                                            placeholder: Container(
-                                              color: Colors.grey[300],
-                                              child: const Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                    ),
-                                              ),
-                                            ),
-                                            errorWidget: Container(
-                                              color: Colors.grey[200],
-                                              child: const Icon(
-                                                Icons.person,
-                                                size: 42,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Optional add post button at bottom right
-                                    Positioned(
-                                      right: 0,
-                                      bottom: 0,
-                                      child: GestureDetector(
-                                        onTap: _navigateToAddPost,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(2),
-                                          decoration: const BoxDecoration(
-                                            color: Colors.white,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Container(
-                                            width: 26,
-                                            height: 26,
-                                            decoration: const BoxDecoration(
-                                              color: Colors.blue,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(
-                                              Icons.add,
-                                              color: Colors.white,
-                                              size: 18,
-                                            ),
                                           ),
                                         ),
                                       ),
@@ -474,17 +348,19 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                               fontSize: 14,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 4),
 
                           // Username with @ icon
                           Row(
                             children: [
-                              const Icon(
-                                Icons.alternate_email,
-                                size: 14,
-                                color: Colors.black87,
+                              const Text(
+                                '@ ',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                              const SizedBox(width: 4),
                               Text(
                                 currentUser.username,
                                 style: const TextStyle(
@@ -503,46 +379,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                             ),
                           ],
                           const SizedBox(height: 16),
-
-                          // Professional Dashboard Card
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[50],
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Professional dashboard',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.arrow_upward,
-                                      size: 14,
-                                      color: Colors.green[700],
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '6 views in the last 30 days.',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey[700],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
 
                           // Action Buttons
                           Row(
@@ -574,7 +410,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
 
                           // Tab Bar
                           Row(
@@ -617,7 +453,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 14)),
+          Text(label, style: const TextStyle(fontSize: 13)),
         ],
       ),
     );
@@ -627,7 +463,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
     return InkWell(
       onTap: onTap ?? () {},
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: Colors.grey[200],
           borderRadius: BorderRadius.circular(8),
@@ -649,7 +485,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
         onTap: () {
           setState(() {
             selectedTabIndex = index;
-            // ✅ Reload data when switching to reposts tab
             if (index == 2) {
               _loadData();
             }
@@ -742,11 +577,6 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
               UniversalImage(
                 imagePath: post.images.isNotEmpty ? post.images.first : '',
                 fit: BoxFit.cover,
-                placeholder: Container(color: Colors.grey[300]),
-                errorWidget: Container(
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.image, size: 40),
-                ),
               ),
               if (post.images.length > 1)
                 Positioned(
@@ -804,6 +634,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                   initialIndex: fullReelIndex >= 0 ? fullReelIndex : 0,
                   isVisible: true,
                   disableShuffle: true,
+                  userId: currentUser.id,
                 ),
               ),
             ).then((_) => _loadData());
@@ -811,15 +642,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
           child: Stack(
             fit: StackFit.expand,
             children: [
-              UniversalImage(
-                imagePath: reel.thumbnailUrl,
-                fit: BoxFit.cover,
-                placeholder: Container(color: Colors.grey[300]),
-                errorWidget: Container(
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.videocam, size: 40),
-                ),
-              ),
+              UniversalImage(imagePath: reel.thumbnailUrl, fit: BoxFit.cover),
               Positioned(
                 bottom: 8,
                 left: 8,
@@ -909,6 +732,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                   initialIndex: fullReelIndex >= 0 ? fullReelIndex : 0,
                   isVisible: true,
                   disableShuffle: true,
+                  userId: currentUser.id,
                 ),
               ),
             ).then((_) => _loadData());
@@ -916,16 +740,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
           child: Stack(
             fit: StackFit.expand,
             children: [
-              UniversalImage(
-                imagePath: reel.thumbnailUrl,
-                fit: BoxFit.cover,
-                placeholder: Container(color: Colors.grey[300]),
-                errorWidget: Container(
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.videocam, size: 40),
-                ),
-              ),
-              // Repost indicator overlay
+              UniversalImage(imagePath: reel.thumbnailUrl, fit: BoxFit.cover),
               Positioned(
                 top: 8,
                 right: 8,

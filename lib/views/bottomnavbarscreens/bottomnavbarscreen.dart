@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/views/Home/home_screen.dart';
-import 'package:instagram/views/add_post_screen/add_post_screen.dart';
 import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
 import 'package:instagram/views/reels_screen/reels_screen.dart';
 import 'package:instagram/views/search_screen/searchscreen.dart';
+import 'package:instagram/views/messenger_screen/messenger_screen.dart';
 import 'package:instagram/widgets/universal_image.dart';
 
 class BottomNavBarScreen extends StatefulWidget {
@@ -20,35 +20,49 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   int _homeRefreshKey = 0;
   int _reelsRefreshKey = 0;
   int _profileRefreshKey = 0;
-  int _reelsInitialIndex = 0; // Track which reel to start at
-  Duration _reelsStartPosition = Duration.zero; // Track playback position
+  int _reelsInitialIndex = 0;
+  Duration _reelsStartPosition = Duration.zero;
+  bool _showFriendsReelsOnly = false;
 
-  // Public method to navigate to a specific tab from child widgets
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _currentIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void _navigateToTab(int tabIndex, int reelIndex, Duration startPosition) {
-    debugPrint('📱 BottomNavBar: Received navigation request');
-    debugPrint(
-      '📱 Tab Index: $tabIndex, Reel Index: $reelIndex, Start Position: ${startPosition.inSeconds}s',
-    );
-
     setState(() {
-      if (tabIndex == 3) {
-        // Navigating to reels tab
+      if (tabIndex == 1) {
         _reelsInitialIndex = reelIndex;
         _reelsStartPosition = startPosition;
         _reelsRefreshKey++;
-        debugPrint('📱 Set _reelsInitialIndex to: $reelIndex');
-        debugPrint(
-          '📱 Set _reelsStartPosition to: ${startPosition.inSeconds}s',
-        );
-        debugPrint('📱 Refresh key: $_reelsRefreshKey');
       }
       _currentIndex = tabIndex;
+      _pageController.animateToPage(
+        tabIndex,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOutCubic,
+      );
+    });
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
+      _currentIndex = index;
     });
   }
 
   List<Widget> _getScreens() {
     return [
-      // 🏠 HOME — pressing back exits app (only when visible)
+      // 0: HOME
       PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -62,49 +76,70 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
         ),
       ),
 
-      // 🔍 SEARCH — pressing back returns to home (only when visible)
+      // 1: REELS
       PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
           if (_currentIndex == 1) {
+            _pageController.previousPage(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOutCubic,
+            );
+          }
+        },
+        child: ReelsScreen(
+          key: ValueKey('reels_$_reelsRefreshKey'),
+          isVisible: _currentIndex == 1,
+          initialIndex: _reelsInitialIndex,
+          disableShuffle: _reelsInitialIndex > 0,
+          startPosition: _reelsStartPosition,
+          showFriendsOnly: _showFriendsReelsOnly,
+          onFriendsToggle: (value) {
             setState(() {
-              _currentIndex = 0;
+              _showFriendsReelsOnly = value;
+              _reelsRefreshKey++;
             });
+          },
+        ),
+      ),
+
+      // 2: MESSENGER
+      PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (_currentIndex == 2) {
+            _pageController.previousPage(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOutCubic,
+            );
+          }
+        },
+        child: const MessengerScreen(),
+      ),
+
+      // 3: SEARCH
+      PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (_currentIndex == 3) {
+            _pageController.previousPage(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOutCubic,
+            );
           }
         },
         child: const SearchScreen(),
       ),
 
-      // ➕ ADD POST placeholder
-      const SizedBox(),
-
-      // 🎥 REELS — pressing back returns to home (only when visible)
-      PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (_currentIndex == 3) {
-            setState(() {
-              _currentIndex = 0;
-            });
-          }
-        },
-        child: ReelsScreen(
-          key: ValueKey('reels_$_reelsRefreshKey'),
-          isVisible: _currentIndex == 3,
-          initialIndex: _reelsInitialIndex,
-          disableShuffle: true, // Don't shuffle when navigating from home feed
-          startPosition: _reelsStartPosition,
-        ),
-      ),
-
-      // 👤 PROFILE — pressing back returns to home (only when visible)
+      // 4: PROFILE
       PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
           if (_currentIndex == 4) {
-            setState(() {
-              _currentIndex = 0;
-            });
+            _pageController.previousPage(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOutCubic,
+            );
           }
         },
         child: ProfileTabScreen(key: ValueKey('profile_$_profileRefreshKey')),
@@ -113,64 +148,42 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   }
 
   void _onTabTapped(int index) {
-    if (index == 2) {
-      // Open Add Post screen as a modal
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const AddPostScreen(),
-          fullscreenDialog: true,
-        ),
-      ).then((_) {
-        // ✅ FIX: Refresh both home and profile screens after returning from add post
+    if (_currentIndex != index) {
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOutCubic,
+      );
+    } else {
+      // Refresh current tab if tapped again
+      if (index == 0) {
+        setState(() => _homeRefreshKey++);
+      } else if (index == 1) {
         setState(() {
-          _homeRefreshKey++;
-          _profileRefreshKey++;
+          _reelsInitialIndex = 0;
+          _reelsStartPosition = Duration.zero;
           _reelsRefreshKey++;
         });
-      });
-    } else {
-      setState(() {
-        // If tapping the same tab, refresh it
-        if (_currentIndex == index) {
-          if (index == 0) {
-            // Refresh home
-            _homeRefreshKey++;
-          } else if (index == 3) {
-            // Refresh reels - start from beginning
-            _reelsInitialIndex = 0;
-            _reelsRefreshKey++;
-          } else if (index == 4) {
-            // Refresh profile
-            _profileRefreshKey++;
-          }
-        } else {
-          // Switching to different tab
-          if (index == 0) {
-            _homeRefreshKey++;
-          } else if (index == 3) {
-            // When manually switching to reels tab, start from beginning
-            _reelsInitialIndex = 0;
-            _reelsRefreshKey++;
-          } else if (index == 4) {
-            // Always refresh profile when switching to it
-            _profileRefreshKey++;
-          }
-        }
-        _currentIndex = index;
-      });
+      } else if (index == 4) {
+        setState(() => _profileRefreshKey++);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _getScreens()),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        physics: const ClampingScrollPhysics(),
+        children: _getScreens(),
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(
-            top: BorderSide(color: Colors.grey.shade300, width: 0.5),
+            top: BorderSide(color: Colors.grey.shade200, width: 0.5),
           ),
         ),
         child: SafeArea(
@@ -182,22 +195,22 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
                 _buildNavItem(
                   index: 0,
                   icon: Icons.home_outlined,
-                  activeIcon: Icons.home,
+                  activeIcon: Icons.home_filled,
                 ),
                 _buildNavItem(
                   index: 1,
-                  icon: Icons.search,
-                  activeIcon: Icons.search,
+                  icon: Icons.play_circle_outlined,
+                  activeIcon: Icons.play_circle,
                 ),
                 _buildNavItem(
                   index: 2,
-                  icon: Icons.add_box_outlined,
-                  activeIcon: Icons.add_box_outlined,
+                  icon: Icons.messenger_outline,
+                  activeIcon: Icons.messenger,
                 ),
                 _buildNavItem(
                   index: 3,
-                  icon: Icons.movie_outlined,
-                  activeIcon: Icons.movie,
+                  icon: Icons.search,
+                  activeIcon: Icons.search,
                 ),
                 _buildProfileNavItem(index: 4),
               ],
@@ -221,7 +234,7 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
         padding: const EdgeInsets.all(8.0),
         child: Icon(
           isSelected ? activeIcon : icon,
-          size: 26,
+          size: 28,
           color: Colors.black,
         ),
       ),
@@ -238,8 +251,8 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
       child: Container(
         padding: const EdgeInsets.all(8.0),
         child: Container(
-          width: 26,
-          height: 26,
+          width: 28,
+          height: 28,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: isSelected
@@ -251,8 +264,8 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
               key: ValueKey(DummyData.currentUser.profileImage),
               imagePath: DummyData.currentUser.profileImage,
               fit: BoxFit.cover,
-              width: 26,
-              height: 26,
+              width: 28,
+              height: 28,
             ),
           ),
         ),
