@@ -594,8 +594,16 @@ class _ReelItemState extends State<ReelItem>
     _dragStartY = details.globalPosition.dy;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    // Check if starting in seeking area (bottom 150px)
-    _isInSeekingArea = _dragStartY! >= screenHeight - 150;
+    // Check if starting in seeking area (bottom 250px)
+    _isInSeekingArea = _dragStartY! >= screenHeight - 250;
+
+    if (_isInSeekingArea) {
+      setState(() {
+        _isSeeking = true;
+        // Start from current video position, not from beginning
+        _seekPreviewPosition = _controller.value.position;
+      });
+    }
   }
 
   void _handleHorizontalDrag(
@@ -604,18 +612,12 @@ class _ReelItemState extends State<ReelItem>
     double screenHeight,
   ) {
     // Only allow seeking if drag started in seeking area
-    if (!_isInSeekingArea) {
+    if (!_isInSeekingArea || !_isSeeking) {
       return;
     }
 
     if (_isLeftEdgePressed || _isRightEdgePressed) {
       return; // Don't seek while edge is pressed
-    }
-
-    if (!_isSeeking) {
-      setState(() {
-        _isSeeking = true;
-      });
     }
 
     final delta = details.delta.dx;
@@ -624,8 +626,8 @@ class _ReelItemState extends State<ReelItem>
         _seekPreviewPosition?.inMilliseconds ??
         _controller.value.position.inMilliseconds;
 
-    // More responsive: 1% of screen width = 1% of video duration
-    final seekDelta = (delta / screenWidth) * totalDuration;
+    // Instagram-like: smaller swipes, more control (1.5x sensitivity)
+    final seekDelta = (delta / screenWidth) * totalDuration * 1.5;
     final newPosition = (currentPosition + seekDelta.toInt()).clamp(
       0,
       totalDuration,
@@ -729,10 +731,6 @@ class _ReelItemState extends State<ReelItem>
         onDoubleTap: _handleDoubleTap,
         onLongPressStart: (details) => _onLongPressStart(details, screenWidth),
         onLongPressEnd: (_) => _onLongPressEnd(),
-        onHorizontalDragStart: _handleHorizontalDragStart,
-        onHorizontalDragUpdate: (details) =>
-            _handleHorizontalDrag(details, screenWidth, screenHeight),
-        onHorizontalDragEnd: (_) => _handleHorizontalDragEnd(),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -828,7 +826,6 @@ class _ReelItemState extends State<ReelItem>
                   child: const Icon(Icons.pause, color: Colors.white, size: 40),
                 ),
               ),
-            // Playback speed indicator
             if (_playbackSpeed != 1.0)
               Center(
                 child: Container(
@@ -847,7 +844,6 @@ class _ReelItemState extends State<ReelItem>
                   ),
                 ),
               ),
-            // Seeking indicator
             if (_isSeeking && _seekPreviewPosition != null)
               Positioned(
                 top: 50,
@@ -874,6 +870,24 @@ class _ReelItemState extends State<ReelItem>
                   ),
                 ),
               ),
+
+            // CRITICAL FIX: Horizontal drag only in seeking area (like Instagram)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 80,
+              height: 250, // Reduced seeking area
+              child: GestureDetector(
+                behavior: HitTestBehavior
+                    .opaque, // Block gestures from passing through
+                onHorizontalDragStart: _handleHorizontalDragStart,
+                onHorizontalDragUpdate: (details) =>
+                    _handleHorizontalDrag(details, screenWidth, screenHeight),
+                onHorizontalDragEnd: (_) => _handleHorizontalDragEnd(),
+                onTap: () {}, // Make area tappable and block tap propagation
+                child: Container(color: Colors.transparent),
+              ),
+            ),
 
             Positioned(
               bottom: 20,
