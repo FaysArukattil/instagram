@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/widgets/universal_image.dart';
@@ -258,7 +259,15 @@ class _PostWidgetState extends State<PostWidget>
                 onPressed: () => widget.onLike(widget.post.id),
               ),
               IconButton(
-                icon: const Icon(Icons.chat_bubble_outline, size: 26),
+                icon: SvgPicture.asset(
+                  'assets/Icons/comment_icon_outline.svg',
+                  width: 26,
+                  height: 26,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.black,
+                    BlendMode.srcIn,
+                  ),
+                ),
                 onPressed: () {
                   if (widget.onComment != null) {
                     widget.onComment!(widget.post);
@@ -266,7 +275,15 @@ class _PostWidgetState extends State<PostWidget>
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.send_outlined, size: 26),
+                icon: SvgPicture.asset(
+                  'assets/Icons/share_icon_outline.svg',
+                  width: 26,
+                  height: 26,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.black,
+                    BlendMode.srcIn,
+                  ),
+                ),
                 onPressed: () {
                   if (widget.onShare != null) {
                     widget.onShare!(widget.post);

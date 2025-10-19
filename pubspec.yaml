@@ -40,6 +40,8 @@ flutter:
     - assets/images/
     - assets/videos/
     - assets/fonts/
+    - assets/Icons/
+
 
   fonts:
     - family: Billabong

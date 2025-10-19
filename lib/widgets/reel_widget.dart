@@ -724,7 +724,7 @@ class _ReelWidgetState extends State<ReelWidget>
                         const SizedBox(width: 16),
                         GestureDetector(
                           onTap: _openShare,
-                          child: const Icon(
+                          child: Icon(
                             Icons.send,
                             color: Colors.black,
                             size: 24,
