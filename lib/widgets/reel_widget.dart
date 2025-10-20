@@ -39,6 +39,7 @@ class _ReelWidgetState extends State<ReelWidget>
   bool _isPausedByUser = false;
   bool _showHeartAnimation = false;
   bool _isVisible = false;
+  bool _isDisposing = false; // Add flag to prevent operations during disposal
 
   // Animation properties for gradient heart
   late Animation<double> _scaleAnimation;
@@ -148,8 +149,10 @@ class _ReelWidgetState extends State<ReelWidget>
     ]).animate(_likeAnimationController);
 
     _likeAnimationController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        setState(() => _showHeartAnimation = false);
+      if (status == AnimationStatus.completed && !_isDisposing) {
+        if (mounted) {
+          setState(() => _showHeartAnimation = false);
+        }
         _likeAnimationController.reset();
       }
     });
@@ -158,6 +161,8 @@ class _ReelWidgetState extends State<ReelWidget>
   }
 
   Future<void> _initializeVideo() async {
+    if (_isDisposing) return;
+
     try {
       if (widget.reel.videoUrl.startsWith('http') ||
           widget.reel.videoUrl.startsWith('https')) {
@@ -171,12 +176,18 @@ class _ReelWidgetState extends State<ReelWidget>
       }
 
       await _controller.initialize();
+
+      if (_isDisposing || !mounted) {
+        _controller.dispose();
+        return;
+      }
+
       _controller.setLooping(true);
 
       widget.reel.isMuted = false;
       _controller.setVolume(1);
 
-      if (mounted) {
+      if (mounted && !_isDisposing) {
         setState(() {
           _isInitialized = true;
         });
@@ -191,7 +202,7 @@ class _ReelWidgetState extends State<ReelWidget>
   }
 
   void _onVisibilityChanged(VisibilityInfo info) {
-    if (!mounted) return;
+    if (!mounted || _isDisposing) return;
 
     final wasVisible = _isVisible;
     _isVisible = info.visibleFraction > 0.5;
@@ -207,6 +218,8 @@ class _ReelWidgetState extends State<ReelWidget>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_isDisposing) return;
+
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
       if (_isInitialized && _controller.value.isPlaying) {
@@ -223,24 +236,42 @@ class _ReelWidgetState extends State<ReelWidget>
   void didUpdateWidget(ReelWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    // Only reinitialize if the reel ID actually changed
     if (widget.reel.id != oldWidget.reel.id) {
+      _isDisposing = true;
       _controller.dispose();
       _isInitialized = false;
+      _isDisposing = false;
       _initializeVideo();
-      return;
+    } else {
+      // Just update the saved state without reinitializing
+      final newSavedState = DummyData.isItemSaved(
+        itemType: 'reel',
+        itemId: widget.reel.id,
+      );
+      if (_isSaved != newSavedState && mounted && !_isDisposing) {
+        setState(() {
+          _isSaved = newSavedState;
+        });
+      }
     }
   }
 
   @override
   void dispose() {
+    _isDisposing = true;
     _tapTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _likeAnimationController.dispose();
-    _controller.dispose();
+    if (_isInitialized) {
+      _controller.dispose();
+    }
     super.dispose();
   }
 
   void _toggleMute() {
+    if (_isDisposing || !mounted) return;
+
     setState(() {
       widget.reel.isMuted = !widget.reel.isMuted;
       _controller.setVolume(widget.reel.isMuted ? 0 : 1);
@@ -248,7 +279,7 @@ class _ReelWidgetState extends State<ReelWidget>
     });
 
     Future.delayed(const Duration(milliseconds: 1000), () {
-      if (mounted) {
+      if (mounted && !_isDisposing) {
         setState(() {
           _showVolumeIndicator = false;
         });
@@ -257,14 +288,24 @@ class _ReelWidgetState extends State<ReelWidget>
   }
 
   void _toggleLike() {
+    if (_isDisposing || !mounted) return;
+
     setState(() {
       widget.reel.isLiked = !widget.reel.isLiked;
       widget.reel.likes += widget.reel.isLiked ? 1 : -1;
     });
-    widget.onReelUpdated?.call();
+
+    // Use a microtask to avoid calling during build
+    Future.microtask(() {
+      if (mounted && !_isDisposing) {
+        widget.onReelUpdated?.call();
+      }
+    });
   }
 
   void _handleTap() {
+    if (_isDisposing) return;
+
     _tapCount++;
 
     debugPrint('👆 TAP DETECTED! Count: $_tapCount');
@@ -275,7 +316,7 @@ class _ReelWidgetState extends State<ReelWidget>
     if (_tapCount == 1) {
       // Wait to see if there's a double tap
       _tapTimer = Timer(const Duration(milliseconds: 300), () {
-        if (mounted && _tapCount == 1) {
+        if (mounted && !_isDisposing && _tapCount == 1) {
           // Single tap confirmed - navigate to reel screen
           debugPrint('✅ SINGLE TAP CONFIRMED - Opening reel screen');
           _openReelScreen();
@@ -301,12 +342,16 @@ class _ReelWidgetState extends State<ReelWidget>
   }
 
   void _startHeartAnimation() {
+    if (_isDisposing || !mounted) return;
+
     _currentGradient = _gradients[_random.nextInt(_gradients.length)];
     setState(() => _showHeartAnimation = true);
     _likeAnimationController.forward();
   }
 
   void _toggleFollow() {
+    if (_isDisposing || !mounted) return;
+
     setState(() {
       final user = DummyData.getUserById(widget.reel.userId);
       if (user != null) {
@@ -328,10 +373,17 @@ class _ReelWidgetState extends State<ReelWidget>
         );
       }
     });
-    widget.onReelUpdated?.call();
+
+    Future.microtask(() {
+      if (mounted && !_isDisposing) {
+        widget.onReelUpdated?.call();
+      }
+    });
   }
 
   void _openComments() {
+    if (_isDisposing) return;
+
     if (_controller.value.isPlaying) {
       _controller.pause();
       _isPausedByUser = true;
@@ -355,6 +407,8 @@ class _ReelWidgetState extends State<ReelWidget>
       backgroundColor: Colors.transparent,
       builder: (context) => CommentsScreen(post: tempPost),
     ).then((_) {
+      if (_isDisposing || !mounted) return;
+
       _isPausedByUser = false;
       if (_isVisible && mounted) {
         _controller.play();
@@ -364,11 +418,18 @@ class _ReelWidgetState extends State<ReelWidget>
           widget.reel.id,
         ).length;
       });
-      widget.onReelUpdated?.call();
+
+      Future.microtask(() {
+        if (mounted && !_isDisposing) {
+          widget.onReelUpdated?.call();
+        }
+      });
     });
   }
 
   void _handleRepost() {
+    if (_isDisposing || !mounted) return;
+
     setState(() {
       if (widget.reel.isReposted) {
         widget.reel.isReposted = false;
@@ -398,10 +459,17 @@ class _ReelWidgetState extends State<ReelWidget>
         );
       }
     });
-    widget.onReelUpdated?.call();
+
+    Future.microtask(() {
+      if (mounted && !_isDisposing) {
+        widget.onReelUpdated?.call();
+      }
+    });
   }
 
   void _openShare() {
+    if (_isDisposing) return;
+
     if (_controller.value.isPlaying) {
       _controller.pause();
       _isPausedByUser = true;
@@ -425,6 +493,8 @@ class _ReelWidgetState extends State<ReelWidget>
       backgroundColor: AppColors.transparent,
       builder: (context) => ShareBottomSheet(post: tempPost),
     ).then((_) {
+      if (_isDisposing || !mounted) return;
+
       _isPausedByUser = false;
       if (_isVisible && mounted) {
         _controller.play();
@@ -433,6 +503,8 @@ class _ReelWidgetState extends State<ReelWidget>
   }
 
   void _openReelScreen() {
+    if (_isDisposing) return;
+
     // Only navigate if callback exists
     if (widget.onNavigateToReels == null) {
       debugPrint('⚠️ onNavigateToReels callback is null - cannot navigate');
@@ -473,6 +545,8 @@ class _ReelWidgetState extends State<ReelWidget>
   }
 
   void _showMoreOptions() {
+    if (_isDisposing) return;
+
     if (_controller.value.isPlaying) {
       _controller.pause();
       _isPausedByUser = true;
@@ -484,16 +558,25 @@ class _ReelWidgetState extends State<ReelWidget>
       isScrollControlled: true,
       builder: (context) => ThreeDotBottomSheet(reel: widget.reel),
     ).then((_) {
+      if (_isDisposing || !mounted) return;
+
       _isPausedByUser = false;
       if (_isVisible && mounted) {
         _controller.play();
       }
       setState(() {});
-      widget.onReelUpdated?.call();
+
+      Future.microtask(() {
+        if (mounted && !_isDisposing) {
+          widget.onReelUpdated?.call();
+        }
+      });
     });
   }
 
   void _toggleSave() {
+    if (_isDisposing || !mounted) return;
+
     setState(() {
       if (_isSaved) {
         DummyData.removeSavedItem(itemType: 'reel', itemId: widget.reel.id);
@@ -520,7 +603,12 @@ class _ReelWidgetState extends State<ReelWidget>
       }
     });
 
-    widget.onReelUpdated?.call();
+    // Use microtask to avoid calling during build
+    Future.microtask(() {
+      if (mounted && !_isDisposing) {
+        widget.onReelUpdated?.call();
+      }
+    });
   }
 
   String _formatCount(int count) {
@@ -660,8 +748,7 @@ class _ReelWidgetState extends State<ReelWidget>
                   _tapPosition = box.globalToLocal(details.globalPosition);
                 }
               },
-              onTap:
-                  _handleTap, // Use onTap instead of onTapDown for tap handling
+              onTap: _handleTap,
               child: Stack(
                 alignment: Alignment.center,
                 children: [

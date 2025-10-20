@@ -29,7 +29,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen>
-    with RouteAware, SingleTickerProviderStateMixin {
+    with
+        RouteAware,
+        SingleTickerProviderStateMixin,
+        AutomaticKeepAliveClientMixin {
   void _triggerAutoRefresh() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -44,6 +47,9 @@ class _HomeScreenState extends State<HomeScreen>
   late List<PostModel> posts;
   late List<ReelModel> reels;
   List<dynamic> feedItems = [];
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -226,6 +232,16 @@ class _HomeScreenState extends State<HomeScreen>
     _loadData(shuffle: true);
   }
 
+  // Updated method that only triggers minimal setState
+  void _handleReelUpdate() {
+    // Don't reload entire feed, just let ReelWidget manage its own state
+    if (mounted) {
+      setState(() {
+        // Minimal update - this will just refresh the UI without rebuilding everything
+      });
+    }
+  }
+
   Widget _buildFeedItem(BuildContext context, int index) {
     final item = feedItems[index];
 
@@ -233,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen>
       return ReelWidget(
         key: ValueKey('reel_${item.id}'),
         reel: item,
-        onReelUpdated: () => _loadData(),
+        onReelUpdated: _handleReelUpdate, // Use the new minimal update method
         onNavigateToReels: widget.onNavigateToReels,
       );
     } else if (item is PostModel) {
@@ -253,6 +269,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Important for AutomaticKeepAliveClientMixin
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
