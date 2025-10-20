@@ -733,22 +733,23 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
 
         return GestureDetector(
           onTap: () {
-            final fullReelIndex = DummyData.reels.indexWhere(
-              (r) => r.id == reel.id,
-            );
+            // Find index of tapped repost inside user's reposts
+            final repostIndex = userReposts.indexWhere((r) => r.id == reel.id);
 
+            // Open ReelsScreen with only reposted reels
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => ReelsScreen(
-                  initialIndex: fullReelIndex >= 0 ? fullReelIndex : 0,
+                  specificReels: userReposts, // ✅ pass repost list directly
+                  initialIndex: repostIndex >= 0 ? repostIndex : 0,
                   isVisible: true,
                   disableShuffle: true,
-                  userId: currentUser.id,
                 ),
               ),
             ).then((_) => _loadData());
           },
+
           child: Stack(
             fit: StackFit.expand,
             children: [
