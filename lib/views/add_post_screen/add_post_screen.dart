@@ -1,4 +1,7 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:io';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:instagram/core/constants/app_colors.dart';
@@ -14,7 +17,8 @@ class AddPostScreen extends StatefulWidget {
   State<AddPostScreen> createState() => _AddPostScreenState();
 }
 
-class _AddPostScreenState extends State<AddPostScreen> {
+class _AddPostScreenState extends State<AddPostScreen>
+    with WidgetsBindingObserver {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   final List<String> _modes = ['Post', 'Story', 'Reel', 'Live'];
@@ -24,17 +28,43 @@ class _AddPostScreenState extends State<AddPostScreen> {
   List<XFile>? _galleryImages;
   int _selectedGalleryIndex = 0;
 
+  // Camera variables
+  CameraController? _cameraController;
+  List<CameraDescription>? _cameras;
+  bool _isCameraInitialized = false;
+  bool _isRecording = false;
+  FlashMode _flashMode = FlashMode.off;
+  int _currentCameraIndex = 0;
+
   @override
   void initState() {
     super.initState();
-    _loadGalleryImages();
+    WidgetsBinding.instance.addObserver(this);
+    _initializeCamera();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
+    _disposeCamera();
     _clearSelection();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final CameraController? cameraController = _cameraController;
+
+    if (cameraController == null || !cameraController.value.isInitialized) {
+      return;
+    }
+
+    if (state == AppLifecycleState.inactive) {
+      _disposeCamera();
+    } else if (state == AppLifecycleState.resumed) {
+      _initializeCamera();
+    }
   }
 
   void _clearSelection() {
@@ -45,9 +75,125 @@ class _AddPostScreenState extends State<AddPostScreen> {
     imageCache.clearLiveImages();
   }
 
-  Future<void> _loadGalleryImages() async {
-    // In a real app, you'd load recent gallery images here
-    // For now, we'll wait for user selection
+  Future<void> _initializeCamera() async {
+    try {
+      _cameras = await availableCameras();
+      if (_cameras == null || _cameras!.isEmpty) return;
+
+      _cameraController = CameraController(
+        _cameras![_currentCameraIndex],
+        ResolutionPreset.high,
+        enableAudio: true,
+        imageFormatGroup: ImageFormatGroup.jpeg,
+      );
+
+      await _cameraController!.initialize();
+      await _cameraController!.setFlashMode(_flashMode);
+
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Camera initialization error: $e');
+    }
+  }
+
+  Future<void> _disposeCamera() async {
+    if (_cameraController != null) {
+      if (_isRecording) {
+        await _cameraController!.stopVideoRecording();
+        _isRecording = false;
+      }
+      await _cameraController!.dispose();
+      _cameraController = null;
+      _isCameraInitialized = false;
+    }
+  }
+
+  Future<void> _switchCamera() async {
+    if (_cameras == null || _cameras!.length < 2) return;
+
+    _currentCameraIndex = (_currentCameraIndex + 1) % _cameras!.length;
+    await _disposeCamera();
+    await _initializeCamera();
+  }
+
+  Future<void> _toggleFlash() async {
+    if (_cameraController == null) return;
+
+    setState(() {
+      if (_flashMode == FlashMode.off) {
+        _flashMode = FlashMode.auto;
+      } else if (_flashMode == FlashMode.auto) {
+        _flashMode = FlashMode.always;
+      } else {
+        _flashMode = FlashMode.off;
+      }
+    });
+
+    await _cameraController!.setFlashMode(_flashMode);
+  }
+
+  Future<void> _capturePhoto() async {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      return;
+    }
+
+    try {
+      final XFile photo = await _cameraController!.takePicture();
+
+      if (mounted) {
+        setState(() {
+          if (_currentPage == 0) {
+            // Post mode - allow multiple
+            _galleryImages ??= [];
+            _galleryImages!.add(photo);
+            _selectedMedia = photo;
+          } else {
+            // Story mode - single image
+            _selectedMedia = photo;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error capturing photo: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _startVideoRecording() async {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      return;
+    }
+
+    if (_isRecording) {
+      // Stop recording
+      try {
+        final XFile video = await _cameraController!.stopVideoRecording();
+        setState(() {
+          _isRecording = false;
+          _selectedMedia = video;
+        });
+      } catch (e) {
+        debugPrint('Error stopping video: $e');
+      }
+    } else {
+      // Start recording
+      try {
+        await _cameraController!.startVideoRecording();
+        setState(() {
+          _isRecording = true;
+        });
+      } catch (e) {
+        debugPrint('Error starting video: $e');
+      }
+    }
   }
 
   Future<void> _pickFromGallery() async {
@@ -95,40 +241,10 @@ class _AddPostScreenState extends State<AddPostScreen> {
     }
   }
 
-  Future<void> _pickFromCamera() async {
-    try {
-      if (_currentPage == 2) {
-        final XFile? video = await _picker.pickVideo(
-          source: ImageSource.camera,
-          maxDuration: const Duration(seconds: 60),
-        );
-        if (video != null && mounted) {
-          setState(() => _selectedMedia = video);
-        }
-      } else {
-        final XFile? image = await _picker.pickImage(
-          source: ImageSource.camera,
-          maxWidth: 1800,
-          maxHeight: 1800,
-          imageQuality: 85,
-        );
-        if (image != null && mounted) {
-          setState(() => _selectedMedia = image);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.red),
-        );
-      }
-    }
-  }
-
   void _handleNext() {
     if (_selectedMedia == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select media first')),
+        const SnackBar(content: Text('Please capture or select media first')),
       );
       return;
     }
@@ -145,7 +261,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
         ),
       ).then((_) {
         _clearSelection();
-        // ignore: use_build_context_synchronously
         Navigator.pop(context);
       });
     } else if (_currentPage == 1) {
@@ -159,7 +274,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
       ).then((_) {
         _clearSelection();
         Navigator.pushReplacement(
-          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
         );
@@ -174,7 +288,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
         ),
       ).then((_) {
         _clearSelection();
-        // ignore: use_build_context_synchronously
         Navigator.pop(context);
       });
     } else if (_currentPage == 3) {
@@ -197,7 +310,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
             // Top bar
             _buildTopBar(),
 
-            // Main swipable content area
+            // Main content
             Expanded(
               child: Stack(
                 children: [
@@ -214,8 +327,8 @@ class _AddPostScreenState extends State<AddPostScreen> {
                     itemBuilder: (context, index) {
                       return Column(
                         children: [
-                          // Preview area for each mode
-                          Expanded(child: _buildPreviewArea()),
+                          // Preview/Camera area
+                          Expanded(child: _buildCameraOrPreview()),
 
                           // Gallery thumbnails (for Post mode with multiple images)
                           if (index == 0 &&
@@ -227,33 +340,14 @@ class _AddPostScreenState extends State<AddPostScreen> {
                     },
                   ),
 
-                  // Fixed Camera/Gallery buttons overlay
-                  Positioned(
-                    bottom: 20,
-                    left: 0,
-                    right: 0,
-                    child: IgnorePointer(
-                      ignoring: false,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildCameraButton(
-                            Icons.photo_library,
-                            'Gallery',
-                            _pickFromGallery,
-                          ),
-                          _buildCameraButton(
-                            Icons.camera_alt,
-                            'Camera',
-                            _pickFromCamera,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // Camera controls overlay
+                  if (_selectedMedia == null) _buildCameraControls(),
                 ],
               ),
             ),
+
+            // Bottom controls
+            _buildBottomControls(),
 
             // Bottom menu indicator
             _buildBottomMenu(),
@@ -285,11 +379,11 @@ class _AddPostScreenState extends State<AddPostScreen> {
             ),
           ),
           TextButton(
-            onPressed: _handleNext,
-            child: const Text(
+            onPressed: _selectedMedia != null ? _handleNext : null,
+            child: Text(
               'Next',
               style: TextStyle(
-                color: AppColors.blue,
+                color: _selectedMedia != null ? AppColors.blue : AppColors.grey,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -300,9 +394,13 @@ class _AddPostScreenState extends State<AddPostScreen> {
     );
   }
 
-  Widget _buildPreviewArea() {
+  Widget _buildCameraOrPreview() {
+    // If media is selected, show preview
     if (_selectedMedia != null) {
-      final isVideo = _currentPage == 2;
+      final isVideo =
+          _selectedMedia!.path.endsWith('.mp4') ||
+          _selectedMedia!.path.endsWith('.mov');
+
       if (isVideo) {
         return Container(
           color: AppColors.black,
@@ -312,8 +410,8 @@ class _AddPostScreenState extends State<AddPostScreen> {
               children: [
                 const Icon(Icons.videocam, size: 80, color: AppColors.white54),
                 const SizedBox(height: 16),
-                Text(
-                  'Video selected',
+                const Text(
+                  'Video captured',
                   style: TextStyle(color: AppColors.white54, fontSize: 16),
                 ),
               ],
@@ -324,62 +422,148 @@ class _AddPostScreenState extends State<AddPostScreen> {
         return Image.file(
           File(_selectedMedia!.path),
           fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => _buildEmptyState(),
+          errorBuilder: (_, __, ___) => _buildCameraPreview(),
         );
       }
     }
 
-    return _buildEmptyState();
+    // Show camera preview
+    return _buildCameraPreview();
   }
 
-  Widget _buildEmptyState() {
-    return Container(
-      color: AppColors.black,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildCameraPreview() {
+    if (!_isCameraInitialized || _cameraController == null) {
+      return Container(
+        color: AppColors.black,
+        child: const Center(
+          child: CircularProgressIndicator(color: AppColors.white),
+        ),
+      );
+    }
+
+    final size = MediaQuery.of(context).size;
+    final scale = size.aspectRatio * _cameraController!.value.aspectRatio;
+
+    return ClipRect(
+      child: Transform.scale(
+        scale: scale < 1 ? 1 / scale : scale,
+        child: Center(child: CameraPreview(_cameraController!)),
+      ),
+    );
+  }
+
+  Widget _buildCameraControls() {
+    return Positioned(
+      top: 20,
+      left: 0,
+      right: 0,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(
-              _currentPage == 2 ? Icons.videocam : Icons.photo_camera,
-              size: 80,
-              color: AppColors.white38,
+            // Flash control
+            _buildControlButton(
+              icon: _flashMode == FlashMode.off
+                  ? Icons.flash_off
+                  : _flashMode == FlashMode.auto
+                  ? Icons.flash_auto
+                  : Icons.flash_on,
+              onTap: _toggleFlash,
             ),
-            const SizedBox(height: 16),
-            Text(
-              _getEmptyStateText(),
-              style: const TextStyle(color: Colors.white54, fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
+
+            const Spacer(),
+
+            // Settings (placeholder)
+            _buildControlButton(icon: Icons.settings, onTap: () {}),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCameraButton(IconData icon, String label, VoidCallback onTap) {
+  Widget _buildControlButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: AppColors.white.withValues(alpha: .2),
-          borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: AppColors.white.withValues(alpha: 0.3)),
+          color: AppColors.black.withValues(alpha: .5),
+          shape: BoxShape.circle,
         ),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.white, size: 24),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
+        child: Icon(icon, color: AppColors.white, size: 26),
+      ),
+    );
+  }
+
+  Widget _buildBottomControls() {
+    if (_selectedMedia != null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          // Gallery button
+          GestureDetector(
+            onTap: _pickFromGallery,
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: AppColors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.white.withValues(alpha: 0.3),
+                  width: 2,
+                ),
+              ),
+              child: const Icon(Icons.photo_library, color: AppColors.white),
+            ),
+          ),
+
+          // Capture button
+          GestureDetector(
+            onTap: _currentPage == 2 ? _startVideoRecording : _capturePhoto,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.white, width: 4),
+              ),
+              child: Container(
+                margin: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  shape: _isRecording ? BoxShape.rectangle : BoxShape.circle,
+                  color: _isRecording ? AppColors.red : AppColors.white,
+                  borderRadius: _isRecording ? BorderRadius.circular(8) : null,
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+
+          // Switch camera button
+          GestureDetector(
+            onTap: _switchCamera,
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: AppColors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.white.withValues(alpha: 0.3),
+                  width: 2,
+                ),
+              ),
+              child: const Icon(Icons.flip_camera_ios, color: AppColors.white),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -444,7 +628,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                   shape: BoxShape.circle,
                   color: _currentPage == index
                       ? AppColors.white
-                      : AppColors.white.withValues(alpha: .3),
+                      : AppColors.white.withValues(alpha: 0.3),
                 ),
               );
             }),
@@ -454,7 +638,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
           // Current mode label
           Text(
             _modes[_currentPage].toUpperCase(),
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.white,
               fontSize: 17,
               fontWeight: FontWeight.w600,
@@ -464,20 +648,5 @@ class _AddPostScreenState extends State<AddPostScreen> {
         ],
       ),
     );
-  }
-
-  String _getEmptyStateText() {
-    switch (_currentPage) {
-      case 0:
-        return 'Tap to select photos\nfor your post';
-      case 1:
-        return 'Tap to select photo\nfor your story';
-      case 2:
-        return 'Tap to select video\nfor your reel';
-      case 3:
-        return 'Go live with\nyour followers';
-      default:
-        return '';
-    }
   }
 }
