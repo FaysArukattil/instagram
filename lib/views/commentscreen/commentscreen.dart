@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/comment_model.dart';
 import 'package:instagram/models/post_model.dart';
@@ -57,7 +58,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
         const SnackBar(
           content: Text('Comment added'),
           duration: Duration(seconds: 1),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.green,
         ),
       );
     }
@@ -74,7 +75,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
@@ -86,7 +87,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+              border: Border(bottom: BorderSide(color: AppColors.grey300!)),
             ),
             child: Column(
               children: [
@@ -95,7 +96,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 8),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.grey300,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -117,14 +118,14 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         Icon(
                           Icons.chat_bubble_outline,
                           size: 80,
-                          color: Colors.grey[300],
+                          color: AppColors.grey300,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No comments yet',
                           style: TextStyle(
                             fontSize: 18,
-                            color: Colors.grey[600],
+                            color: AppColors.grey600,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -133,7 +134,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                           'Start the conversation',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[500],
+                            color: AppColors.grey500,
                           ),
                         ),
                       ],
@@ -181,7 +182,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                       Text(
                                         comment.timeAgo,
                                         style: TextStyle(
-                                          color: Colors.grey[600],
+                                          color: AppColors.grey600,
                                           fontSize: 12,
                                         ),
                                       ),
@@ -193,7 +194,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                             vertical: 2,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Colors.grey[200],
+                                            color: AppColors.grey200,
                                             borderRadius: BorderRadius.circular(
                                               4,
                                             ),
@@ -203,7 +204,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                             style: TextStyle(
                                               fontSize: 10,
                                               fontWeight: FontWeight.w600,
-                                              color: Colors.grey,
+                                              color: AppColors.grey,
                                             ),
                                           ),
                                         ),
@@ -223,7 +224,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                         child: Text(
                                           'Reply',
                                           style: TextStyle(
-                                            color: Colors.grey[600],
+                                            color: AppColors.grey600,
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -234,7 +235,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                         Text(
                                           '${comment.likes} ${comment.likes == 1 ? "like" : "likes"}',
                                           style: TextStyle(
-                                            color: Colors.grey[600],
+                                            color: AppColors.grey600,
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -251,7 +252,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                               icon: Icon(
                                 Icons.favorite_border,
                                 size: 16,
-                                color: Colors.grey[600],
+                                color: AppColors.grey600,
                               ),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
@@ -267,8 +268,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
           // Comment Input
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Colors.grey[300]!)),
+              color: AppColors.white,
+              border: Border(top: BorderSide(color: AppColors.grey300!)),
             ),
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -291,7 +292,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                       controller: _commentController,
                       decoration: InputDecoration(
                         hintText: 'Add a comment...',
-                        hintStyle: TextStyle(color: Colors.grey[500]),
+                        hintStyle: TextStyle(color: AppColors.grey500),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -309,8 +310,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
                       'Post',
                       style: TextStyle(
                         color: _commentController.text.trim().isEmpty
-                            ? Colors.blue[200]
-                            : Colors.blue,
+                            ? AppColors.blue200
+                            : AppColors.blue,
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/views/Home/home_screen.dart';
 import 'package:instagram/views/profile_tab_screen/profile_tab_screen.dart';
@@ -137,7 +138,7 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
         decoration: isSelected
             ? BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.black, width: 2),
+                border: Border.all(color: AppColors.black, width: 2),
               )
             : null,
         child: ClipOval(
@@ -164,9 +165,9 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           border: Border(
-            top: BorderSide(color: Colors.grey.shade200, width: 0.5),
+            top: BorderSide(color: AppColors.grey200!, width: 0.5),
           ),
         ),
         child: SafeArea(

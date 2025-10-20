@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
 
@@ -79,12 +80,12 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppColors.black),
           onPressed: () => Navigator.pop(context),
         ),
         leadingWidth: 40,
@@ -102,7 +103,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   Text(
                     widget.user.username,
                     style: const TextStyle(
-                      color: Colors.black,
+                      color: AppColors.black,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -110,12 +111,15 @@ class _ChatScreenState extends State<ChatScreen> {
                   if (widget.user.isOnline)
                     const Text(
                       'Active now',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      style: TextStyle(color: AppColors.grey, fontSize: 12),
                     )
                   else if (widget.user.lastSeen != null)
                     Text(
                       'Active ${widget.user.lastSeen} ago',
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      style: const TextStyle(
+                        color: AppColors.grey,
+                        fontSize: 12,
+                      ),
                     ),
                 ],
               ),
@@ -124,11 +128,11 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.videocam_outlined, color: Colors.black),
+            icon: const Icon(Icons.videocam_outlined, color: AppColors.black),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.info_outline, color: Colors.black),
+            icon: const Icon(Icons.info_outline, color: AppColors.black),
             onPressed: () {},
           ),
         ],
@@ -158,12 +162,12 @@ class _ChatScreenState extends State<ChatScreen> {
                         const SizedBox(height: 8),
                         Text(
                           widget.user.name,
-                          style: const TextStyle(color: Colors.grey),
+                          style: const TextStyle(color: AppColors.grey),
                         ),
                         const SizedBox(height: 24),
                         const Text(
                           'Say hi to start the conversation',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: AppColors.grey),
                         ),
                       ],
                     ),
@@ -187,7 +191,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               child: Text(
                                 message['time'],
                                 style: const TextStyle(
-                                  color: Colors.grey,
+                                  color: AppColors.grey,
                                   fontSize: 12,
                                 ),
                               ),
@@ -211,7 +215,7 @@ class _ChatScreenState extends State<ChatScreen> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isMe ? Colors.blue : Colors.grey[200],
+          color: isMe ? AppColors.blue : AppColors.grey200,
           borderRadius: BorderRadius.circular(20),
         ),
         constraints: BoxConstraints(
@@ -220,7 +224,7 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Text(
           message['text'],
           style: TextStyle(
-            color: isMe ? Colors.white : Colors.black,
+            color: isMe ? AppColors.white : AppColors.black,
             fontSize: 15,
           ),
         ),
@@ -232,23 +236,23 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade300)),
+        color: AppColors.white,
+        border: Border(top: BorderSide(color: AppColors.grey300!)),
       ),
       child: SafeArea(
         child: Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.camera_alt, color: Colors.black),
+              icon: const Icon(Icons.camera_alt, color: AppColors.black),
               onPressed: () {},
             ),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: AppColors.grey100,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: AppColors.grey300!),
                 ),
                 child: TextField(
                   controller: _messageController,
@@ -266,15 +270,15 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             const SizedBox(width: 8),
             IconButton(
-              icon: const Icon(Icons.mic, color: Colors.black),
+              icon: const Icon(Icons.mic, color: AppColors.black),
               onPressed: () {},
             ),
             IconButton(
               icon: Icon(
                 Icons.send,
                 color: _messageController.text.isEmpty
-                    ? Colors.grey
-                    : Colors.blue,
+                    ? AppColors.grey
+                    : AppColors.blue,
               ),
               onPressed: _sendMessage,
             ),

@@ -4,17 +4,25 @@ class AppColors {
   // Basic Colors
   static const Color white = Colors.white;
   static const Color black = Colors.black;
-  static const Color black54 = Colors.black54;
-  static const Color black87 = Colors.black87;
-
   static const Color red = Colors.red;
   static const Color grey = Colors.grey;
   static const Color orange = Colors.orange;
   static const Color green = Colors.green;
+
+  //Advance Colors
+  static const Color black54 = Colors.black54;
+  static const Color black87 = Colors.black87;
   static const Color white54 = Colors.white54;
   static const Color white38 = Colors.white38;
+
   static const Color transparent = Colors.transparent;
+
+  static Color? blue200 = Colors.blue[200];
   static Color? grey300 = Colors.grey[300];
+  static Color? grey500 = Colors.grey[500];
+  static Color? grey600 = Colors.grey[600];
+  static Color? grey200 = Colors.grey.shade200;
+  static Color? grey100 = Colors.grey.shade100;
 
   // Instagram-like UI Colors
   static const Color lightGrey = Color(0xFFF0F0F0); // TextField background
