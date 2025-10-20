@@ -22,6 +22,34 @@ class PostScreen extends StatefulWidget {
 }
 
 class _PostScreenState extends State<PostScreen> {
+  void _toggleSave(PostModel post) {
+    setState(() {
+      final isSaved = DummyData.isItemSaved(itemType: 'post', itemId: post.id);
+
+      if (isSaved) {
+        DummyData.removeSavedItem(itemType: 'post', itemId: post.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Removed from saved'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        DummyData.saveItem(
+          itemType: 'post',
+          itemId: post.id,
+          userId: post.userId,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Saved to collection'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    });
+  }
+
   late PageController _pageController;
   late List<PostModel> userPosts;
   int currentIndex = 0;
@@ -368,8 +396,17 @@ class _PostScreenState extends State<PostScreen> {
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.bookmark_border, size: 26),
-                        onPressed: () {},
+                        icon: Icon(
+                          DummyData.isItemSaved(
+                                itemType: 'post',
+                                itemId: post.id,
+                              )
+                              ? Icons.bookmark
+                              : Icons.bookmark_border,
+                          size: 26,
+                          color: Colors.black,
+                        ),
+                        onPressed: () => _toggleSave(post),
                       ),
                     ],
                   ),
