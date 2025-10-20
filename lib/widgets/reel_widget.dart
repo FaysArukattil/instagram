@@ -1,3 +1,5 @@
+import 'dart:math';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/views/three_dot_bottom_sheet/three_dot_bottom_sheet.dart';
@@ -14,8 +16,7 @@ import 'dart:io';
 class ReelWidget extends StatefulWidget {
   final ReelModel reel;
   final VoidCallback? onReelUpdated;
-  final void Function(int, int, Duration)?
-  onNavigateToReels; // (tabIndex, reelIndex, startPosition)
+  final void Function(int, int, Duration)? onNavigateToReels;
 
   const ReelWidget({
     super.key,
@@ -30,46 +31,46 @@ class ReelWidget extends StatefulWidget {
 
 class _ReelWidgetState extends State<ReelWidget>
     with WidgetsBindingObserver, TickerProviderStateMixin {
-  void _toggleSave() {
-    setState(() {
-      if (_isSaved) {
-        DummyData.removeSavedItem(itemType: 'reel', itemId: widget.reel.id);
-        _isSaved = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Removed from saved'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      } else {
-        DummyData.saveItem(
-          itemType: 'reel', // ✅ Correct type
-          itemId: widget.reel.id,
-          userId: widget.reel.userId,
-        );
-        _isSaved = true;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Saved to collection'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    });
-
-    // Update parent if needed
-    widget.onReelUpdated?.call();
-  }
-
   late bool _isSaved;
   late VideoPlayerController _controller;
   bool _isInitialized = false;
   bool _showVolumeIndicator = false;
   late AnimationController _likeAnimationController;
-  late Animation<double> _likeAnimation;
   bool _isPausedByUser = false;
   bool _showHeartAnimation = false;
   bool _isVisible = false;
+
+  // Animation properties for gradient heart
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+  late Animation<double> _moveUpAnimation;
+  late Animation<double> _wiggleAnimation;
+  Offset _tapPosition = Offset.zero;
+
+  // Tap handling variables
+  int _tapCount = 0;
+  Timer? _tapTimer;
+
+  final Random _random = Random();
+  late List<Color> _currentGradient;
+
+  final List<List<Color>> _gradients = [
+    [
+      Color(0xFFfeda75),
+      Color(0xFFfa7e1e),
+      Color(0xFFd62976),
+      Color(0xFF962fbf),
+      Color(0xFF4f5bd5),
+    ],
+    [
+      Color(0xFFf09433),
+      Color(0xFFe6683c),
+      Color(0xFFdc2743),
+      Color(0xFFcc2366),
+      Color(0xFFbc1888),
+    ],
+    [Color(0xFF833ab4), Color(0xFFfd1d1d), Color(0xFFfcb045)],
+  ];
 
   @override
   void initState() {
@@ -79,16 +80,81 @@ class _ReelWidgetState extends State<ReelWidget>
     _isSaved = DummyData.isItemSaved(itemType: 'reel', itemId: widget.reel.id);
 
     _likeAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
-    _likeAnimation = Tween<double>(begin: 0.0, end: 1.2).animate(
+    // Scale animation with bounce effect
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.6,
+          end: 1.4,
+        ).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.4,
+          end: 1.2,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 50,
+      ),
+    ]).animate(_likeAnimationController);
+
+    // Fade out animation
+    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _likeAnimationController,
-        curve: Curves.elasticOut,
+        curve: const Interval(0.4, 1.0),
       ),
     );
+
+    // Move up animation
+    _moveUpAnimation = Tween<double>(begin: 0, end: -50).animate(
+      CurvedAnimation(parent: _likeAnimationController, curve: Curves.easeOut),
+    );
+
+    // Wiggle animation
+    _wiggleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(
+          begin: -0.1,
+          end: 0.1,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.1,
+          end: -0.05,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: -0.05,
+          end: 0.05,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.05,
+          end: 0.0,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
+    ]).animate(_likeAnimationController);
+
+    _likeAnimationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() => _showHeartAnimation = false);
+        _likeAnimationController.reset();
+      }
+    });
+
+    _currentGradient = _gradients[_random.nextInt(_gradients.length)];
   }
 
   Future<void> _initializeVideo() async {
@@ -115,7 +181,6 @@ class _ReelWidgetState extends State<ReelWidget>
           _isInitialized = true;
         });
 
-        // Only play if visible
         if (_isVisible && !_isPausedByUser) {
           _controller.play();
         }
@@ -129,7 +194,6 @@ class _ReelWidgetState extends State<ReelWidget>
     if (!mounted) return;
 
     final wasVisible = _isVisible;
-    // Video is visible if more than 50% is on screen
     _isVisible = info.visibleFraction > 0.5;
 
     if (_isVisible != wasVisible) {
@@ -169,6 +233,7 @@ class _ReelWidgetState extends State<ReelWidget>
 
   @override
   void dispose() {
+    _tapTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _likeAnimationController.dispose();
     _controller.dispose();
@@ -199,25 +264,46 @@ class _ReelWidgetState extends State<ReelWidget>
     widget.onReelUpdated?.call();
   }
 
-  void _handleDoubleTapLike() {
-    if (!widget.reel.isLiked) {
-      setState(() {
-        widget.reel.isLiked = true;
-        widget.reel.likes++;
-        _showHeartAnimation = true;
-      });
-      widget.onReelUpdated?.call();
+  void _handleTap() {
+    _tapCount++;
 
-      _likeAnimationController.forward(from: 0.0).then((_) {
-        Future.delayed(const Duration(milliseconds: 200), () {
-          if (mounted) {
-            setState(() {
-              _showHeartAnimation = false;
-            });
-          }
-        });
+    debugPrint('👆 TAP DETECTED! Count: $_tapCount');
+
+    // Cancel any existing timer
+    _tapTimer?.cancel();
+
+    if (_tapCount == 1) {
+      // Wait to see if there's a double tap
+      _tapTimer = Timer(const Duration(milliseconds: 300), () {
+        if (mounted && _tapCount == 1) {
+          // Single tap confirmed - navigate to reel screen
+          debugPrint('✅ SINGLE TAP CONFIRMED - Opening reel screen');
+          _openReelScreen();
+        }
+        _tapCount = 0;
       });
+    } else if (_tapCount >= 2) {
+      // Double tap confirmed immediately
+      debugPrint('❤️ DOUBLE TAP - Showing heart animation');
+
+      // Only toggle like if not already liked
+      if (!widget.reel.isLiked) {
+        _toggleLike();
+      }
+      _startHeartAnimation();
+
+      // Reset count immediately after handling double tap
+      _tapCount = 0;
+
+      // Cancel timer since we've handled the double tap
+      _tapTimer?.cancel();
     }
+  }
+
+  void _startHeartAnimation() {
+    _currentGradient = _gradients[_random.nextInt(_gradients.length)];
+    setState(() => _showHeartAnimation = true);
+    _likeAnimationController.forward();
   }
 
   void _toggleFollow() {
@@ -347,40 +433,43 @@ class _ReelWidgetState extends State<ReelWidget>
   }
 
   void _openReelScreen() {
-    if (widget.onNavigateToReels != null) {
-      // Store the current playback position before navigating
-      final currentPosition = _isInitialized
-          ? _controller.value.position
-          : Duration.zero;
-
-      // Find the index of this specific reel in the main reels list
-      final reelIndex = DummyData.reels.indexWhere(
-        (r) => r.id == widget.reel.id,
-      );
-
-      debugPrint('🎬 Tapped Reel ID: ${widget.reel.id}');
-      debugPrint('🎬 Current Position: ${currentPosition.inSeconds}s');
-      debugPrint('🎬 Found at index: $reelIndex in DummyData.reels');
-
-      // Pause the video before navigating
-      if (_isInitialized && _controller.value.isPlaying) {
-        _controller.pause();
-      }
-
-      if (reelIndex != -1) {
-        debugPrint(
-          '🎬 Navigating to reels tab (index 1) with reel index: $reelIndex',
-        );
-        widget.onNavigateToReels!(1, reelIndex, currentPosition);
-      } else {
-        debugPrint(
-          '⚠️ Reel not found in DummyData.reels, defaulting to index 0',
-        );
-        widget.onNavigateToReels!(1, 0, currentPosition);
-      }
-    } else {
-      debugPrint('⚠️ onNavigateToReels callback is null');
+    // Only navigate if callback exists
+    if (widget.onNavigateToReels == null) {
+      debugPrint('⚠️ onNavigateToReels callback is null - cannot navigate');
+      return;
     }
+
+    // Find this exact reel's index in the main reels list
+    final reelIndex = DummyData.reels.indexWhere((r) => r.id == widget.reel.id);
+
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    debugPrint('🎬 REEL WIDGET NAVIGATION');
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    debugPrint('🎯 Current Reel ID: ${widget.reel.id}');
+    debugPrint('📍 Found at index: $reelIndex in DummyData.reels');
+    debugPrint('📊 Total reels in DummyData: ${DummyData.reels.length}');
+
+    if (reelIndex == -1) {
+      debugPrint('❌ ERROR: Reel not found in DummyData.reels!');
+      debugPrint(
+        'Available reel IDs: ${DummyData.reels.map((r) => r.id).take(5).toList()}...',
+      );
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      return;
+    }
+
+    final currentPosition = _isInitialized
+        ? _controller.value.position
+        : Duration.zero;
+
+    debugPrint('⏱️ Current Position: ${currentPosition.inSeconds}s');
+    debugPrint(
+      '🔄 Calling: onNavigateToReels(1, $reelIndex, $currentPosition)',
+    );
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    // Navigate to reels tab (index 1) with the specific reel index
+    widget.onNavigateToReels!(1, reelIndex, currentPosition);
   }
 
   void _showMoreOptions() {
@@ -393,18 +482,45 @@ class _ReelWidgetState extends State<ReelWidget>
       context: context,
       backgroundColor: AppColors.transparent,
       isScrollControlled: true,
-      builder: (context) => ThreeDotBottomSheet(
-        reel: widget.reel, // ✅ pass current reel
-      ),
+      builder: (context) => ThreeDotBottomSheet(reel: widget.reel),
     ).then((_) {
       _isPausedByUser = false;
       if (_isVisible && mounted) {
         _controller.play();
       }
-      // Refresh state in case reel got saved/reposted etc.
       setState(() {});
       widget.onReelUpdated?.call();
     });
+  }
+
+  void _toggleSave() {
+    setState(() {
+      if (_isSaved) {
+        DummyData.removeSavedItem(itemType: 'reel', itemId: widget.reel.id);
+        _isSaved = false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Removed from saved'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        DummyData.saveItem(
+          itemType: 'reel',
+          itemId: widget.reel.id,
+          userId: widget.reel.userId,
+        );
+        _isSaved = true;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Saved to collection'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    });
+
+    widget.onReelUpdated?.call();
   }
 
   String _formatCount(int count) {
@@ -424,125 +540,129 @@ class _ReelWidgetState extends State<ReelWidget>
     return VisibilityDetector(
       key: Key('reel_${widget.reel.id}'),
       onVisibilityChanged: _onVisibilityChanged,
-      child: GestureDetector(
-        onDoubleTap: _handleDoubleTapLike,
-        onTap: _openReelScreen,
-        child: Container(
-          color: AppColors.white,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundImage: user?.profileImage != null
-                          ? NetworkImage(user!.profileImage)
-                          : null,
-                      backgroundColor: AppColors.grey300,
-                      child: user?.profileImage == null
-                          ? const Icon(Icons.person, size: 18)
-                          : null,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+      child: Container(
+        color: AppColors.white,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundImage: user?.profileImage != null
+                        ? NetworkImage(user!.profileImage)
+                        : null,
+                    backgroundColor: AppColors.grey300,
+                    child: user?.profileImage == null
+                        ? const Icon(Icons.person, size: 18)
+                        : null,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user?.username ?? 'Unknown',
+                          style: const TextStyle(
+                            color: AppColors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        if (widget.reel.location != null)
                           Text(
-                            user?.username ?? 'Unknown',
-                            style: const TextStyle(
-                              color: AppColors.black,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                          if (widget.reel.location != null)
-                            Text(
-                              widget.reel.location!,
-                              style: TextStyle(
-                                color: AppColors.grey600,
-                                fontSize: 11,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    // Show follow button only if not current user
-                    if (!isCurrentUser) ...[
-                      GestureDetector(
-                        onTap: _toggleFollow,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: user?.isFollowing == true
-                                ? AppColors.grey200
-                                : AppColors.blue,
-                            border: user?.isFollowing == true
-                                ? Border.all(color: AppColors.grey300!)
-                                : null,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            user?.isFollowing == true ? 'Following' : 'Follow',
+                            widget.reel.location!,
                             style: TextStyle(
-                              color: user?.isFollowing == true
-                                  ? AppColors.black
-                                  : AppColors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                              color: AppColors.grey600,
+                              fontSize: 11,
                             ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (!isCurrentUser) ...[
+                    GestureDetector(
+                      onTap: _toggleFollow,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: user?.isFollowing == true
+                              ? AppColors.grey200
+                              : AppColors.blue,
+                          border: user?.isFollowing == true
+                              ? Border.all(color: AppColors.grey300!)
+                              : null,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          user?.isFollowing == true ? 'Following' : 'Follow',
+                          style: TextStyle(
+                            color: user?.isFollowing == true
+                                ? AppColors.black
+                                : AppColors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                    ],
-                    GestureDetector(
-                      onTap: _showMoreOptions,
-                      child: Icon(
-                        Icons.more_vert,
-                        color: AppColors.grey600,
-                        size: 18,
-                      ),
                     ),
+                    const SizedBox(width: 8),
                   ],
-                ),
-              ),
-              // Music info
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.music_note, size: 16, color: AppColors.grey600),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        widget.reel.caption.length > 40
-                            ? '${widget.reel.caption.substring(0, 40)}...'
-                            : widget.reel.caption,
-                        style: TextStyle(
-                          color: AppColors.grey700,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                  GestureDetector(
+                    onTap: _showMoreOptions,
+                    child: Icon(
+                      Icons.more_vert,
+                      color: AppColors.grey600,
+                      size: 18,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              // Video Container
-              Stack(
+            ),
+            // Music info
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.music_note, size: 16, color: AppColors.grey600),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      widget.reel.caption.length > 40
+                          ? '${widget.reel.caption.substring(0, 40)}...'
+                          : widget.reel.caption,
+                      style: TextStyle(
+                        color: AppColors.grey700,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Video Container with GestureDetector overlay
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapDown: (details) {
+                // Store tap position for heart animation
+                final RenderBox? box = context.findRenderObject() as RenderBox?;
+                if (box != null) {
+                  _tapPosition = box.globalToLocal(details.globalPosition);
+                }
+              },
+              onTap:
+                  _handleTap, // Use onTap instead of onTapDown for tap handling
+              child: Stack(
                 alignment: Alignment.center,
                 children: [
                   if (_isInitialized)
@@ -554,17 +674,51 @@ class _ReelWidgetState extends State<ReelWidget>
                           alignment: Alignment.center,
                           children: [
                             VideoPlayer(_controller),
-                            // Heart Animation
-                            if (_showHeartAnimation && _likeAnimation.value > 0)
+                            // Gradient Heart Animation
+                            if (_showHeartAnimation)
                               AnimatedBuilder(
-                                animation: _likeAnimation,
+                                animation: _likeAnimationController,
                                 builder: (context, child) {
-                                  return Transform.scale(
-                                    scale: _likeAnimation.value,
-                                    child: const Icon(
-                                      Icons.favorite,
-                                      color: AppColors.white,
-                                      size: 80,
+                                  return Positioned(
+                                    left: _tapPosition.dx - 50,
+                                    top:
+                                        _tapPosition.dy -
+                                        50 +
+                                        _moveUpAnimation.value,
+                                    child: Transform.rotate(
+                                      angle: _wiggleAnimation.value,
+                                      child: Transform.scale(
+                                        scale: _scaleAnimation.value,
+                                        child: Opacity(
+                                          opacity: _opacityAnimation.value,
+                                          child: ShaderMask(
+                                            shaderCallback: (bounds) =>
+                                                LinearGradient(
+                                                  colors: _currentGradient,
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ).createShader(
+                                                  Rect.fromLTWH(
+                                                    0,
+                                                    0,
+                                                    bounds.width,
+                                                    bounds.height,
+                                                  ),
+                                                ),
+                                            child: const Icon(
+                                              Icons.favorite,
+                                              size: 100,
+                                              color: Colors.white,
+                                              shadows: [
+                                                Shadow(
+                                                  blurRadius: 20,
+                                                  color: AppColors.black54,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   );
                                 },
@@ -621,126 +775,119 @@ class _ReelWidgetState extends State<ReelWidget>
                     ),
                 ],
               ),
-              // Action buttons
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: _toggleLike,
-                          child: Icon(
-                            widget.reel.isLiked
-                                ? Icons.favorite
-                                : Icons.favorite_outline,
-                            color: widget.reel.isLiked
-                                ? AppColors.red
-                                : AppColors.black,
-                            size: 24,
-                          ),
+            ),
+            // Action buttons - Save button moved to right
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _toggleLike,
+                        child: Icon(
+                          widget.reel.isLiked
+                              ? Icons.favorite
+                              : Icons.favorite_outline,
+                          color: widget.reel.isLiked
+                              ? AppColors.red
+                              : AppColors.black,
+                          size: 24,
                         ),
-                        const SizedBox(width: 16),
-                        GestureDetector(
-                          onTap: _openComments,
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: SvgPicture.asset(
-                              'assets/Icons/comment_icon_outline.svg',
-                              colorFilter: const ColorFilter.mode(
-                                AppColors.black,
-                                BlendMode.srcIn,
-                              ),
+                      ),
+                      const SizedBox(width: 16),
+                      GestureDetector(
+                        onTap: _openComments,
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: SvgPicture.asset(
+                            'assets/Icons/comment_icon_outline.svg',
+                            colorFilter: const ColorFilter.mode(
+                              AppColors.black,
+                              BlendMode.srcIn,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        GestureDetector(
-                          onTap: _handleRepost,
-                          child: Icon(
-                            Icons.repeat,
-                            color: widget.reel.isReposted
-                                ? AppColors.green
-                                : AppColors.black,
-                            size: 24,
-                          ),
+                      ),
+                      const SizedBox(width: 16),
+                      GestureDetector(
+                        onTap: _handleRepost,
+                        child: Icon(
+                          Icons.repeat,
+                          color: widget.reel.isReposted
+                              ? AppColors.green
+                              : AppColors.black,
+                          size: 24,
                         ),
-                        const SizedBox(width: 16),
-                        GestureDetector(
-                          onTap: _openShare,
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: SvgPicture.asset(
-                              'assets/Icons/share_icon_outline.svg',
-                              colorFilter: const ColorFilter.mode(
-                                AppColors.black,
-                                BlendMode.srcIn,
-                              ),
+                      ),
+                      const SizedBox(width: 16),
+                      GestureDetector(
+                        onTap: _openShare,
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: SvgPicture.asset(
+                            'assets/Icons/share_icon_outline.svg',
+                            colorFilter: const ColorFilter.mode(
+                              AppColors.black,
+                              BlendMode.srcIn,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        // ✅ Save button
-                        GestureDetector(
-                          onTap: _toggleSave,
-                          child: Icon(
-                            _isSaved ? Icons.bookmark : Icons.bookmark_border,
-                            color: AppColors.black,
-                            size: 24,
-                          ),
-                        ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  // Save button on the right
+                  GestureDetector(
+                    onTap: _toggleSave,
+                    child: Icon(
+                      _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                      color: AppColors.black,
+                      size: 24,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              // Stats
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${_formatCount(widget.reel.likes)} likes',
-                      style: const TextStyle(
-                        color: AppColors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
+            ),
+            // Stats
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${_formatCount(widget.reel.likes)} likes',
+                    style: const TextStyle(
+                      color: AppColors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.reel.caption,
-                      style: const TextStyle(
-                        color: AppColors.black,
-                        fontSize: 12,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.reel.caption,
+                    style: const TextStyle(
+                      color: AppColors.black,
+                      fontSize: 12,
                     ),
-                    const SizedBox(height: 4),
-                    GestureDetector(
-                      onTap: _openComments,
-                      child: Text(
-                        'View all ${_formatCount(widget.reel.comments)} comments',
-                        style: TextStyle(
-                          color: AppColors.grey600,
-                          fontSize: 11,
-                        ),
-                      ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  GestureDetector(
+                    onTap: _openComments,
+                    child: Text(
+                      'View all ${_formatCount(widget.reel.comments)} comments',
+                      style: TextStyle(color: AppColors.grey600, fontSize: 11),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const Divider(height: 1),
-            ],
-          ),
+            ),
+            const Divider(height: 1),
+          ],
         ),
       ),
     );

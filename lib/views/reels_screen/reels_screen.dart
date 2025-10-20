@@ -1,12 +1,13 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:instagram/core/constants/app_colors.dart';
+import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
+import 'package:instagram/models/reel_model.dart';
 import 'package:instagram/views/reels_screen/reelscommentscreen.dart';
 import 'package:instagram/views/reels_screen/reelssharebottomsheet.dart';
 import 'package:instagram/views/three_dot_bottom_sheet/three_dot_bottom_sheet.dart';
 import 'package:video_player/video_player.dart';
-import 'package:instagram/data/dummy_data.dart';
-import 'package:instagram/models/reel_model.dart';
 import 'package:instagram/views/profile_screen/profile_screen.dart';
 import 'package:instagram/views/add_post_screen/add_post_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -259,7 +260,6 @@ class _ReelItemState extends State<ReelItem>
   UserModel? _cachedUser;
   late VideoPlayerController _controller;
   bool _isInitialized = false;
-  bool _showLikeAnimation = false;
   bool _isLongPressing = false;
   bool _isPausedByUser = false;
   bool _isSeeking = false;
@@ -273,8 +273,36 @@ class _ReelItemState extends State<ReelItem>
   double? _dragStartY;
   bool _isInSeekingArea = false;
 
-  late AnimationController _likeAnimationController;
-  late Animation<double> _likeAnimation;
+  // Double tap heart animation variables
+  bool _showHeart = false;
+  Offset _tapPosition = Offset.zero;
+  final Random _random = Random();
+  late List<Color> _currentGradient;
+
+  final List<List<Color>> _gradients = [
+    [
+      Color(0xFFfeda75),
+      Color(0xFFfa7e1e),
+      Color(0xFFd62976),
+      Color(0xFF962fbf),
+      Color(0xFF4f5bd5),
+    ],
+    [
+      Color(0xFFf09433),
+      Color(0xFFe6683c),
+      Color(0xFFdc2743),
+      Color(0xFFcc2366),
+      Color(0xFFbc1888),
+    ],
+    [Color(0xFF833ab4), Color(0xFFfd1d1d), Color(0xFFfcb045)],
+  ];
+
+  // Gradient heart animation controllers
+  late AnimationController _heartAnimationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+  late Animation<double> _moveUpAnimation;
+  late Animation<double> _wiggleAnimation;
 
   void _loadUserData() {
     _cachedUser = DummyData.getUserById(widget.reel.userId);
@@ -287,17 +315,79 @@ class _ReelItemState extends State<ReelItem>
     _loadUserData();
     _initializeVideo();
 
-    _likeAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 400),
+    // Initialize gradient heart animation
+    _heartAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
-    _likeAnimation = Tween<double>(begin: 0.0, end: 1.2).animate(
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.6,
+          end: 1.4,
+        ).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.4,
+          end: 1.2,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 50,
+      ),
+    ]).animate(_heartAnimationController);
+
+    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
-        parent: _likeAnimationController,
-        curve: Curves.elasticOut,
+        parent: _heartAnimationController,
+        curve: const Interval(0.4, 1.0),
       ),
     );
+
+    _moveUpAnimation = Tween<double>(begin: 0, end: -50).animate(
+      CurvedAnimation(parent: _heartAnimationController, curve: Curves.easeOut),
+    );
+
+    _wiggleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(
+          begin: -0.1,
+          end: 0.1,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.1,
+          end: -0.05,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: -0.05,
+          end: 0.05,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.05,
+          end: 0.0,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
+    ]).animate(_heartAnimationController);
+
+    _heartAnimationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() => _showHeart = false);
+        _heartAnimationController.reset();
+      }
+    });
+
+    _currentGradient = _gradients[_random.nextInt(_gradients.length)];
   }
 
   @override
@@ -393,7 +483,7 @@ class _ReelItemState extends State<ReelItem>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _likeAnimationController.dispose();
+    _heartAnimationController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -414,23 +504,19 @@ class _ReelItemState extends State<ReelItem>
     });
   }
 
-  void _handleDoubleTap() {
+  void _startHeartAnimation() {
+    _currentGradient = _gradients[_random.nextInt(_gradients.length)];
+    setState(() => _showHeart = true);
+    _heartAnimationController.forward();
+  }
+
+  void _handleDoubleTap(Offset position) {
     _tapCount = 0;
     _isProcessingTap = false;
 
-    setState(() {
-      _showLikeAnimation = true;
-    });
-
-    _likeAnimationController.forward(from: 0.0).then((_) {
-      Future.delayed(const Duration(milliseconds: 200), () {
-        if (mounted) {
-          setState(() {
-            _showLikeAnimation = false;
-          });
-        }
-      });
-    });
+    // Show gradient heart animation at tap position
+    _tapPosition = position;
+    _startHeartAnimation();
 
     if (!widget.reel.isLiked) {
       setState(() {
@@ -459,6 +545,12 @@ class _ReelItemState extends State<ReelItem>
   void _handleTapDown(TapDownDetails details) {
     final screenWidth = MediaQuery.of(context).size.width;
     final dx = details.globalPosition.dx;
+
+    // Store tap position for gradient heart animation
+    final RenderBox? box = context.findRenderObject() as RenderBox?;
+    if (box != null) {
+      _tapPosition = box.globalToLocal(details.globalPosition);
+    }
 
     if (dx > screenWidth - 80) {
       _tapCount = 0;
@@ -728,7 +820,7 @@ class _ReelItemState extends State<ReelItem>
       child: GestureDetector(
         onTapDown: _handleTapDown,
         onTap: _handleSingleTap,
-        onDoubleTap: _handleDoubleTap,
+        onDoubleTap: () => _handleDoubleTap(_tapPosition),
         onLongPressStart: (details) => _onLongPressStart(details, screenWidth),
         onLongPressEnd: (_) => _onLongPressEnd(),
         child: Stack(
@@ -784,21 +876,51 @@ class _ReelItemState extends State<ReelItem>
                 ),
               ),
             ),
-            if (_showLikeAnimation)
-              Center(
-                child: AnimatedBuilder(
-                  animation: _likeAnimation,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _likeAnimation.value,
-                      child: const Icon(
-                        Icons.favorite,
-                        color: AppColors.white,
-                        size: 100,
+            // Gradient heart animation (like PostWidget)
+            if (_showHeart)
+              AnimatedBuilder(
+                animation: _heartAnimationController,
+                builder: (context, child) {
+                  return Positioned(
+                    left: _tapPosition.dx - 50,
+                    top: _tapPosition.dy - 50 + _moveUpAnimation.value,
+                    child: Transform.rotate(
+                      angle: _wiggleAnimation.value,
+                      child: Transform.scale(
+                        scale: _scaleAnimation.value,
+                        child: Opacity(
+                          opacity: _opacityAnimation.value,
+                          child: ShaderMask(
+                            shaderCallback: (bounds) =>
+                                LinearGradient(
+                                  colors: _currentGradient,
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ).createShader(
+                                  Rect.fromLTWH(
+                                    0,
+                                    0,
+                                    bounds.width,
+                                    bounds.height,
+                                  ),
+                                ),
+                            child: const Icon(
+                              Icons.favorite,
+                              size: 100,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  blurRadius: 20,
+                                  color: AppColors.black54,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
             if (_showMuteIndicator)
               Center(

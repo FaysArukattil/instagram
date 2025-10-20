@@ -24,6 +24,7 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   int _reelsInitialIndex = 0;
   Duration _reelsStartPosition = Duration.zero;
   bool _showFriendsReelsOnly = false;
+  String? _specificReelId; // Store the reel ID instead of index
 
   late PageController _pageController;
 
@@ -40,24 +41,48 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   }
 
   void _navigateToTab(int tabIndex, int reelIndex, Duration startPosition) {
-    setState(() {
-      if (tabIndex == 1) {
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    debugPrint('📱 BOTTOM NAV - Received navigation request');
+    debugPrint('Tab Index: $tabIndex');
+    debugPrint('Reel Index from Home: $reelIndex');
+    debugPrint('Start Position: ${startPosition.inSeconds}s');
+
+    if (tabIndex == 1 && reelIndex >= 0 && reelIndex < DummyData.reels.length) {
+      final targetReelId = DummyData.reels[reelIndex].id;
+      debugPrint('🎯 Target Reel ID: $targetReelId');
+      debugPrint('🔢 Target Reel Index: $reelIndex');
+
+      setState(() {
         _reelsInitialIndex = reelIndex;
         _reelsStartPosition = startPosition;
+        _specificReelId =
+            targetReelId; // Mark that we're navigating to a specific reel
         _reelsRefreshKey++;
-      }
-      _currentIndex = tabIndex;
+        _currentIndex = tabIndex;
+      });
+
+      debugPrint('✅ Navigation prepared - animating to page $tabIndex');
+      debugPrint('🚫 Shuffle disabled: ${_specificReelId != null}');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
       _pageController.animateToPage(
         tabIndex,
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOutCubic,
       );
-    });
+    } else {
+      debugPrint('⚠️ Invalid navigation parameters');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    }
   }
 
   void _onPageChanged(int index) {
     setState(() {
       _currentIndex = index;
+      // Clear specific reel ID when leaving reels tab
+      if (index != 1) {
+        _specificReelId = null;
+      }
     });
   }
 
@@ -71,12 +96,15 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
         key: ValueKey('reels_$_reelsRefreshKey'),
         isVisible: _currentIndex == 1,
         initialIndex: _reelsInitialIndex,
-        disableShuffle: _reelsInitialIndex > 0,
-        startPosition: _reelsStartPosition,
+        disableShuffle:
+            _specificReelId != null, // Don't shuffle when navigating from home
+        startPosition: _specificReelId != null ? _reelsStartPosition : null,
         showFriendsOnly: _showFriendsReelsOnly,
         onFriendsToggle: (value) {
           setState(() {
             _showFriendsReelsOnly = value;
+            _specificReelId = null; // Clear when toggling
+            _reelsInitialIndex = 0;
             _reelsRefreshKey++;
           });
         },
@@ -96,15 +124,20 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
       );
     } else {
       // Refresh current tab if tapped again
-      if (index == 0) setState(() => _homeRefreshKey++);
+      if (index == 0) {
+        setState(() => _homeRefreshKey++);
+      }
       if (index == 1) {
         setState(() {
           _reelsInitialIndex = 0;
           _reelsStartPosition = Duration.zero;
+          _specificReelId = null;
           _reelsRefreshKey++;
         });
       }
-      if (index == 4) setState(() => _profileRefreshKey++);
+      if (index == 4) {
+        setState(() => _profileRefreshKey++);
+      }
     }
   }
 

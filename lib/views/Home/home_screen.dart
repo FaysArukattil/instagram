@@ -244,6 +244,7 @@ class _HomeScreenState extends State<HomeScreen>
         onProfileTap: _openProfile,
         onComment: _openComments,
         onShare: _openShare,
+        onPostUpdated: () => setState(() {}),
       );
     }
 
@@ -324,7 +325,6 @@ class _HomeScreenState extends State<HomeScreen>
                         1 + DummyData.users.where((u) => u.hasStory).length,
                     itemBuilder: (context, storyIndex) {
                       if (storyIndex == 0) {
-                        // Current user's story
                         final userStory = DummyData.stories.firstWhere(
                           (s) => s.userId == DummyData.currentUser.id,
                           orElse: () => StoryModel(
@@ -352,13 +352,11 @@ class _HomeScreenState extends State<HomeScreen>
                         );
                       }
 
-                      // Other users' stories
                       final storiesUsers = DummyData.users
                           .where((u) => u.hasStory)
                           .toList();
                       final user = storiesUsers[storyIndex - 1];
 
-                      // Find the story for this user
                       final userStory = DummyData.stories.firstWhere(
                         (s) => s.userId == user.id,
                         orElse: () => StoryModel(
