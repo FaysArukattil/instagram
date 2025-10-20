@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
-import 'package:instagram/services/data_persistence.dart';
 import 'package:instagram/views/commentscreen/commentscreen.dart';
 import 'package:instagram/views/share_bottom_sheet/share_bottom_sheet.dart';
 import 'package:instagram/widgets/universal_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:instagram/views/three_dot_bottom_sheet/three_dot_bottom_sheet.dart';
 
 class PostScreen extends StatefulWidget {
   final String userId;
@@ -22,38 +22,23 @@ class PostScreen extends StatefulWidget {
   State<PostScreen> createState() => _PostScreenState();
 }
 
-class _PostScreenState extends State<PostScreen> {
-  void _toggleSave(PostModel post) {
-    setState(() {
-      final isSaved = DummyData.isItemSaved(itemType: 'post', itemId: post.id);
-
-      if (isSaved) {
-        DummyData.removeSavedItem(itemType: 'post', itemId: post.id);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Removed from saved'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      } else {
-        DummyData.saveItem(
-          itemType: 'post',
-          itemId: post.id,
-          userId: post.userId,
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Saved to collection'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    });
-  }
-
+class _PostScreenState extends State<PostScreen>
+    with SingleTickerProviderStateMixin {
   late PageController _pageController;
   late List<PostModel> userPosts;
   int currentIndex = 0;
+
+  // Heart animation
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+  late Animation<double> _moveUpAnimation;
+  late Animation<double> _wiggleAnimation;
+
+  Offset _tapPosition = Offset.zero;
+  bool _showHeart = false;
+
+  List<Color> _currentGradient = [Colors.red, Colors.pink];
 
   @override
   void initState() {
@@ -63,28 +48,70 @@ class _PostScreenState extends State<PostScreen> {
         .toList();
     currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.6, end: 1.4).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.4, 1.0),
+      ),
+    );
+
+    _moveUpAnimation = Tween<double>(begin: 0, end: -50).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    _wiggleAnimation = Tween<double>(begin: -0.15, end: 0.15).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticIn),
+    );
+
+    _animationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() => _showHeart = false);
+        _animationController.reset();
+      }
+    });
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
-  void _handleLike(String postId) {
+  void _handleDoubleTapLike(String postId, Offset tapPosition) {
+    _tapPosition = tapPosition;
+    _showHeartAnimation();
+
     setState(() {
       final index = userPosts.indexWhere((p) => p.id == postId);
-      if (index != -1) {
-        userPosts[index].isLiked = !userPosts[index].isLiked;
-        userPosts[index].likes += userPosts[index].isLiked ? 1 : -1;
+      if (index != -1 && !userPosts[index].isLiked) {
+        userPosts[index].isLiked = true;
+        userPosts[index].likes += 1;
 
         final mainIndex = DummyData.posts.indexWhere((p) => p.id == postId);
         if (mainIndex != -1) {
-          DummyData.posts[mainIndex].isLiked = userPosts[index].isLiked;
+          DummyData.posts[mainIndex].isLiked = true;
           DummyData.posts[mainIndex].likes = userPosts[index].likes;
         }
       }
     });
+  }
+
+  void _showHeartAnimation() {
+    _currentGradient = [Colors.red, Colors.pink, Colors.orange, Colors.yellow]
+      ..shuffle();
+    setState(() => _showHeart = true);
+    _animationController.forward();
   }
 
   void _openComments(PostModel post) {
@@ -114,116 +141,32 @@ class _PostScreenState extends State<PostScreen> {
     );
   }
 
-  void _showPostOptions(PostModel post) {
-    final isOwnPost = post.userId == DummyData.currentUser.id;
+  void _toggleSave(PostModel post) {
+    setState(() {
+      final isSaved = DummyData.isItemSaved(itemType: 'post', itemId: post.id);
 
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isOwnPost)
-              ListTile(
-                leading: const Icon(Icons.delete, color: AppColors.red),
-                title: const Text(
-                  'Delete',
-                  style: TextStyle(color: AppColors.red),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _confirmDelete(post);
-                },
-              ),
-            ListTile(
-              leading: const Icon(Icons.link),
-              title: const Text('Copy link'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Link copied to clipboard')),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.share),
-              title: const Text('Share to...'),
-              onTap: () {
-                Navigator.pop(context);
-                _openShare(post);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.cancel),
-              title: const Text('Cancel'),
-              onTap: () => Navigator.pop(context),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _confirmDelete(PostModel post) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Delete Post?'),
-          content: const Text(
-            'Are you sure you want to delete this post? This action cannot be undone.',
+      if (isSaved) {
+        DummyData.removeSavedItem(itemType: 'post', itemId: post.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Removed from saved'),
+            duration: Duration(seconds: 2),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _deletePost(post);
-              },
-              child: const Text(
-                'Delete',
-                style: TextStyle(color: AppColors.red),
-              ),
-            ),
-          ],
         );
-      },
-    );
-  }
-
-  void _deletePost(PostModel post) async {
-    DummyData.posts.removeWhere((p) => p.id == post.id);
-    DummyData.currentUser.posts--;
-
-    await DataPersistence.savePosts(DummyData.posts);
-    await DataPersistence.saveUserPostCount(DummyData.currentUser.posts);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Post deleted successfully'),
-          backgroundColor: AppColors.green,
-        ),
-      );
-
-      if (userPosts.length <= 1) {
-        Navigator.pop(context);
       } else {
-        setState(() {
-          userPosts = DummyData.posts
-              .where((p) => p.userId == widget.userId)
-              .toList();
-
-          if (currentIndex >= userPosts.length) {
-            currentIndex = userPosts.length - 1;
-            _pageController.jumpToPage(currentIndex);
-          }
-        });
+        DummyData.saveItem(
+          itemType: 'post',
+          itemId: post.id,
+          userId: post.userId,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Saved to collection'),
+            duration: Duration(seconds: 2),
+          ),
+        );
       }
-    }
+    });
   }
 
   @override
@@ -322,33 +265,92 @@ class _PostScreenState extends State<PostScreen> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.more_vert, size: 20),
-                        onPressed: () => _showPostOptions(post),
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: AppColors.transparent,
+                            builder: (context) =>
+                                ThreeDotBottomSheet(post: post),
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
 
-                // Images
-                SizedBox(
-                  height: MediaQuery.of(context).size.width,
-                  child: post.images.length == 1
-                      ? UniversalImage(
-                          imagePath: post.images[0],
-                          width: double.infinity,
-                          height: MediaQuery.of(context).size.width,
-                          fit: BoxFit.cover,
-                        )
-                      : PageView.builder(
-                          itemCount: post.images.length,
-                          itemBuilder: (context, imgIndex) {
-                            return UniversalImage(
-                              imagePath: post.images[imgIndex],
-                              width: double.infinity,
-                              height: MediaQuery.of(context).size.width,
-                              fit: BoxFit.cover,
-                            );
-                          },
+                // Images + heart animation
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return GestureDetector(
+                      onDoubleTapDown: (details) {
+                        _tapPosition = details.localPosition;
+                      },
+                      onDoubleTap: () =>
+                          _handleDoubleTapLike(post.id, _tapPosition),
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.width,
+                        width: double.infinity,
+                        child: Stack(
+                          children: [
+                            post.images.length == 1
+                                ? UniversalImage(
+                                    imagePath: post.images[0],
+                                    width: double.infinity,
+                                    height: constraints.maxHeight,
+                                    fit: BoxFit.cover,
+                                  )
+                                : PageView.builder(
+                                    itemCount: post.images.length,
+                                    itemBuilder: (context, imgIndex) {
+                                      return UniversalImage(
+                                        imagePath: post.images[imgIndex],
+                                        width: double.infinity,
+                                        height: constraints.maxHeight,
+                                        fit: BoxFit.cover,
+                                      );
+                                    },
+                                  ),
+                            if (_showHeart)
+                              AnimatedBuilder(
+                                animation: _animationController,
+                                builder: (context, child) {
+                                  return Positioned(
+                                    left: _tapPosition.dx - 50,
+                                    top:
+                                        _tapPosition.dy -
+                                        50 +
+                                        _moveUpAnimation.value,
+                                    child: Transform.rotate(
+                                      angle: _wiggleAnimation.value,
+                                      child: Transform.scale(
+                                        scale: _scaleAnimation.value,
+                                        child: ShaderMask(
+                                          shaderCallback: (bounds) =>
+                                              LinearGradient(
+                                                colors: _currentGradient,
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                              ).createShader(bounds),
+                                          child: Opacity(
+                                            opacity: _opacityAnimation.value,
+                                            child: const Icon(
+                                              Icons.favorite,
+                                              size: 100,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                          ],
                         ),
+                      ),
+                    );
+                  },
                 ),
 
                 // Action Buttons
@@ -362,7 +364,32 @@ class _PostScreenState extends State<PostScreen> {
                           color: post.isLiked ? AppColors.red : AppColors.black,
                           size: 28,
                         ),
-                        onPressed: () => _handleLike(post.id),
+                        onPressed: () {
+                          setState(() {
+                            final index = userPosts.indexWhere(
+                              (p) => p.id == post.id,
+                            );
+                            if (index != -1) {
+                              // Toggle like/unlike
+                              userPosts[index].isLiked =
+                                  !userPosts[index].isLiked;
+                              userPosts[index].likes += userPosts[index].isLiked
+                                  ? 1
+                                  : -1;
+
+                              // Update in main DummyData.posts
+                              final mainIndex = DummyData.posts.indexWhere(
+                                (p) => p.id == post.id,
+                              );
+                              if (mainIndex != -1) {
+                                DummyData.posts[mainIndex].isLiked =
+                                    userPosts[index].isLiked;
+                                DummyData.posts[mainIndex].likes =
+                                    userPosts[index].likes;
+                              }
+                            }
+                          });
+                        },
                       ),
                       GestureDetector(
                         onTap: () => _openComments(post),

@@ -3,6 +3,7 @@ import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/models/reel_model.dart';
+import 'package:instagram/views/profile_screen/profile_screen.dart';
 import 'package:instagram/views/share_profile_screen/share_profile_screen.dart';
 
 class ThreeDotBottomSheet extends StatefulWidget {
@@ -101,6 +102,17 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
     }
   }
 
+  void _openprofilescreen() {
+    Navigator.pop(context);
+    final user = DummyData.getUserById(userId);
+    if (user != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
+      );
+    }
+  }
+
   void _toggleFollow() {
     setState(() {
       final user = DummyData.getUserById(userId);
@@ -191,18 +203,17 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
                 icon: Icons.person_outline,
                 text: 'About this account',
                 onTap: () {
-                  Navigator.pop(context);
-                  _showSnackBar('Account info feature coming soon');
+                  _openprofilescreen();
                 },
               ),
 
               // AI info
               _buildOption(
                 icon: Icons.info_outline,
-                text: 'AI info',
+                text: 'info',
                 onTap: () {
                   Navigator.pop(context);
-                  _showSnackBar('AI info feature coming soon');
+                  _showSnackBar('info feature coming soon');
                 },
               ),
 

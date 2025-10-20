@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:instagram/core/constants/app_colors.dart';
@@ -32,11 +33,37 @@ class _PostWidgetState extends State<PostWidget>
     with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
+  late Animation<double> _moveUpAnimation;
+  late Animation<double> _wiggleAnimation;
+
   bool _showHeart = false;
+  Offset _tapPosition = Offset.zero;
   late bool _isSaved;
+
+  final Random _random = Random();
+  late List<Color> _currentGradient;
+
+  final List<List<Color>> _gradients = [
+    [
+      Color(0xFFfeda75),
+      Color(0xFFfa7e1e),
+      Color(0xFFd62976),
+      Color(0xFF962fbf),
+      Color(0xFF4f5bd5),
+    ],
+    [
+      Color(0xFFf09433),
+      Color(0xFFe6683c),
+      Color(0xFFdc2743),
+      Color(0xFFcc2366),
+      Color(0xFFbc1888),
+    ],
+    [Color(0xFF833ab4), Color(0xFFfd1d1d), Color(0xFFfcb045)],
+  ];
 
   @override
   void initState() {
@@ -44,20 +71,69 @@ class _PostWidgetState extends State<PostWidget>
     _isSaved = DummyData.isItemSaved(itemType: 'post', itemId: widget.post.id);
 
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.2).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.6,
+          end: 1.4,
+        ).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 50,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.4,
+          end: 1.2,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 50,
+      ),
+    ]).animate(_animationController);
 
     _opacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _animationController,
-        curve: const Interval(0.5, 1.0),
+        curve: const Interval(0.4, 1.0),
       ),
     );
+
+    _moveUpAnimation = Tween<double>(begin: 0, end: -50).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    // Wiggle: small rotation back and forth
+    _wiggleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(
+          begin: -0.1,
+          end: 0.1,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.1,
+          end: -0.05,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: -0.05,
+          end: 0.05,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.05,
+          end: 0.0,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
+    ]).animate(_animationController);
 
     _animationController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
@@ -65,6 +141,8 @@ class _PostWidgetState extends State<PostWidget>
         _animationController.reset();
       }
     });
+
+    _currentGradient = _gradients[_random.nextInt(_gradients.length)];
   }
 
   @override
@@ -75,9 +153,18 @@ class _PostWidgetState extends State<PostWidget>
   }
 
   void _handleDoubleTap() {
-    if (!widget.post.isLiked) {
-      widget.onLike(widget.post.id);
-    }
+    if (!widget.post.isLiked) widget.onLike(widget.post.id);
+    _startHeartAnimation();
+  }
+
+  void _handleTap(Offset position) {
+    _tapPosition = position;
+    _startHeartAnimation();
+  }
+
+  void _startHeartAnimation() {
+    // Pick a random gradient each time
+    _currentGradient = _gradients[_random.nextInt(_gradients.length)];
     setState(() => _showHeart = true);
     _animationController.forward();
   }
@@ -136,7 +223,7 @@ class _PostWidgetState extends State<PostWidget>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header with UniversalImage for profile picture
+        // Header
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
@@ -204,28 +291,32 @@ class _PostWidgetState extends State<PostWidget>
           ),
         ),
 
-        // Image carousel with double tap
+        // Image carousel + tap hearts
         GestureDetector(
+          onTapDown: (details) {
+            final RenderBox box = context.findRenderObject() as RenderBox;
+            _tapPosition = box.globalToLocal(details.globalPosition);
+          },
+          onTap: () => _handleTap(_tapPosition),
           onDoubleTap: _handleDoubleTap,
           child: SizedBox(
             height: MediaQuery.of(context).size.width,
             child: Stack(
+              clipBehavior: Clip.none,
               children: [
                 PageView.builder(
                   controller: _pageController,
-                  onPageChanged: (index) {
-                    setState(() => _currentPage = index);
-                  },
+                  onPageChanged: (index) =>
+                      setState(() => _currentPage = index),
                   itemCount: widget.post.images.length,
-                  itemBuilder: (context, index) {
-                    return UniversalImage(
-                      imagePath: widget.post.images[index],
-                      width: double.infinity,
-                      height: MediaQuery.of(context).size.width,
-                      fit: BoxFit.cover,
-                    );
-                  },
+                  itemBuilder: (context, index) => UniversalImage(
+                    imagePath: widget.post.images[index],
+                    width: double.infinity,
+                    height: MediaQuery.of(context).size.width,
+                    fit: BoxFit.cover,
+                  ),
                 ),
+
                 if (widget.post.images.length > 1)
                   Positioned(
                     top: 12,
@@ -249,38 +340,59 @@ class _PostWidgetState extends State<PostWidget>
                       ),
                     ),
                   ),
-                // Animated heart overlay
+
+                // Floating heart animation with gradient and jiggle/wobble
                 if (_showHeart)
-                  Center(
-                    child: AnimatedBuilder(
-                      animation: _animationController,
-                      builder: (context, child) {
-                        return Transform.scale(
-                          scale: _scaleAnimation.value,
-                          child: Opacity(
-                            opacity: _opacityAnimation.value,
-                            child: const Icon(
-                              Icons.favorite,
-                              color: Colors.white,
-                              size: 100,
-                              shadows: [
-                                Shadow(
-                                  blurRadius: 20,
-                                  color: AppColors.black54,
+                  AnimatedBuilder(
+                    animation: _animationController,
+                    builder: (context, child) {
+                      return Positioned(
+                        left: _tapPosition.dx - 50,
+                        top: _tapPosition.dy - 50 + _moveUpAnimation.value,
+                        child: Transform.rotate(
+                          angle: _wiggleAnimation.value,
+                          child: Transform.scale(
+                            scale: _scaleAnimation.value,
+                            child: Opacity(
+                              opacity: _opacityAnimation.value,
+                              child: ShaderMask(
+                                shaderCallback: (bounds) =>
+                                    LinearGradient(
+                                      colors: _currentGradient,
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ).createShader(
+                                      Rect.fromLTWH(
+                                        0,
+                                        0,
+                                        bounds.width,
+                                        bounds.height,
+                                      ),
+                                    ),
+                                child: const Icon(
+                                  Icons.favorite,
+                                  size: 100,
+                                  color: Colors.white,
+                                  shadows: [
+                                    Shadow(
+                                      blurRadius: 20,
+                                      color: AppColors.black54,
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
                   ),
               ],
             ),
           ),
         ),
 
-        // Page indicators (dots)
+        // Page dots
         if (widget.post.images.length > 1)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -303,7 +415,7 @@ class _PostWidgetState extends State<PostWidget>
             ),
           ),
 
-        // Action buttons
+        // Action bar
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
@@ -327,9 +439,7 @@ class _PostWidgetState extends State<PostWidget>
                   ),
                 ),
                 onPressed: () {
-                  if (widget.onComment != null) {
-                    widget.onComment!(widget.post);
-                  }
+                  if (widget.onComment != null) widget.onComment!(widget.post);
                 },
               ),
               IconButton(
@@ -343,9 +453,7 @@ class _PostWidgetState extends State<PostWidget>
                   ),
                 ),
                 onPressed: () {
-                  if (widget.onShare != null) {
-                    widget.onShare!(widget.post);
-                  }
+                  if (widget.onShare != null) widget.onShare!(widget.post);
                 },
               ),
               const Spacer(),
@@ -361,7 +469,7 @@ class _PostWidgetState extends State<PostWidget>
           ),
         ),
 
-        // Likes and caption
+        // Likes, caption, etc.
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
