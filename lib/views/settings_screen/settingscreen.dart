@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:instagram/core/constants/app_images.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/views/auth/login/login_screen.dart';
+import 'package:instagram/views/saved_screen/saved_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Settingscreen extends StatefulWidget {
@@ -71,7 +72,12 @@ class _SettingscreenState extends State<Settingscreen> {
           _buildSettingItem(
             icon: Icons.archive_outlined,
             title: 'Saved',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SavedScreen()),
+              );
+            },
           ),
           _buildSettingItem(
             icon: Icons.archive_outlined,

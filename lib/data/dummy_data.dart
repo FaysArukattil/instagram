@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:instagram/models/saved_item_model.dart';
+
 import '../models/user_model.dart';
 import '../models/post_model.dart';
 import '../models/story_model.dart';
@@ -5,10 +8,86 @@ import '../models/comment_model.dart';
 import '../models/reel_model.dart';
 
 class DummyData {
-  // ADD THESE METHODS TO YOUR DummyData CLASS
-  // REPLACE the existing addRepost method with all of this code
+  /// List to store all saved items
+  static List<SavedItem> savedItems = [];
 
-  // Track which users have reposted which reels
+  /// Save a post or reel
+  static void saveItem({
+    required String itemType, // 'post' or 'reel'
+    required String itemId,
+    required String userId,
+  }) {
+    final existingIndex = savedItems.indexWhere(
+      (item) => item.itemType == itemType && item.itemId == itemId,
+    );
+
+    // Only add if not already saved
+    if (existingIndex == -1) {
+      savedItems.add(
+        SavedItem(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          itemType: itemType,
+          itemId: itemId,
+          userId: userId,
+          savedAt: DateTime.now(),
+        ),
+      );
+      debugPrint('✅ Saved: $itemType - $itemId');
+    }
+  }
+
+  /// Remove a saved post or reel
+  static void removeSavedItem({
+    required String itemType, // 'post' or 'reel'
+    required String itemId,
+  }) {
+    final initialLength = savedItems.length;
+    savedItems.removeWhere(
+      (item) => item.itemType == itemType && item.itemId == itemId,
+    );
+    if (savedItems.length < initialLength) {
+      debugPrint('❌ Removed: $itemType - $itemId');
+    }
+  }
+
+  /// Check if a post or reel is saved
+  static bool isItemSaved({required String itemType, required String itemId}) {
+    return savedItems.any(
+      (item) => item.itemType == itemType && item.itemId == itemId,
+    );
+  }
+
+  /// Get all saved items
+  static List<SavedItem> getSavedItems() {
+    return List.from(savedItems);
+  }
+
+  /// Get saved items filtered by type
+  static List<SavedItem> getSavedItemsByType(String itemType) {
+    return savedItems.where((item) => item.itemType == itemType).toList();
+  }
+
+  /// Get saved items count
+  static int getSavedItemsCount({String? itemType}) {
+    if (itemType == null) {
+      return savedItems.length;
+    }
+    return savedItems.where((item) => item.itemType == itemType).length;
+  }
+
+  /// Get saved items sorted by save date (newest first)
+  static List<SavedItem> getSavedItemsSorted() {
+    final sorted = List<SavedItem>.from(savedItems);
+    sorted.sort((a, b) => b.savedAt.compareTo(a.savedAt));
+    return sorted;
+  }
+
+  /// Clear all saved items
+  static void clearAllSavedItems() {
+    savedItems.clear();
+    debugPrint('🗑️ Cleared all saved items');
+  }
+
   static Map<String, List<String>> userReposts = {};
 
   // ✅ Get all reposted reels for a specific user
@@ -196,7 +275,7 @@ class DummyData {
       location: 'NewYork,USA',
     ),
     ReelModel(
-      id: 'reel_12',
+      id: 'reel_13',
       userId: 'user_2',
       videoUrl: 'assets/videos/mkbhd4.mp4',
       thumbnailUrl:
@@ -209,7 +288,7 @@ class DummyData {
       location: 'NewYork,USA',
     ),
     ReelModel(
-      id: 'reel_13',
+      id: 'reel_14',
       userId: 'user_2',
       videoUrl: 'assets/videos/mkbhd5.mp4',
       thumbnailUrl:
@@ -222,7 +301,7 @@ class DummyData {
       location: 'NewYork,USA',
     ),
     ReelModel(
-      id: 'reel_14',
+      id: 'reel_15',
       userId: 'user_2',
       videoUrl: 'assets/videos/mkbhd6.mp4',
       thumbnailUrl:
@@ -236,7 +315,7 @@ class DummyData {
       location: 'NewYork,USA',
     ),
     ReelModel(
-      id: 'reel_14',
+      id: 'reel_16',
       userId: 'user_2',
       videoUrl: 'assets/videos/mkbhd7.mp4',
       thumbnailUrl:
@@ -250,7 +329,7 @@ class DummyData {
       location: 'NewYork,USA',
     ),
     ReelModel(
-      id: 'reel_9',
+      id: 'reel_17',
       userId: 'user_4',
       videoUrl: 'assets/videos/reelsample8.mp4',
       thumbnailUrl:
@@ -263,7 +342,7 @@ class DummyData {
       location: 'Kovalam Beach',
     ),
     ReelModel(
-      id: 'reel_10',
+      id: 'reel_18',
       userId: 'user_2',
       videoUrl: 'assets/videos/reelsample9.mp4',
       thumbnailUrl:
@@ -276,7 +355,7 @@ class DummyData {
       location: 'New York City',
     ),
     ReelModel(
-      id: 'reel_11',
+      id: 'reel_19',
       userId: 'user_3',
       videoUrl: 'assets/videos/reelsample10.mp4',
       thumbnailUrl:
@@ -289,7 +368,7 @@ class DummyData {
       location: 'Bangalore',
     ),
     ReelModel(
-      id: 'reel_12',
+      id: 'reel_20',
       userId: 'user_5',
       videoUrl: 'assets/videos/reelsample11.mp4',
       thumbnailUrl:
@@ -302,7 +381,7 @@ class DummyData {
       location: 'Manali',
     ),
     ReelModel(
-      id: 'reel_13',
+      id: 'reel_21',
       userId: 'user_14',
       videoUrl: 'assets/videos/reelsample12.mp4',
       thumbnailUrl:
@@ -315,7 +394,7 @@ class DummyData {
       location: 'Goa',
     ),
     ReelModel(
-      id: 'reel_14',
+      id: 'reel_22',
       userId: 'user_6',
       videoUrl: 'assets/videos/reelsample13.mp4',
       thumbnailUrl:
@@ -328,7 +407,7 @@ class DummyData {
       location: 'Bangkok',
     ),
     ReelModel(
-      id: 'reel_15',
+      id: 'reel_23',
       userId: 'user_2',
       videoUrl: 'assets/videos/reelsample14.mp4',
       thumbnailUrl:
@@ -341,7 +420,7 @@ class DummyData {
       location: 'Mumbai',
     ),
     ReelModel(
-      id: 'reel_16',
+      id: 'reel_24',
       userId: 'user_5',
       videoUrl: 'assets/videos/reelsample15.mp4',
       thumbnailUrl:
@@ -354,7 +433,7 @@ class DummyData {
       location: 'Kochi',
     ),
     ReelModel(
-      id: 'reel_17',
+      id: 'reel_25',
       userId: 'user_7',
       videoUrl: 'assets/videos/reelsample16.mp4',
       thumbnailUrl:
@@ -367,7 +446,7 @@ class DummyData {
       location: 'Paris',
     ),
     ReelModel(
-      id: 'reel_18',
+      id: 'reel_26',
       userId: 'user_3',
       videoUrl: 'assets/videos/reelsample17.mp4',
       thumbnailUrl:
@@ -380,7 +459,7 @@ class DummyData {
       location: 'London',
     ),
     ReelModel(
-      id: 'reel_19',
+      id: 'reel_27',
       userId: 'user_8',
       videoUrl: 'assets/videos/reelsample18.mp4',
       thumbnailUrl:
@@ -393,7 +472,7 @@ class DummyData {
       location: 'Chennai',
     ),
     ReelModel(
-      id: 'reel_20',
+      id: 'reel_28',
       userId: 'user_2',
       videoUrl: 'assets/videos/reelsample19.mp4',
       thumbnailUrl:
@@ -406,7 +485,7 @@ class DummyData {
       location: 'Dubai',
     ),
     ReelModel(
-      id: 'reel_21',
+      id: 'reel_29',
       userId: 'user_4',
       videoUrl: 'assets/videos/reelsample20.mp4',
       thumbnailUrl:
@@ -419,7 +498,7 @@ class DummyData {
       location: 'Singapore',
     ),
     ReelModel(
-      id: 'reel_22',
+      id: 'reel_30',
       userId: 'user_6',
       videoUrl: 'assets/videos/reelsample21.mp4',
       thumbnailUrl:
@@ -432,7 +511,7 @@ class DummyData {
       location: 'Nepal',
     ),
     ReelModel(
-      id: 'reel_23',
+      id: 'reel_31',
       userId: 'user_13',
       videoUrl: 'assets/videos/reelsample22.mp4',
       thumbnailUrl:
@@ -445,7 +524,7 @@ class DummyData {
       location: 'San Francisco',
     ),
     ReelModel(
-      id: 'reel_24',
+      id: 'reel_32',
       userId: 'user_9',
       videoUrl: 'assets/videos/reelsample23.mp4',
       thumbnailUrl:

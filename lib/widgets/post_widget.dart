@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
+import 'package:instagram/views/three_dot_bottom_sheet/three_dot_bottom_sheet.dart';
 import 'package:instagram/widgets/universal_image.dart';
 
 class PostWidget extends StatefulWidget {
@@ -10,6 +11,7 @@ class PostWidget extends StatefulWidget {
   final Function(String) onProfileTap;
   final Function(PostModel)? onComment;
   final Function(PostModel)? onShare;
+  final VoidCallback? onPostUpdated;
 
   const PostWidget({
     super.key,
@@ -18,6 +20,7 @@ class PostWidget extends StatefulWidget {
     required this.onProfileTap,
     this.onComment,
     this.onShare,
+    this.onPostUpdated,
   });
 
   @override
@@ -32,10 +35,12 @@ class _PostWidgetState extends State<PostWidget>
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
   bool _showHeart = false;
+  late bool _isSaved;
 
   @override
   void initState() {
     super.initState();
+    _isSaved = DummyData.isItemSaved(itemType: 'post', itemId: widget.post.id);
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 700),
@@ -74,6 +79,52 @@ class _PostWidgetState extends State<PostWidget>
     }
     setState(() => _showHeart = true);
     _animationController.forward();
+  }
+
+  void _toggleSave() {
+    setState(() {
+      if (_isSaved) {
+        DummyData.removeSavedItem(itemType: 'post', itemId: widget.post.id);
+        _isSaved = false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Removed from saved'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        DummyData.saveItem(
+          itemType: 'post',
+          itemId: widget.post.id,
+          userId: widget.post.userId,
+        );
+        _isSaved = true;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Saved to collection'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    });
+    widget.onPostUpdated?.call();
+  }
+
+  void _showMoreOptions() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ThreeDotBottomSheet(post: widget.post),
+    ).then((_) {
+      setState(() {
+        _isSaved = DummyData.isItemSaved(
+          itemType: 'post',
+          itemId: widget.post.id,
+        );
+      });
+      widget.onPostUpdated?.call();
+    });
   }
 
   @override
@@ -143,13 +194,13 @@ class _PostWidgetState extends State<PostWidget>
               ),
               IconButton(
                 icon: const Icon(Icons.more_vert, size: 20),
-                onPressed: () {},
+                onPressed: _showMoreOptions,
               ),
             ],
           ),
         ),
 
-        // Image carousel with double tap - Matching PostScreen's EXACT approach
+        // Image carousel with double tap
         GestureDetector(
           onDoubleTap: _handleDoubleTap,
           child: SizedBox(
@@ -292,8 +343,12 @@ class _PostWidgetState extends State<PostWidget>
               ),
               const Spacer(),
               IconButton(
-                icon: const Icon(Icons.bookmark_border, size: 26),
-                onPressed: () {},
+                icon: Icon(
+                  _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                  size: 26,
+                  color: Colors.black,
+                ),
+                onPressed: _toggleSave,
               ),
             ],
           ),

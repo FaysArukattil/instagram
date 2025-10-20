@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/views/three_dot_bottom_sheet/three_dot_bottom_sheet.dart';
 import 'package:video_player/video_player.dart';
 import 'package:instagram/models/reel_model.dart';
 import 'package:instagram/models/post_model.dart';
@@ -28,6 +29,38 @@ class ReelWidget extends StatefulWidget {
 
 class _ReelWidgetState extends State<ReelWidget>
     with WidgetsBindingObserver, TickerProviderStateMixin {
+  void _toggleSave() {
+    setState(() {
+      if (_isSaved) {
+        DummyData.removeSavedItem(itemType: 'reel', itemId: widget.reel.id);
+        _isSaved = false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Removed from saved'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        DummyData.saveItem(
+          itemType: 'reel', // ✅ Correct type
+          itemId: widget.reel.id,
+          userId: widget.reel.userId,
+        );
+        _isSaved = true;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Saved to collection'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    });
+
+    // Update parent if needed
+    widget.onReelUpdated?.call();
+  }
+
+  late bool _isSaved;
   late VideoPlayerController _controller;
   bool _isInitialized = false;
   bool _showVolumeIndicator = false;
@@ -42,6 +75,7 @@ class _ReelWidgetState extends State<ReelWidget>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initializeVideo();
+    _isSaved = DummyData.isItemSaved(itemType: 'reel', itemId: widget.reel.id);
 
     _likeAnimationController = AnimationController(
       duration: const Duration(milliseconds: 600),
@@ -356,117 +390,13 @@ class _ReelWidgetState extends State<ReelWidget>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => _buildMoreOptionsSheet(),
+      builder: (context) => ThreeDotBottomSheet(),
     ).then((_) {
       _isPausedByUser = false;
       if (_isVisible && mounted) {
         _controller.play();
       }
     });
-  }
-
-  Widget _buildMoreOptionsSheet() {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.6,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _buildMoreOption(Icons.bookmark_outline, 'Save', () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Saved to collection')),
-                );
-              }),
-              _buildMoreOption(Icons.repeat, 'Remix', () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Remix feature coming soon')),
-                );
-              }),
-              _buildMoreOption(Icons.qr_code, 'QR code', () {
-                Navigator.pop(context);
-              }),
-              const Divider(height: 16),
-              _buildMoreOption(
-                Icons.not_interested_outlined,
-                'Not interested',
-                () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('We\'ll show you less like this'),
-                    ),
-                  );
-                },
-              ),
-              _buildMoreOption(Icons.person_outline, 'About this account', () {
-                Navigator.pop(context);
-              }),
-              _buildMoreOption(Icons.info_outline, 'AI info', () {
-                Navigator.pop(context);
-              }),
-              const Divider(height: 16),
-              _buildMoreOption(Icons.flag_outlined, 'Report', () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Report submitted')),
-                );
-              }, isDestructive: true),
-              _buildMoreOption(
-                Icons.tune_outlined,
-                'Manage content preferences',
-                () {
-                  Navigator.pop(context);
-                },
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMoreOption(
-    IconData icon,
-    String text,
-    VoidCallback onTap, {
-    bool isDestructive = false,
-  }) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isDestructive ? Colors.red : Colors.black,
-        size: 22,
-      ),
-      title: Text(
-        text,
-        style: TextStyle(
-          color: isDestructive ? Colors.red : Colors.black,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      onTap: onTap,
-    );
   }
 
   String _formatCount(int count) {
@@ -740,6 +670,16 @@ class _ReelWidgetState extends State<ReelWidget>
                                 BlendMode.srcIn,
                               ),
                             ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        // ✅ Save button
+                        GestureDetector(
+                          onTap: _toggleSave,
+                          child: Icon(
+                            _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                            color: Colors.black,
+                            size: 24,
                           ),
                         ),
                       ],
