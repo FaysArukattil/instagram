@@ -11,7 +11,7 @@ class TermsPage extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Account created successfully!'),
-        backgroundColor: Colors.green,
+        backgroundColor: AppColors.green,
         duration: Duration(seconds: 2),
       ),
     );
