@@ -17,6 +17,7 @@ import 'package:instagram/views/story_viewer_screen/story_viewer_screen.dart';
 import 'package:instagram/widgets/post_widget.dart';
 import 'package:instagram/widgets/reel_widget.dart';
 import 'package:instagram/widgets/story_avatar.dart';
+import 'package:instagram/models/story_model.dart';
 
 class HomeScreen extends StatefulWidget {
   final void Function(int, int, Duration)? onNavigateToReels;
@@ -260,13 +261,9 @@ class _HomeScreenState extends State<HomeScreen>
         title: Flexible(
           child: FittedBox(
             fit: BoxFit.contain,
-            child: Image.asset(
-              AppImages.instagramtext,
-              height: 120, // typical Instagram text height
-            ),
+            child: Image.asset(AppImages.instagramtext, height: 120),
           ),
         ),
-
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(
@@ -294,7 +291,6 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ],
       ),
-
       body: PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -328,10 +324,24 @@ class _HomeScreenState extends State<HomeScreen>
                         1 + DummyData.users.where((u) => u.hasStory).length,
                     itemBuilder: (context, storyIndex) {
                       if (storyIndex == 0) {
+                        // Current user's story
+                        final userStory = DummyData.stories.firstWhere(
+                          (s) => s.userId == DummyData.currentUser.id,
+                          orElse: () => StoryModel(
+                            id: '',
+                            userId: DummyData.currentUser.id,
+                            username: DummyData.currentUser.username,
+                            profileImageUrl: DummyData.currentUser.profileImage,
+                            images: [],
+                            timeAgo: '',
+                          ),
+                        );
+
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: StoryAvatar(
                             user: DummyData.currentUser,
+                            story: userStory.id.isNotEmpty ? userStory : null,
                             hasStory: DummyData.stories.any(
                               (s) => s.userId == DummyData.currentUser.id,
                             ),
@@ -341,14 +351,31 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         );
                       }
+
+                      // Other users' stories
                       final storiesUsers = DummyData.users
                           .where((u) => u.hasStory)
                           .toList();
                       final user = storiesUsers[storyIndex - 1];
+
+                      // Find the story for this user
+                      final userStory = DummyData.stories.firstWhere(
+                        (s) => s.userId == user.id,
+                        orElse: () => StoryModel(
+                          id: '',
+                          userId: user.id,
+                          username: user.username,
+                          profileImageUrl: user.profileImage,
+                          images: [],
+                          timeAgo: '',
+                        ),
+                      );
+
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: StoryAvatar(
                           user: user,
+                          story: userStory.id.isNotEmpty ? userStory : null,
                           hasStory: true,
                           onTap: () => _openStory(user.id),
                         ),

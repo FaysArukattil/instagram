@@ -5,6 +5,7 @@ import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/story_model.dart';
 import 'package:instagram/models/user_model.dart';
+import 'package:instagram/views/profile_screen/profile_screen.dart';
 
 class StoryViewerScreen extends StatefulWidget {
   final List<StoryModel> stories;
@@ -53,6 +54,26 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
           });
 
     _startProgress();
+    _markStoryAsViewed(); // Mark initial story as viewed
+  }
+
+  // Mark the current story as viewed
+  void _markStoryAsViewed() {
+    if (_currentUserIndex >= 0 && _currentUserIndex < widget.stories.length) {
+      final currentStory = widget.stories[_currentUserIndex];
+      // Mark as viewed
+      currentStory.markAsViewed(DummyData.currentUser.id);
+
+      // Also update in DummyData to persist
+      final mainStoryIndex = DummyData.stories.indexWhere(
+        (s) => s.id == currentStory.id,
+      );
+      if (mainStoryIndex != -1) {
+        DummyData.stories[mainStoryIndex].markAsViewed(
+          DummyData.currentUser.id,
+        );
+      }
+    }
   }
 
   void _startProgress() {
@@ -115,6 +136,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
 
     try {
       if (localPosition.dx < width / 2) {
+        // Tap on left side - go to previous
         if (images != null && _currentImageIndex > 0) {
           setState(() {
             _currentImageIndex = (_currentImageIndex - 1).clamp(
@@ -127,6 +149,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
           _goToPreviousUserOrClose();
         }
       } else {
+        // Tap on right side - go to next
         if (images != null && _currentImageIndex < images.length - 1) {
           setState(() {
             _currentImageIndex = (_currentImageIndex + 1).clamp(
@@ -173,6 +196,25 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
           });
     } else {
       if (mounted) Navigator.pop(context);
+    }
+  }
+
+  void _openUserProfile(String userId) {
+    // Don't open current user's profile
+    if (userId == DummyData.currentUser.id) return;
+
+    final user = DummyData.getUserById(userId);
+    if (user != null) {
+      _pauseProgress(); // Pause story progress
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
+      ).then((_) {
+        // Resume progress when returning from profile
+        if (mounted) {
+          _resumeProgress();
+        }
+      });
     }
   }
 
@@ -240,6 +282,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
               });
               _progressController.reset();
               _startProgress();
+              _markStoryAsViewed(); // Mark new story as viewed when page changes
             },
             itemBuilder: (context, pageIndex) {
               final StoryModel pageStory = widget.stories[pageIndex];
@@ -333,45 +376,60 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                     ),
                   ),
 
-                  // User info (avatar, name, time)
+                  // User info (avatar, name, time) - TAPPABLE
                   Positioned(
                     top: 52,
                     left: 16,
                     right: 16,
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundImage:
-                              (user?.profileImage != null &&
-                                  user!.profileImage.startsWith('http'))
-                              ? NetworkImage(user.profileImage)
-                              : (user?.profileImage != null &&
-                                    File(user!.profileImage).existsSync())
-                              ? FileImage(File(user.profileImage))
-                                    as ImageProvider
-                              : const AssetImage('assets/default_avatar.png'),
-                        ),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              user?.username ?? pageStory.username,
-                              style: const TextStyle(
-                                color: AppColors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                        GestureDetector(
+                          onTap: () {
+                            if (user != null) {
+                              _openUserProfile(user.id);
+                            }
+                          },
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundImage:
+                                    (user?.profileImage != null &&
+                                        user!.profileImage.startsWith('http'))
+                                    ? NetworkImage(user.profileImage)
+                                    : (user?.profileImage != null &&
+                                          File(user!.profileImage).existsSync())
+                                    ? FileImage(File(user.profileImage))
+                                          as ImageProvider
+                                    : const AssetImage(
+                                        'assets/default_avatar.png',
+                                      ),
                               ),
-                            ),
-                            Text(
-                              pageStory.timeAgo,
-                              style: TextStyle(
-                                color: AppColors.white.withValues(alpha: .8),
-                                fontSize: 12,
+                              const SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    user?.username ?? pageStory.username,
+                                    style: const TextStyle(
+                                      color: AppColors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    pageStory.timeAgo,
+                                    style: TextStyle(
+                                      color: AppColors.white.withValues(
+                                        alpha: .8,
+                                      ),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         const Spacer(),
                         IconButton(

@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:instagram/core/constants/app_colors.dart';
+import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
-import 'package:instagram/widgets/universal_image.dart'; // ✅ Import your UniversalImage
+import 'package:instagram/models/story_model.dart';
+import 'package:instagram/widgets/universal_image.dart';
 
 class StoryAvatar extends StatelessWidget {
   final UserModel user;
+  final StoryModel? story;
   final bool hasStory;
   final bool isCurrentUser;
   final VoidCallback onTap;
-  final VoidCallback? onAddStory; // For adding more stories
+  final VoidCallback? onAddStory;
 
   const StoryAvatar({
     super.key,
@@ -17,22 +20,32 @@ class StoryAvatar extends StatelessWidget {
     this.isCurrentUser = false,
     required this.onTap,
     this.onAddStory,
+    this.story,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Check if story is viewed by current user
+    bool isStoryViewed = story != null
+        ? story!.isViewedBy(DummyData.currentUser.id)
+        : false;
+
+    // Show gradient ring only if has story and NOT viewed
+    bool showGradientRing = hasStory && !isStoryViewed;
+
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 70, // Fixed width to prevent overflow
+        width: 70,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Stack(
               clipBehavior: Clip.none,
+              alignment: Alignment.center,
               children: [
-                // Story ring gradient (if has story)
-                if (hasStory && !isCurrentUser)
+                // Gradient ring for unviewed stories
+                if (showGradientRing)
                   Container(
                     width: 70,
                     height: 70,
@@ -50,22 +63,34 @@ class StoryAvatar extends StatelessWidget {
                     ),
                   ),
 
+                // Grey ring for viewed stories
+                if (hasStory && isStoryViewed && !isCurrentUser)
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.grey300!, width: 2),
+                    ),
+                  ),
+
                 // White border + profile image
                 Container(
-                  width: 70,
-                  height: 70,
+                  width: 66,
+                  height: 66,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppColors.white,
-                    border: hasStory && !isCurrentUser
-                        ? null
-                        : Border.all(color: AppColors.grey300!, width: 1),
+                    border: !hasStory || isCurrentUser
+                        ? Border.all(color: AppColors.grey300!, width: 1.5)
+                        : null,
                   ),
-                  padding: const EdgeInsets.all(2.5),
+                  padding: EdgeInsets.all(
+                    showGradientRing || (hasStory && isStoryViewed) ? 2.5 : 0,
+                  ),
                   child: ClipOval(
                     child: UniversalImage(
-                      imagePath:
-                          user.profileImage, // ✅ Works for both local/network
+                      imagePath: user.profileImage,
                       fit: BoxFit.cover,
                       errorWidget: Container(
                         color: AppColors.grey300,
@@ -75,7 +100,7 @@ class StoryAvatar extends StatelessWidget {
                   ),
                 ),
 
-                // Plus icon for current user (to add story)
+                // Plus icon for current user
                 if (isCurrentUser)
                   Positioned(
                     right: 0,
@@ -102,7 +127,7 @@ class StoryAvatar extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              user.username, // ✅ Always shows the user's name now
+              user.username,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
