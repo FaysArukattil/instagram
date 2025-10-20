@@ -160,7 +160,7 @@ class _SavedScreenState extends State<SavedScreen>
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: .6),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Icon(
