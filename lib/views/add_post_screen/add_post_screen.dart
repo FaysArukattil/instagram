@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:instagram/data/dummy_data.dart';
-import 'package:instagram/models/post_model.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/views/bottomnavbarscreens/bottomnavbarscreen.dart';
+import 'package:instagram/views/post_editor_screen/posteditorscreen.dart';
 import 'package:instagram/views/reels_editor_screen/reels_editor_screen.dart';
 import 'package:instagram/views/story_editing_screen/story_editor_screen.dart';
 
@@ -89,7 +89,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.red),
         );
       }
     }
@@ -119,7 +119,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.red),
         );
       }
     }
@@ -181,7 +181,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Live streaming coming soon!'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppColors.orange,
         ),
       );
     }
@@ -190,7 +190,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.black,
       body: SafeArea(
         child: Column(
           children: [
@@ -270,7 +270,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.white, size: 28),
+            icon: const Icon(Icons.close, color: AppColors.white, size: 28),
             onPressed: () {
               _clearSelection();
               Navigator.pop(context);
@@ -279,7 +279,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
           Text(
             _modes[_currentPage],
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.white,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -289,7 +289,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
             child: const Text(
               'Next',
               style: TextStyle(
-                color: Colors.blue,
+                color: AppColors.blue,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -305,16 +305,16 @@ class _AddPostScreenState extends State<AddPostScreen> {
       final isVideo = _currentPage == 2;
       if (isVideo) {
         return Container(
-          color: Colors.black,
+          color: AppColors.black,
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.videocam, size: 80, color: Colors.white54),
+                const Icon(Icons.videocam, size: 80, color: AppColors.white54),
                 const SizedBox(height: 16),
                 Text(
                   'Video selected',
-                  style: TextStyle(color: Colors.white54, fontSize: 16),
+                  style: TextStyle(color: AppColors.white54, fontSize: 16),
                 ),
               ],
             ),
@@ -334,7 +334,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
   Widget _buildEmptyState() {
     return Container(
-      color: Colors.black,
+      color: AppColors.black,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -342,7 +342,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
             Icon(
               _currentPage == 2 ? Icons.videocam : Icons.photo_camera,
               size: 80,
-              color: Colors.white38,
+              color: AppColors.white38,
             ),
             const SizedBox(height: 16),
             Text(
@@ -362,18 +362,18 @@ class _AddPostScreenState extends State<AddPostScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .2),
+          color: AppColors.white.withValues(alpha: .2),
           borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+          border: Border.all(color: AppColors.white.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 24),
+            Icon(icon, color: AppColors.white, size: 24),
             const SizedBox(width: 8),
             Text(
               label,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.white,
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
               ),
@@ -387,7 +387,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
   Widget _buildGalleryThumbnails() {
     return Container(
       height: 80,
-      color: Colors.black,
+      color: AppColors.black,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -406,7 +406,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: isSelected ? Colors.blue : Colors.transparent,
+                  color: isSelected ? AppColors.blue : AppColors.transparent,
                   width: 2,
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -428,7 +428,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
   Widget _buildBottomMenu() {
     return Container(
       height: 80,
-      color: Colors.black,
+      color: AppColors.black,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -443,8 +443,8 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: _currentPage == index
-                      ? Colors.white
-                      : Colors.white.withValues(alpha: .3),
+                      ? AppColors.white
+                      : AppColors.white.withValues(alpha: .3),
                 ),
               );
             }),
@@ -455,7 +455,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
           Text(
             _modes[_currentPage].toUpperCase(),
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.white,
               fontSize: 17,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
@@ -479,151 +479,5 @@ class _AddPostScreenState extends State<AddPostScreen> {
       default:
         return '';
     }
-  }
-}
-
-// ---------------- Post Editor ----------------
-class PostEditorScreen extends StatefulWidget {
-  final List<String> imagePaths;
-  const PostEditorScreen({super.key, required this.imagePaths});
-
-  @override
-  State<PostEditorScreen> createState() => _PostEditorScreenState();
-}
-
-class _PostEditorScreenState extends State<PostEditorScreen> {
-  final TextEditingController _captionController = TextEditingController();
-  String? _location;
-  int _currentImageIndex = 0;
-
-  @override
-  void dispose() {
-    _captionController.dispose();
-    super.dispose();
-  }
-
-  void _sharePost() {
-    final newPost = PostModel(
-      id: 'post_${DateTime.now().millisecondsSinceEpoch}',
-      userId: DummyData.currentUser.id,
-      images: widget.imagePaths,
-      caption: _captionController.text.trim(),
-      likes: 0,
-      comments: 0,
-      timeAgo: 'Just now',
-      location: _location,
-      isLiked: false,
-    );
-
-    DummyData.posts.insert(0, newPost);
-    DummyData.currentUser.posts++;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Post shared successfully!'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
-
-    Navigator.pop(context);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'New post',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          TextButton(
-            onPressed: _sharePost,
-            child: const Text(
-              'Share',
-              style: TextStyle(
-                color: Colors.blue,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Image carousel
-            SizedBox(
-              height: 400,
-              child: Stack(
-                children: [
-                  PageView.builder(
-                    itemCount: widget.imagePaths.length,
-                    onPageChanged: (index) {
-                      setState(() => _currentImageIndex = index);
-                    },
-                    itemBuilder: (context, index) {
-                      return Image.file(
-                        File(widget.imagePaths[index]),
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      );
-                    },
-                  ),
-                  if (widget.imagePaths.length > 1)
-                    Positioned(
-                      top: 16,
-                      right: 16,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '${_currentImageIndex + 1}/${widget.imagePaths.length}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: TextField(
-                controller: _captionController,
-                maxLines: 5,
-                decoration: const InputDecoration(
-                  hintText: 'Write a caption...',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.location_on),
-              title: Text(_location ?? 'Add location'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => setState(() => _location = 'Sample Location'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
