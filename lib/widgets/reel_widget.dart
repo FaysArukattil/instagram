@@ -390,12 +390,17 @@ class _ReelWidgetState extends State<ReelWidget>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => ThreeDotBottomSheet(),
+      builder: (context) => ThreeDotBottomSheet(
+        reel: widget.reel, // ✅ pass current reel
+      ),
     ).then((_) {
       _isPausedByUser = false;
       if (_isVisible && mounted) {
         _controller.play();
       }
+      // Refresh state in case reel got saved/reposted etc.
+      setState(() {});
+      widget.onReelUpdated?.call();
     });
   }
 

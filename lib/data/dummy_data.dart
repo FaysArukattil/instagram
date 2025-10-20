@@ -9,7 +9,8 @@ import '../models/reel_model.dart';
 
 class DummyData {
   /// List to store all saved items
-  static List<SavedItem> savedItems = [];
+  // Saved items storage
+  static final List<SavedItem> _savedItems = [];
 
   /// Save a post or reel
   static void saveItem({
@@ -17,13 +18,11 @@ class DummyData {
     required String itemId,
     required String userId,
   }) {
-    final existingIndex = savedItems.indexWhere(
+    // Check if already saved
+    if (!_savedItems.any(
       (item) => item.itemType == itemType && item.itemId == itemId,
-    );
-
-    // Only add if not already saved
-    if (existingIndex == -1) {
-      savedItems.add(
+    )) {
+      _savedItems.add(
         SavedItem(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           itemType: itemType,
@@ -38,55 +37,88 @@ class DummyData {
 
   /// Remove a saved post or reel
   static void removeSavedItem({
-    required String itemType, // 'post' or 'reel'
+    required String itemType,
     required String itemId,
   }) {
-    final initialLength = savedItems.length;
-    savedItems.removeWhere(
+    _savedItems.removeWhere(
       (item) => item.itemType == itemType && item.itemId == itemId,
     );
-    if (savedItems.length < initialLength) {
-      debugPrint('❌ Removed: $itemType - $itemId');
-    }
+    debugPrint('❌ Removed: $itemType - $itemId');
   }
 
   /// Check if a post or reel is saved
   static bool isItemSaved({required String itemType, required String itemId}) {
-    return savedItems.any(
+    return _savedItems.any(
       (item) => item.itemType == itemType && item.itemId == itemId,
     );
   }
 
   /// Get all saved items
-  static List<SavedItem> getSavedItems() {
-    return List.from(savedItems);
-  }
+  static List<SavedItem> getSavedItems() => List<SavedItem>.from(_savedItems);
 
   /// Get saved items filtered by type
-  static List<SavedItem> getSavedItemsByType(String itemType) {
-    return savedItems.where((item) => item.itemType == itemType).toList();
-  }
 
-  /// Get saved items count
-  static int getSavedItemsCount({String? itemType}) {
-    if (itemType == null) {
-      return savedItems.length;
-    }
-    return savedItems.where((item) => item.itemType == itemType).length;
-  }
-
-  /// Get saved items sorted by save date (newest first)
+  /// Get saved items sorted by newest first
   static List<SavedItem> getSavedItemsSorted() {
-    final sorted = List<SavedItem>.from(savedItems);
+    final sorted = List<SavedItem>.from(_savedItems);
     sorted.sort((a, b) => b.savedAt.compareTo(a.savedAt));
     return sorted;
   }
 
   /// Clear all saved items
   static void clearAllSavedItems() {
-    savedItems.clear();
+    _savedItems.clear();
     debugPrint('🗑️ Cleared all saved items');
   }
+
+  /// Get a Post by ID
+  static PostModel? getPostById(String postId) {
+    return posts.firstWhere(
+      (p) => p.id == postId,
+      orElse: () => PostModel(
+        id: '',
+        userId: '',
+        images: [],
+        caption: '',
+        likes: 0,
+        comments: 0,
+        timeAgo: '',
+      ),
+    );
+  }
+
+  /// Get a Reel by ID
+  static ReelModel? getReelById(String reelId) {
+    return reels.firstWhere(
+      (r) => r.id == reelId,
+      orElse: () => ReelModel(
+        id: '',
+        userId: '',
+        videoUrl: '',
+        thumbnailUrl: '',
+        caption: '',
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        timeAgo: '',
+      ),
+    );
+  }
+
+  /// Get saved items filtered by type
+  static List<SavedItem> getSavedItemsByType(String itemType) {
+    return _savedItems.where((item) => item.itemType == itemType).toList();
+  }
+
+  /// Get saved items count
+  static int getSavedItemsCount({String? itemType}) {
+    if (itemType == null) {
+      return _savedItems.length;
+    }
+    return _savedItems.where((item) => item.itemType == itemType).length;
+  }
+
+  /// Get saved items sorted by save date (newest first)
 
   static Map<String, List<String>> userReposts = {};
 

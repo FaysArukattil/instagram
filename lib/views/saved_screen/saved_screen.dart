@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/saved_item_model.dart';
-import 'package:instagram/models/post_model.dart';
-import 'package:instagram/models/reel_model.dart';
 import 'package:instagram/widgets/universal_image.dart';
 import 'package:instagram/views/post_screen/post_screen.dart';
 import 'package:instagram/views/reels_screen/reels_screen.dart';
@@ -86,20 +84,9 @@ class _SavedScreenState extends State<SavedScreen>
 
   void _openSavedItem(SavedItem item) {
     if (item.itemType == 'post') {
-      final post = DummyData.posts.firstWhere(
-        (p) => p.id == item.itemId,
-        orElse: () => PostModel(
-          id: '',
-          userId: '',
-          images: [],
-          caption: '',
-          likes: 0,
-          comments: 0,
-          timeAgo: '',
-        ),
-      );
+      final post = DummyData.getPostById(item.itemId);
 
-      if (post.id.isEmpty) {
+      if (post == null) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Post not found')));
@@ -116,21 +103,24 @@ class _SavedScreenState extends State<SavedScreen>
         ),
       ).then((_) => _loadSavedItems());
     } else if (item.itemType == 'reel') {
-      final reelIndex = DummyData.reels.indexWhere((r) => r.id == item.itemId);
+      final reel = DummyData.getReelById(item.itemId);
 
-      if (reelIndex != -1) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                ReelsScreen(userId: item.userId, initialIndex: reelIndex),
-          ),
-        ).then((_) => _loadSavedItems());
-      } else {
+      if (reel == null) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Reel not found')));
+        return;
       }
+
+      final reelIndex = DummyData.reels.indexWhere((r) => r.id == reel.id);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              ReelsScreen(userId: item.userId, initialIndex: reelIndex),
+        ),
+      ).then((_) => _loadSavedItems());
     }
   }
 
@@ -139,37 +129,13 @@ class _SavedScreenState extends State<SavedScreen>
     bool isReel = item.itemType == 'reel';
 
     if (item.itemType == 'post') {
-      final post = DummyData.posts.firstWhere(
-        (p) => p.id == item.itemId,
-        orElse: () => PostModel(
-          id: '',
-          userId: '',
-          images: [],
-          caption: '',
-          likes: 0,
-          comments: 0,
-          timeAgo: '',
-        ),
-      );
-      if (post.id.isNotEmpty && post.images.isNotEmpty) {
+      final post = DummyData.getPostById(item.itemId);
+      if (post != null && post.images.isNotEmpty) {
         thumbnailPath = post.images.first;
       }
     } else if (item.itemType == 'reel') {
-      final reel = DummyData.reels.firstWhere(
-        (r) => r.id == item.itemId,
-        orElse: () => ReelModel(
-          id: '',
-          userId: '',
-          videoUrl: '',
-          thumbnailUrl: '',
-          caption: '',
-          likes: 0,
-          comments: 0,
-          shares: 0,
-          timeAgo: '',
-        ),
-      );
-      if (reel.id.isNotEmpty) {
+      final reel = DummyData.getReelById(item.itemId);
+      if (reel != null) {
         thumbnailPath = reel.thumbnailUrl;
       }
     }
