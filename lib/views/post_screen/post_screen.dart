@@ -7,6 +7,7 @@ import 'package:instagram/views/share_bottom_sheet/share_bottom_sheet.dart';
 import 'package:instagram/widgets/universal_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:instagram/views/three_dot_bottom_sheet/three_dot_bottom_sheet.dart';
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 class PostScreen extends StatefulWidget {
   final String userId;
@@ -37,8 +38,15 @@ class _PostScreenState extends State<PostScreen>
 
   Offset _tapPosition = Offset.zero;
   bool _showHeart = false;
+  bool _isZooming = false;
 
   List<Color> _currentGradient = [Colors.red, Colors.pink];
+
+  // Zoom state
+  double _scale = 1.0;
+  double _previousScale = 1.0;
+  Offset _offset = Offset.zero;
+  Offset _normalizedOffset = Offset.zero;
 
   @override
   void initState() {
@@ -88,7 +96,9 @@ class _PostScreenState extends State<PostScreen>
     super.dispose();
   }
 
+  // --- LIKE HANDLING ---
   void _handleDoubleTapLike(String postId, Offset tapPosition) {
+    if (_isZooming) return;
     _tapPosition = tapPosition;
     _showHeartAnimation();
 
@@ -114,6 +124,38 @@ class _PostScreenState extends State<PostScreen>
     _animationController.forward();
   }
 
+  // --- ZOOM HANDLERS ---
+  void _onScaleStart(ScaleStartDetails details) {
+    _previousScale = _scale;
+    final RenderBox box = context.findRenderObject() as RenderBox;
+    final Offset focalPoint = box.globalToLocal(details.focalPoint);
+    _normalizedOffset = (focalPoint - _offset) / _scale;
+    setState(() => _isZooming = true);
+  }
+
+  void _onScaleUpdate(ScaleUpdateDetails details) {
+    setState(() {
+      _scale = (_previousScale * details.scale).clamp(1.0, 4.0);
+
+      final RenderBox box = context.findRenderObject() as RenderBox;
+      final Offset focalPoint = box.globalToLocal(details.focalPoint);
+
+      // Calculate new offset, and slightly bias downwards for a natural Instagram-like feel
+      final Offset newOffset = focalPoint - _normalizedOffset * _scale;
+      final double biasY = (_scale - 1) * 40; // adds slight downward bias
+      _offset = Offset(newOffset.dx, newOffset.dy + biasY);
+    });
+  }
+
+  void _onScaleEnd(ScaleEndDetails details) {
+    setState(() {
+      _scale = 1.0;
+      _offset = Offset.zero;
+      _isZooming = false;
+    });
+  }
+
+  // --- OPENERS ---
   void _openComments(PostModel post) {
     showModalBottomSheet(
       context: context,
@@ -147,24 +189,18 @@ class _PostScreenState extends State<PostScreen>
 
       if (isSaved) {
         DummyData.removeSavedItem(itemType: 'post', itemId: post.id);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Removed from saved'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Removed from saved')));
       } else {
         DummyData.saveItem(
           itemType: 'post',
           itemId: post.id,
           userId: post.userId,
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Saved to collection'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Saved to collection')));
       }
     });
   }
@@ -206,17 +242,19 @@ class _PostScreenState extends State<PostScreen>
       body: PageView.builder(
         controller: _pageController,
         scrollDirection: Axis.vertical,
-        onPageChanged: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-        },
+        physics: _isZooming
+            ? const NeverScrollableScrollPhysics()
+            : const BouncingScrollPhysics(),
+        onPageChanged: (index) => setState(() => currentIndex = index),
         itemCount: userPosts.length,
         itemBuilder: (context, index) {
           final post = userPosts[index];
           final user = DummyData.getUserById(post.userId);
 
           return SingleChildScrollView(
+            physics: _isZooming
+                ? const NeverScrollableScrollPhysics()
+                : const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -279,39 +317,51 @@ class _PostScreenState extends State<PostScreen>
                   ),
                 ),
 
-                // Images + heart animation
+                // --- ZOOMABLE IMAGE SECTION ---
                 LayoutBuilder(
                   builder: (context, constraints) {
                     return GestureDetector(
-                      onDoubleTapDown: (details) {
-                        _tapPosition = details.localPosition;
-                      },
+                      behavior: HitTestBehavior.translucent,
+                      onDoubleTapDown: (details) =>
+                          _tapPosition = details.localPosition,
                       onDoubleTap: () =>
                           _handleDoubleTapLike(post.id, _tapPosition),
+                      onScaleStart: _onScaleStart,
+                      onScaleUpdate: _onScaleUpdate,
+                      onScaleEnd: _onScaleEnd,
                       child: SizedBox(
                         height: MediaQuery.of(context).size.width,
                         width: double.infinity,
                         child: Stack(
+                          alignment: Alignment.center,
                           children: [
-                            post.images.length == 1
-                                ? UniversalImage(
-                                    imagePath: post.images[0],
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 80),
+                              transform: Matrix4.identity()
+                                ..translateByVector3(
+                                  Vector3(_offset.dx, _offset.dy, 0),
+                                )
+                                ..scaleByDouble(_scale, _scale, 1, 1),
+
+                              curve: Curves.easeOut,
+                              child: PageView.builder(
+                                physics: _isZooming
+                                    ? const NeverScrollableScrollPhysics()
+                                    : const BouncingScrollPhysics(),
+                                itemCount: post.images.length,
+                                itemBuilder: (context, imgIndex) {
+                                  return UniversalImage(
+                                    imagePath: post.images[imgIndex],
                                     width: double.infinity,
                                     height: constraints.maxHeight,
                                     fit: BoxFit.cover,
-                                  )
-                                : PageView.builder(
-                                    itemCount: post.images.length,
-                                    itemBuilder: (context, imgIndex) {
-                                      return UniversalImage(
-                                        imagePath: post.images[imgIndex],
-                                        width: double.infinity,
-                                        height: constraints.maxHeight,
-                                        fit: BoxFit.cover,
-                                      );
-                                    },
-                                  ),
-                            if (_showHeart)
+                                  );
+                                },
+                              ),
+                            ),
+
+                            // Heart Animation
+                            if (_showHeart && !_isZooming)
                               AnimatedBuilder(
                                 animation: _animationController,
                                 builder: (context, child) {
@@ -353,148 +403,120 @@ class _PostScreenState extends State<PostScreen>
                   },
                 ),
 
-                // Action Buttons
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          post.isLiked ? Icons.favorite : Icons.favorite_border,
-                          color: post.isLiked ? AppColors.red : AppColors.black,
-                          size: 28,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            final index = userPosts.indexWhere(
-                              (p) => p.id == post.id,
-                            );
-                            if (index != -1) {
-                              // Toggle like/unlike
-                              userPosts[index].isLiked =
-                                  !userPosts[index].isLiked;
-                              userPosts[index].likes += userPosts[index].isLiked
-                                  ? 1
-                                  : -1;
-
-                              // Update in main DummyData.posts
-                              final mainIndex = DummyData.posts.indexWhere(
-                                (p) => p.id == post.id,
-                              );
-                              if (mainIndex != -1) {
-                                DummyData.posts[mainIndex].isLiked =
-                                    userPosts[index].isLiked;
-                                DummyData.posts[mainIndex].likes =
-                                    userPosts[index].likes;
-                              }
-                            }
-                          });
-                        },
-                      ),
-                      GestureDetector(
-                        onTap: () => _openComments(post),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: SvgPicture.asset(
-                              'assets/Icons/comment_icon_outline.svg',
-                              colorFilter: const ColorFilter.mode(
-                                AppColors.black,
-                                BlendMode.srcIn,
-                              ),
-                            ),
+                // --- Buttons + Captions ---
+                if (!_isZooming)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            post.isLiked
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: post.isLiked
+                                ? AppColors.red
+                                : AppColors.black,
+                            size: 28,
                           ),
+                          onPressed: () {
+                            setState(() {
+                              post.isLiked = !post.isLiked;
+                              post.likes += post.isLiked ? 1 : -1;
+                            });
+                          },
                         ),
-                      ),
-                      GestureDetector(
-                        onTap: () => _openShare(post),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: SvgPicture.asset(
-                              'assets/Icons/share_icon_outline.svg',
-                              colorFilter: const ColorFilter.mode(
-                                AppColors.black,
-                                BlendMode.srcIn,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: Icon(
-                          DummyData.isItemSaved(
-                                itemType: 'post',
-                                itemId: post.id,
-                              )
-                              ? Icons.bookmark
-                              : Icons.bookmark_border,
-                          size: 26,
-                          color: AppColors.black,
-                        ),
-                        onPressed: () => _toggleSave(post),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Likes and Caption
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${post.likes} likes',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      if (post.caption.isNotEmpty)
-                        RichText(
-                          text: TextSpan(
-                            style: const TextStyle(
-                              color: AppColors.black,
-                              fontSize: 14,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: '${user?.username ?? "Unknown"} ',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              TextSpan(text: post.caption),
-                            ],
-                          ),
-                        ),
-                      const SizedBox(height: 4),
-                      if (post.comments > 0)
                         GestureDetector(
                           onTap: () => _openComments(post),
-                          child: Text(
-                            'View all ${post.comments} comments',
-                            style: TextStyle(
-                              color: AppColors.grey600,
-                              fontSize: 13,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: SvgPicture.asset(
+                              'assets/Icons/comment_icon_outline.svg',
+                              width: 28,
+                              height: 28,
                             ),
                           ),
                         ),
-                      const SizedBox(height: 4),
-                      Text(
-                        post.timeAgo,
-                        style: TextStyle(
-                          color: AppColors.grey600,
-                          fontSize: 11,
+                        GestureDetector(
+                          onTap: () => _openShare(post),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: SvgPicture.asset(
+                              'assets/Icons/share_icon_outline.svg',
+                              width: 28,
+                              height: 28,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                        const Spacer(),
+                        IconButton(
+                          icon: Icon(
+                            DummyData.isItemSaved(
+                                  itemType: 'post',
+                                  itemId: post.id,
+                                )
+                                ? Icons.bookmark
+                                : Icons.bookmark_border,
+                            size: 26,
+                          ),
+                          onPressed: () => _toggleSave(post),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+
+                if (!_isZooming)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${post.likes} likes',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        if (post.caption.isNotEmpty)
+                          RichText(
+                            text: TextSpan(
+                              style: const TextStyle(
+                                color: AppColors.black,
+                                fontSize: 14,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: '${user?.username ?? "Unknown"} ',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                TextSpan(text: post.caption),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 4),
+                        if (post.comments > 0)
+                          GestureDetector(
+                            onTap: () => _openComments(post),
+                            child: Text(
+                              'View all ${post.comments} comments',
+                              style: TextStyle(
+                                color: AppColors.grey600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 4),
+                        Text(
+                          post.timeAgo,
+                          style: TextStyle(
+                            color: AppColors.grey600,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 const SizedBox(height: 12),
               ],
             ),
