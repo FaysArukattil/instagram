@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/views/reels_screen/reelscommentscreen.dart';
 import 'package:instagram/views/reels_screen/reelssharebottomsheet.dart';
+import 'package:instagram/views/three_dot_bottom_sheet/three_dot_bottom_sheet.dart';
 import 'package:video_player/video_player.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/reel_model.dart';
@@ -1082,6 +1083,33 @@ class _ReelItemState extends State<ReelItem>
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  GestureDetector(
+                    onTap: () {
+                      if (_controller.value.isPlaying) {
+                        _controller.pause();
+                        _isPausedByUser = true;
+                      }
+
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) =>
+                            ThreeDotBottomSheet(reel: widget.reel),
+                      ).then((_) {
+                        _isPausedByUser = false;
+                        if (widget.isActive && mounted) {
+                          _controller.play();
+                        }
+                      });
+                    },
+                    child: const Icon(
+                      Icons.more_vert,
+                      color: Colors.white,
+                      size: 28,
                     ),
                   ),
                 ],
