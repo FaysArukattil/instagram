@@ -129,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true, // ensures no overflow
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
       ),
@@ -168,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: AppColors.black,
                       ),
                     ),
                   ),
@@ -214,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Expanded(
               child: Text(
                 language,
-                style: const TextStyle(fontSize: 16, color: Colors.black),
+                style: const TextStyle(fontSize: 16, color: AppColors.black),
               ),
             ),
             Container(
@@ -224,13 +224,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 shape: BoxShape.rectangle,
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(
-                  color: isSelected ? AppColors.blue : Colors.grey,
+                  color: isSelected ? AppColors.blue : AppColors.grey,
                   width: 2,
                 ),
-                color: isSelected ? AppColors.blue : Colors.transparent,
+                color: isSelected ? AppColors.blue : AppColors.transparent,
               ),
               child: isSelected
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  ? const Icon(Icons.check, size: 16, color: AppColors.white)
                   : null,
             ),
           ],

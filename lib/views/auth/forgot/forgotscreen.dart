@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/views/auth/auth_widgets/auth_textfield_widget.dart';
 import 'package:instagram/widgets/primary_button.dart';
 import 'package:instagram/widgets/secondary_button.dart';
@@ -30,7 +31,7 @@ class Forgotscreen extends StatelessWidget {
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 20),
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppColors.grey300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -64,7 +65,7 @@ class Forgotscreen extends StatelessWidget {
                   'Enter your email address or username so that we can use a secure process to help you get back in.',
                   style: TextStyle(
                     fontSize: screenWidth * 0.035,
-                    color: Colors.black87,
+                    color: AppColors.black87,
                     height: 1.4,
                   ),
                 ),
@@ -94,12 +95,12 @@ class Forgotscreen extends StatelessWidget {
     final horizontalPadding = screenWidth * 0.06;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppColors.black),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -118,7 +119,7 @@ class Forgotscreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: screenWidth * 0.07,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: AppColors.black,
                   ),
                 ),
 
@@ -131,7 +132,7 @@ class Forgotscreen extends StatelessWidget {
                       "Enter your email address or username.",
                       style: TextStyle(
                         fontSize: screenWidth * 0.035,
-                        color: Colors.black87,
+                        color: AppColors.black87,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -141,7 +142,7 @@ class Forgotscreen extends StatelessWidget {
                         "Can't reset your password?",
                         style: TextStyle(
                           fontSize: screenWidth * 0.035,
-                          color: const Color(0xFF0095F6),
+                          color: AppColors.blue,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -173,7 +174,7 @@ class Forgotscreen extends StatelessWidget {
                         "Find by mobile number instead",
                         style: TextStyle(
                           fontSize: screenWidth * 0.035,
-                          color: Colors.black87,
+                          color: AppColors.black87,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -186,20 +187,20 @@ class Forgotscreen extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Divider(color: Colors.grey[300], thickness: 1),
+                      child: Divider(color: AppColors.grey300, thickness: 1),
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         "OR",
                         style: TextStyle(
-                          color: Colors.grey,
+                          color: AppColors.grey,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     Expanded(
-                      child: Divider(color: Colors.grey[300], thickness: 1),
+                      child: Divider(color: AppColors.grey300, thickness: 1),
                     ),
                   ],
                 ),
