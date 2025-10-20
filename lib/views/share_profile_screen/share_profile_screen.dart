@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -177,24 +178,24 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
           ),
         ),
         child: Scaffold(
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.transparent,
           appBar: AppBar(
-            backgroundColor: Colors.transparent,
+            backgroundColor: AppColors.transparent,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
+              icon: const Icon(Icons.close, color: AppColors.white),
               onPressed: () => Navigator.pop(context),
             ),
             title: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.white, width: 1.5),
+                border: Border.all(color: AppColors.white, width: 1.5),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Text(
                 'COLOUR',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.white,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
                   fontSize: 14,
@@ -204,7 +205,7 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
             centerTitle: true,
             actions: [
               IconButton(
-                icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
+                icon: const Icon(Icons.qr_code_scanner, color: AppColors.white),
                 onPressed: () {},
               ),
             ],
@@ -222,7 +223,7 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
                         margin: const EdgeInsets.symmetric(horizontal: 40),
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(24),
                         ),
                         child: Column(
@@ -233,7 +234,7 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
                               data: 'https://instagram.com/${widget.username}',
                               version: QrVersions.auto,
                               size: 220,
-                              backgroundColor: Colors.white,
+                              backgroundColor: AppColors.white,
                               eyeStyle: QrEyeStyle(
                                 eyeShape: QrEyeShape.square,
                                 color: _getQrColor(),
@@ -250,7 +251,7 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 18,
-                                color: Colors.black,
+                                color: AppColors.black,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -269,7 +270,7 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
                         horizontal: 24,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.white,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -300,9 +301,9 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
               // Loading overlay
               if (_isLoading)
                 Container(
-                  color: Colors.black26,
+                  color: AppColors.black26,
                   child: const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
+                    child: CircularProgressIndicator(color: AppColors.white),
                   ),
                 ),
             ],
@@ -315,7 +316,7 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
   Color _getQrColor() {
     // Return matching color for QR code based on current gradient
     final gradientColors = gradients[_currentGradientIndex];
-    if (_currentGradientIndex == 0) return Colors.black;
+    if (_currentGradientIndex == 0) return AppColors.black;
     return gradientColors[0];
   }
 
@@ -332,16 +333,16 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: AppColors.grey100,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: Colors.black, size: 24),
+            child: Icon(icon, color: AppColors.black, size: 24),
           ),
           const SizedBox(height: 8),
           Text(
             label,
             style: const TextStyle(
-              color: Colors.black,
+              color: AppColors.black,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),

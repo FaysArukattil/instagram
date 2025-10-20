@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/services/data_persistence.dart';
@@ -90,7 +91,7 @@ class _PostScreenState extends State<PostScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => CommentsScreen(post: post),
     ).then(
       (_) => setState(() {
@@ -108,7 +109,7 @@ class _PostScreenState extends State<PostScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => ShareBottomSheet(post: post),
     );
   }
@@ -124,10 +125,10 @@ class _PostScreenState extends State<PostScreen> {
           children: [
             if (isOwnPost)
               ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
+                leading: const Icon(Icons.delete, color: AppColors.red),
                 title: const Text(
                   'Delete',
-                  style: TextStyle(color: Colors.red),
+                  style: TextStyle(color: AppColors.red),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -182,7 +183,10 @@ class _PostScreenState extends State<PostScreen> {
                 Navigator.pop(context);
                 _deletePost(post);
               },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: AppColors.red),
+              ),
             ),
           ],
         );
@@ -201,7 +205,7 @@ class _PostScreenState extends State<PostScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Post deleted successfully'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.green,
         ),
       );
 
@@ -226,12 +230,12 @@ class _PostScreenState extends State<PostScreen> {
   Widget build(BuildContext context) {
     if (userPosts.isEmpty) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.white,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            icon: const Icon(Icons.arrow_back, color: AppColors.black),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -240,18 +244,18 @@ class _PostScreenState extends State<PostScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppColors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           DummyData.getUserById(widget.userId)?.username ?? 'Posts',
           style: const TextStyle(
-            color: Colors.black,
+            color: AppColors.black,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -283,7 +287,7 @@ class _PostScreenState extends State<PostScreen> {
                     children: [
                       CircleAvatar(
                         radius: 16,
-                        backgroundColor: Colors.grey[300],
+                        backgroundColor: AppColors.grey300,
                         child: ClipOval(
                           child: UniversalImage(
                             imagePath: user?.profileImage ?? '',
@@ -310,7 +314,7 @@ class _PostScreenState extends State<PostScreen> {
                                 post.location!,
                                 style: const TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey,
+                                  color: AppColors.grey,
                                 ),
                               ),
                           ],
@@ -355,7 +359,7 @@ class _PostScreenState extends State<PostScreen> {
                       IconButton(
                         icon: Icon(
                           post.isLiked ? Icons.favorite : Icons.favorite_border,
-                          color: post.isLiked ? Colors.red : Colors.black,
+                          color: post.isLiked ? AppColors.red : AppColors.black,
                           size: 28,
                         ),
                         onPressed: () => _handleLike(post.id),
@@ -370,7 +374,7 @@ class _PostScreenState extends State<PostScreen> {
                             child: SvgPicture.asset(
                               'assets/Icons/comment_icon_outline.svg',
                               colorFilter: const ColorFilter.mode(
-                                Colors.black,
+                                AppColors.black,
                                 BlendMode.srcIn,
                               ),
                             ),
@@ -387,7 +391,7 @@ class _PostScreenState extends State<PostScreen> {
                             child: SvgPicture.asset(
                               'assets/Icons/share_icon_outline.svg',
                               colorFilter: const ColorFilter.mode(
-                                Colors.black,
+                                AppColors.black,
                                 BlendMode.srcIn,
                               ),
                             ),
@@ -404,7 +408,7 @@ class _PostScreenState extends State<PostScreen> {
                               ? Icons.bookmark
                               : Icons.bookmark_border,
                           size: 26,
-                          color: Colors.black,
+                          color: AppColors.black,
                         ),
                         onPressed: () => _toggleSave(post),
                       ),
@@ -427,7 +431,7 @@ class _PostScreenState extends State<PostScreen> {
                         RichText(
                           text: TextSpan(
                             style: const TextStyle(
-                              color: Colors.black,
+                              color: AppColors.black,
                               fontSize: 14,
                             ),
                             children: [
@@ -448,7 +452,7 @@ class _PostScreenState extends State<PostScreen> {
                           child: Text(
                             'View all ${post.comments} comments',
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: AppColors.grey600,
                               fontSize: 13,
                             ),
                           ),
@@ -456,7 +460,10 @@ class _PostScreenState extends State<PostScreen> {
                       const SizedBox(height: 4),
                       Text(
                         post.timeAgo,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                        style: TextStyle(
+                          color: AppColors.grey600,
+                          fontSize: 11,
+                        ),
                       ),
                     ],
                   ),

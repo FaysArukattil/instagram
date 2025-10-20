@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/models/reel_model.dart';
@@ -115,21 +116,21 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         .toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         title: Text(
           widget.user.username,
           style: const TextStyle(
-            color: Colors.black,
+            color: AppColors.black,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
+            icon: const Icon(Icons.more_vert, color: AppColors.black),
             onPressed: () {},
           ),
         ],
@@ -210,11 +211,11 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                         onPressed: _toggleFollow,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: isFollowing
-                              ? Colors.grey.shade200
-                              : Colors.blue,
+                              ? AppColors.grey200
+                              : AppColors.blue,
                           foregroundColor: isFollowing
-                              ? Colors.black
-                              : Colors.white,
+                              ? AppColors.black
+                              : AppColors.white,
                           elevation: 0,
                         ),
                         child: Text(isFollowing ? 'Following' : 'Follow'),
@@ -225,8 +226,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                       child: ElevatedButton(
                         onPressed: _openMessage,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade200,
-                          foregroundColor: Colors.black,
+                          backgroundColor: AppColors.grey200,
+                          foregroundColor: AppColors.black,
                           elevation: 0,
                         ),
                         child: const Text('Message'),
@@ -239,9 +240,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           ),
           TabBar(
             controller: _tabController,
-            indicatorColor: Colors.black,
-            labelColor: Colors.black,
-            unselectedLabelColor: Colors.grey,
+            indicatorColor: AppColors.black,
+            labelColor: AppColors.black,
+            unselectedLabelColor: AppColors.grey,
             tabs: const [
               Tab(icon: Icon(Icons.grid_on)),
               Tab(icon: Icon(Icons.video_library_outlined)),
@@ -273,7 +274,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 14, color: AppColors.grey),
+          ),
         ],
       ),
     );
@@ -327,7 +331,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
               UniversalImage(imagePath: reel.thumbnailUrl, fit: BoxFit.cover),
               const Icon(
                 Icons.play_circle_outline,
-                color: Colors.white,
+                color: AppColors.white,
                 size: 36,
               ),
             ],

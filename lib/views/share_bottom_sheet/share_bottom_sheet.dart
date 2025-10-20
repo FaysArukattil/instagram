@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 
@@ -18,7 +19,7 @@ class ShareBottomSheet extends StatelessWidget {
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: SingleChildScrollView(
@@ -32,7 +33,7 @@ class ShareBottomSheet extends StatelessWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppColors.grey300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -44,7 +45,7 @@ class ShareBottomSheet extends StatelessWidget {
                         Text(
                           'Links you share are unique to you and may be used to improve suggestions and ads you see.',
                           style: TextStyle(
-                            color: Colors.grey[600],
+                            color: AppColors.grey600,
                             fontSize: 13,
                           ),
                           textAlign: TextAlign.center,
@@ -55,7 +56,7 @@ class ShareBottomSheet extends StatelessWidget {
                           child: const Text(
                             'Learn more',
                             style: TextStyle(
-                              color: Colors.blue,
+                              color: AppColors.blue,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                             ),
@@ -79,7 +80,7 @@ class ShareBottomSheet extends StatelessWidget {
                                 borderSide: BorderSide.none,
                               ),
                               filled: true,
-                              fillColor: Colors.grey[100],
+                              fillColor: AppColors.grey100,
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 12,
                               ),
@@ -90,7 +91,7 @@ class ShareBottomSheet extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: AppColors.grey100,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.qr_code_scanner, size: 24),
@@ -136,10 +137,10 @@ class ShareBottomSheet extends StatelessWidget {
                                       width: 18,
                                       height: 18,
                                       decoration: BoxDecoration(
-                                        color: Colors.green,
+                                        color: AppColors.green,
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: Colors.white,
+                                          color: AppColors.white,
                                           width: 3,
                                         ),
                                       ),
@@ -155,17 +156,17 @@ class ShareBottomSheet extends StatelessWidget {
                                         vertical: 3,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.green,
+                                        color: AppColors.green,
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: Colors.white,
+                                          color: AppColors.white,
                                           width: 2,
                                         ),
                                       ),
                                       child: Text(
                                         user.lastSeen!,
                                         style: const TextStyle(
-                                          color: Colors.white,
+                                          color: AppColors.white,
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -204,31 +205,31 @@ class ShareBottomSheet extends StatelessWidget {
                         _buildShareOption(
                           icon: Icons.add_circle_outline,
                           label: 'Add to\nstory',
-                          color: Colors.black,
+                          color: AppColors.black,
                         ),
                         const SizedBox(width: 20),
                         _buildShareOption(
                           icon: Icons.chat_bubble_outline,
                           label: 'WhatsApp',
-                          color: Colors.green,
+                          color: AppColors.green,
                         ),
                         const SizedBox(width: 20),
                         _buildShareOption(
                           icon: Icons.replay_circle_filled_outlined,
                           label: 'WhatsApp\nstatus',
-                          color: Colors.green,
+                          color: AppColors.green,
                         ),
                         const SizedBox(width: 20),
                         _buildShareOption(
                           icon: Icons.share_outlined,
                           label: 'Share',
-                          color: Colors.black,
+                          color: AppColors.black,
                         ),
                         const SizedBox(width: 20),
                         _buildShareOption(
                           icon: Icons.link,
                           label: 'Copy link',
-                          color: Colors.black,
+                          color: AppColors.black,
                         ),
                       ],
                     ),
@@ -254,12 +255,14 @@ class ShareBottomSheet extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: color == Colors.green ? Colors.green : Colors.grey[100],
+            color: color == AppColors.green
+                ? AppColors.green
+                : AppColors.grey100,
             shape: BoxShape.circle,
           ),
           child: Icon(
             icon,
-            color: color == Colors.green ? Colors.white : Colors.black,
+            color: color == AppColors.green ? AppColors.white : AppColors.black,
             size: 26,
           ),
         ),

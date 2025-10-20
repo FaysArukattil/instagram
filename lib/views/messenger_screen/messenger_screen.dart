@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/views/chatscreen/chatscreen.dart';
@@ -137,9 +138,9 @@ class _MessengerScreenState extends State<MessengerScreen> {
       onHorizontalDragUpdate: widget.onHorizontalDragUpdate,
       onHorizontalDragEnd: widget.onHorizontalDragEnd,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.white,
           elevation: 0,
 
           title: Row(
@@ -148,7 +149,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
                 child: Text(
                   DummyData.currentUser.username,
                   style: const TextStyle(
-                    color: Colors.black,
+                    color: AppColors.black,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -156,13 +157,13 @@ class _MessengerScreenState extends State<MessengerScreen> {
                 ),
               ),
               const SizedBox(width: 4),
-              const Icon(Icons.keyboard_arrow_down, color: Colors.black),
+              const Icon(Icons.keyboard_arrow_down, color: AppColors.black),
               const SizedBox(width: 4),
               Container(
                 width: 8,
                 height: 8,
                 decoration: const BoxDecoration(
-                  color: Colors.red,
+                  color: AppColors.red,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -170,12 +171,12 @@ class _MessengerScreenState extends State<MessengerScreen> {
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.more_horiz, color: Colors.black),
+              icon: const Icon(Icons.more_horiz, color: AppColors.black),
               onPressed: () {},
             ),
 
             IconButton(
-              icon: const Icon(Icons.edit_square, color: Colors.black),
+              icon: const Icon(Icons.edit_square, color: AppColors.black),
               onPressed: () {},
             ),
           ],
@@ -202,7 +203,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: AppColors.grey200,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: TextField(
@@ -309,13 +310,13 @@ class _MessengerScreenState extends State<MessengerScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue[50] : Colors.grey[100],
+          color: isSelected ? AppColors.blue50 : AppColors.grey100,
           borderRadius: BorderRadius.circular(22),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.blue : Colors.black,
+            color: isSelected ? AppColors.blue : AppColors.black,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
           ),
         ),
@@ -346,13 +347,13 @@ class _MessengerScreenState extends State<MessengerScreen> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: AppColors.black,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     noteText,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.white,
                       fontSize: 9,
                       fontWeight: FontWeight.w500,
                       height: 1.2,
@@ -403,13 +404,13 @@ class _MessengerScreenState extends State<MessengerScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black,
+                      color: AppColors.black,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       noteText,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
                         height: 1.2,
@@ -426,9 +427,9 @@ class _MessengerScreenState extends State<MessengerScreen> {
                     width: 16,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: Colors.green,
+                      color: AppColors.green,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: AppColors.white, width: 2),
                     ),
                   ),
                 ),
@@ -496,9 +497,9 @@ class _MessengerScreenState extends State<MessengerScreen> {
                       width: 16,
                       height: 16,
                       decoration: BoxDecoration(
-                        color: Colors.green,
+                        color: AppColors.green,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: AppColors.white, width: 2),
                       ),
                     ),
                   ),
@@ -522,7 +523,9 @@ class _MessengerScreenState extends State<MessengerScreen> {
                         child: Text(
                           msgData['message'],
                           style: TextStyle(
-                            color: hasUnread ? Colors.black : Colors.grey[600],
+                            color: hasUnread
+                                ? AppColors.black
+                                : AppColors.grey600,
                             fontWeight: hasUnread
                                 ? FontWeight.w600
                                 : FontWeight.normal,
@@ -537,7 +540,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
                           child: Icon(
                             Icons.volume_off,
                             size: 16,
-                            color: Colors.grey,
+                            color: AppColors.grey,
                           ),
                         ),
                     ],
@@ -552,7 +555,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
               children: [
                 Text(
                   msgData['time'],
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  style: const TextStyle(color: AppColors.grey, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -561,13 +564,13 @@ class _MessengerScreenState extends State<MessengerScreen> {
                     if (showPlay)
                       const Icon(
                         Icons.play_arrow,
-                        color: Colors.grey,
+                        color: AppColors.grey,
                         size: 20,
                       ),
                     if (showCamera)
                       const Icon(
                         Icons.camera_alt_outlined,
-                        color: Colors.grey,
+                        color: AppColors.grey,
                         size: 20,
                       ),
                     if (hasUnread && !showPlay && !showCamera)
@@ -575,7 +578,7 @@ class _MessengerScreenState extends State<MessengerScreen> {
                         width: 10,
                         height: 10,
                         decoration: const BoxDecoration(
-                          color: Colors.blue,
+                          color: AppColors.blue,
                           shape: BoxShape.circle,
                         ),
                       ),

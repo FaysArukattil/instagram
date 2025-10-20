@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/widgets/universal_image.dart'; // ✅ Import your UniversalImage
 
@@ -55,10 +56,10 @@ class StoryAvatar extends StatelessWidget {
                   height: 70,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white,
+                    color: AppColors.white,
                     border: hasStory && !isCurrentUser
                         ? null
-                        : Border.all(color: Colors.grey.shade300, width: 1),
+                        : Border.all(color: AppColors.grey300!, width: 1),
                   ),
                   padding: const EdgeInsets.all(2.5),
                   child: ClipOval(
@@ -67,7 +68,7 @@ class StoryAvatar extends StatelessWidget {
                           user.profileImage, // ✅ Works for both local/network
                       fit: BoxFit.cover,
                       errorWidget: Container(
-                        color: Colors.grey[300],
+                        color: AppColors.grey300,
                         child: const Icon(Icons.person, color: Colors.grey),
                       ),
                     ),
@@ -85,13 +86,13 @@ class StoryAvatar extends StatelessWidget {
                         width: 24,
                         height: 24,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0095F6),
+                          color: AppColors.blue,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+                          border: Border.all(color: AppColors.white, width: 2),
                         ),
                         child: const Icon(
                           Icons.add,
-                          color: Colors.white,
+                          color: AppColors.white,
                           size: 16,
                         ),
                       ),
@@ -105,7 +106,7 @@ class StoryAvatar extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, color: Colors.black),
+              style: const TextStyle(fontSize: 12, color: AppColors.black),
             ),
           ],
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/views/share_profile_screen/share_profile_screen.dart';
 import 'package:instagram/widgets/universal_image.dart';
 import 'package:share_plus/share_plus.dart';
@@ -46,7 +47,7 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
   void _showShareOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.grey[900],
+      backgroundColor: AppColors.grey900,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -55,10 +56,10 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
           child: Wrap(
             children: [
               ListTile(
-                leading: const Icon(Icons.share, color: Colors.white),
+                leading: const Icon(Icons.share, color: AppColors.white),
                 title: const Text(
                   'Share profile',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.white),
                 ),
                 onTap: () {
                   SharePlus.instance.share(ShareParams());
@@ -66,10 +67,10 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.link, color: Colors.white),
+                leading: const Icon(Icons.link, color: AppColors.white),
                 title: const Text(
                   'Copy link',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.white),
                 ),
                 onTap: () async {
                   await Clipboard.setData(
@@ -85,11 +86,11 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
               ListTile(
                 leading: const Icon(
                   Icons.qr_code_2_outlined,
-                  color: Colors.white,
+                  color: AppColors.white,
                 ),
                 title: const Text(
                   'Show QR Code',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.white),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -133,7 +134,7 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
     final double baseSize = MediaQuery.of(context).size.width * 0.85;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.black,
       body: SafeArea(
         child: Stack(
           alignment: Alignment.center,
@@ -142,7 +143,7 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
             Positioned.fill(
               child: GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: Container(color: Colors.black.withValues(alpha: .85)),
+                child: Container(color: AppColors.black.withValues(alpha: .85)),
               ),
             ),
 
@@ -185,7 +186,7 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
                   Text(
                     widget.username,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -237,7 +238,11 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
               right: 20,
               child: GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(Icons.close, color: Colors.white, size: 28),
+                child: const Icon(
+                  Icons.close,
+                  color: AppColors.white,
+                  size: 28,
+                ),
               ),
             ),
           ],
@@ -250,14 +255,14 @@ class _ProfilePreviewScreenState extends State<ProfilePreviewScreen>
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      splashColor: Colors.white24,
+      splashColor: AppColors.white24,
       child: Column(
         children: [
-          Icon(icon, color: Colors.white, size: 30),
+          Icon(icon, color: AppColors.white, size: 30),
           const SizedBox(height: 6),
           Text(
             label,
-            style: const TextStyle(color: Colors.white, fontSize: 12),
+            style: const TextStyle(color: AppColors.white, fontSize: 12),
           ),
         ],
       ),

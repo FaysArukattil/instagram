@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/views/three_dot_bottom_sheet/three_dot_bottom_sheet.dart';
 import 'package:video_player/video_player.dart';
 import 'package:instagram/models/reel_model.dart';
@@ -234,7 +235,9 @@ class _ReelWidgetState extends State<ReelWidget>
                   : 'Unfollowed ${user.username}',
             ),
             duration: const Duration(seconds: 2),
-            backgroundColor: user.isFollowing ? Colors.blue : Colors.grey[700],
+            backgroundColor: user.isFollowing
+                ? AppColors.blue
+                : AppColors.grey700,
           ),
         );
       }
@@ -292,7 +295,7 @@ class _ReelWidgetState extends State<ReelWidget>
           const SnackBar(
             content: Text('Removed from your profile'),
             duration: Duration(seconds: 2),
-            backgroundColor: Colors.grey,
+            backgroundColor: AppColors.grey,
           ),
         );
       } else {
@@ -304,7 +307,7 @@ class _ReelWidgetState extends State<ReelWidget>
           const SnackBar(
             content: Text('Reposted to your profile'),
             duration: Duration(seconds: 2),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.green,
           ),
         );
       }
@@ -333,7 +336,7 @@ class _ReelWidgetState extends State<ReelWidget>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => ShareBottomSheet(post: tempPost),
     ).then((_) {
       _isPausedByUser = false;
@@ -388,7 +391,7 @@ class _ReelWidgetState extends State<ReelWidget>
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       isScrollControlled: true,
       builder: (context) => ThreeDotBottomSheet(
         reel: widget.reel, // ✅ pass current reel
@@ -425,7 +428,7 @@ class _ReelWidgetState extends State<ReelWidget>
         onDoubleTap: _handleDoubleTapLike,
         onTap: _openReelScreen,
         child: Container(
-          color: Colors.white,
+          color: AppColors.white,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -439,7 +442,7 @@ class _ReelWidgetState extends State<ReelWidget>
                       backgroundImage: user?.profileImage != null
                           ? NetworkImage(user!.profileImage)
                           : null,
-                      backgroundColor: Colors.grey[300],
+                      backgroundColor: AppColors.grey300,
                       child: user?.profileImage == null
                           ? const Icon(Icons.person, size: 18)
                           : null,
@@ -452,7 +455,7 @@ class _ReelWidgetState extends State<ReelWidget>
                           Text(
                             user?.username ?? 'Unknown',
                             style: const TextStyle(
-                              color: Colors.black,
+                              color: AppColors.black,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                             ),
@@ -461,7 +464,7 @@ class _ReelWidgetState extends State<ReelWidget>
                             Text(
                               widget.reel.location!,
                               style: TextStyle(
-                                color: Colors.grey[600],
+                                color: AppColors.grey600,
                                 fontSize: 11,
                               ),
                             ),
@@ -479,10 +482,10 @@ class _ReelWidgetState extends State<ReelWidget>
                           ),
                           decoration: BoxDecoration(
                             color: user?.isFollowing == true
-                                ? Colors.grey[200]
-                                : Colors.blue,
+                                ? AppColors.grey200
+                                : AppColors.blue,
                             border: user?.isFollowing == true
-                                ? Border.all(color: Colors.grey[300]!)
+                                ? Border.all(color: AppColors.grey300!)
                                 : null,
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -490,8 +493,8 @@ class _ReelWidgetState extends State<ReelWidget>
                             user?.isFollowing == true ? 'Following' : 'Follow',
                             style: TextStyle(
                               color: user?.isFollowing == true
-                                  ? Colors.black
-                                  : Colors.white,
+                                  ? AppColors.black
+                                  : AppColors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
@@ -504,7 +507,7 @@ class _ReelWidgetState extends State<ReelWidget>
                       onTap: _showMoreOptions,
                       child: Icon(
                         Icons.more_vert,
-                        color: Colors.grey[600],
+                        color: AppColors.grey600,
                         size: 18,
                       ),
                     ),
@@ -519,7 +522,7 @@ class _ReelWidgetState extends State<ReelWidget>
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.music_note, size: 16, color: Colors.grey[600]),
+                    Icon(Icons.music_note, size: 16, color: AppColors.grey600),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -527,7 +530,7 @@ class _ReelWidgetState extends State<ReelWidget>
                             ? '${widget.reel.caption.substring(0, 40)}...'
                             : widget.reel.caption,
                         style: TextStyle(
-                          color: Colors.grey[700],
+                          color: AppColors.grey700,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -560,7 +563,7 @@ class _ReelWidgetState extends State<ReelWidget>
                                     scale: _likeAnimation.value,
                                     child: const Icon(
                                       Icons.favorite,
-                                      color: Colors.white,
+                                      color: AppColors.white,
                                       size: 80,
                                     ),
                                   );
@@ -575,14 +578,16 @@ class _ReelWidgetState extends State<ReelWidget>
                                 child: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.5),
+                                    color: AppColors.black.withValues(
+                                      alpha: 0.5,
+                                    ),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
                                     widget.reel.isMuted
                                         ? Icons.volume_off
                                         : Icons.volume_up,
-                                    color: Colors.white,
+                                    color: AppColors.white,
                                     size: 18,
                                   ),
                                 ),
@@ -593,14 +598,14 @@ class _ReelWidgetState extends State<ReelWidget>
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.6),
+                                  color: AppColors.black.withValues(alpha: 0.6),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
                                   widget.reel.isMuted
                                       ? Icons.volume_off
                                       : Icons.volume_up,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   size: 28,
                                 ),
                               ),
@@ -610,7 +615,7 @@ class _ReelWidgetState extends State<ReelWidget>
                     )
                   else
                     Container(
-                      color: Colors.grey[200],
+                      color: AppColors.grey200,
                       height: 400,
                       child: const Center(child: CircularProgressIndicator()),
                     ),
@@ -631,8 +636,8 @@ class _ReelWidgetState extends State<ReelWidget>
                                 ? Icons.favorite
                                 : Icons.favorite_outline,
                             color: widget.reel.isLiked
-                                ? Colors.red
-                                : Colors.black,
+                                ? AppColors.red
+                                : AppColors.black,
                             size: 24,
                           ),
                         ),
@@ -645,7 +650,7 @@ class _ReelWidgetState extends State<ReelWidget>
                             child: SvgPicture.asset(
                               'assets/Icons/comment_icon_outline.svg',
                               colorFilter: const ColorFilter.mode(
-                                Colors.black,
+                                AppColors.black,
                                 BlendMode.srcIn,
                               ),
                             ),
@@ -657,8 +662,8 @@ class _ReelWidgetState extends State<ReelWidget>
                           child: Icon(
                             Icons.repeat,
                             color: widget.reel.isReposted
-                                ? Colors.green
-                                : Colors.black,
+                                ? AppColors.green
+                                : AppColors.black,
                             size: 24,
                           ),
                         ),
@@ -671,7 +676,7 @@ class _ReelWidgetState extends State<ReelWidget>
                             child: SvgPicture.asset(
                               'assets/Icons/share_icon_outline.svg',
                               colorFilter: const ColorFilter.mode(
-                                Colors.black,
+                                AppColors.black,
                                 BlendMode.srcIn,
                               ),
                             ),
@@ -683,7 +688,7 @@ class _ReelWidgetState extends State<ReelWidget>
                           onTap: _toggleSave,
                           child: Icon(
                             _isSaved ? Icons.bookmark : Icons.bookmark_border,
-                            color: Colors.black,
+                            color: AppColors.black,
                             size: 24,
                           ),
                         ),
@@ -704,7 +709,7 @@ class _ReelWidgetState extends State<ReelWidget>
                     Text(
                       '${_formatCount(widget.reel.likes)} likes',
                       style: const TextStyle(
-                        color: Colors.black,
+                        color: AppColors.black,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -712,7 +717,10 @@ class _ReelWidgetState extends State<ReelWidget>
                     const SizedBox(height: 4),
                     Text(
                       widget.reel.caption,
-                      style: const TextStyle(color: Colors.black, fontSize: 12),
+                      style: const TextStyle(
+                        color: AppColors.black,
+                        fontSize: 12,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -721,7 +729,10 @@ class _ReelWidgetState extends State<ReelWidget>
                       onTap: _openComments,
                       child: Text(
                         'View all ${_formatCount(widget.reel.comments)} comments',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                        style: TextStyle(
+                          color: AppColors.grey600,
+                          fontSize: 11,
+                        ),
                       ),
                     ),
                   ],

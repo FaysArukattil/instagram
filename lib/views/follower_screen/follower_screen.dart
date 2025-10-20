@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/views/chatscreen/chatscreen.dart';
@@ -168,18 +169,18 @@ class _FollowersScreenState extends State<FollowersScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppColors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           DummyData.currentUser.username,
           style: const TextStyle(
-            color: Colors.black,
+            color: AppColors.black,
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
@@ -190,13 +191,13 @@ class _FollowersScreenState extends State<FollowersScreen>
           // Tab Bar
           Container(
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+              border: Border(bottom: BorderSide(color: AppColors.grey200!)),
             ),
             child: TabBar(
               controller: _tabController,
-              labelColor: Colors.black,
-              unselectedLabelColor: Colors.grey[500],
-              indicatorColor: Colors.black,
+              labelColor: AppColors.black,
+              unselectedLabelColor: AppColors.grey500,
+              indicatorColor: AppColors.black,
               indicatorWeight: 1,
               labelStyle: const TextStyle(
                 fontSize: 15,
@@ -238,7 +239,7 @@ class _FollowersScreenState extends State<FollowersScreen>
             padding: const EdgeInsets.all(16),
             child: Text(
               'Followers you follow back',
-              style: TextStyle(color: Colors.grey[600], fontSize: 15),
+              style: TextStyle(color: AppColors.grey600, fontSize: 15),
             ),
           ),
         Expanded(child: _buildUserList()),
@@ -352,7 +353,7 @@ class _FollowersScreenState extends State<FollowersScreen>
                         fontSize: 15,
                       ),
                     ),
-                    Icon(Icons.swap_vert, color: Colors.grey[700]),
+                    Icon(Icons.swap_vert, color: AppColors.grey700),
                   ],
                 ),
               ),
@@ -370,7 +371,7 @@ class _FollowersScreenState extends State<FollowersScreen>
       child: Container(
         height: 36,
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: AppColors.grey200,
           borderRadius: BorderRadius.circular(10),
         ),
         child: TextField(
@@ -378,8 +379,8 @@ class _FollowersScreenState extends State<FollowersScreen>
           style: const TextStyle(fontSize: 15),
           decoration: InputDecoration(
             hintText: 'Search',
-            hintStyle: TextStyle(color: Colors.grey[500]),
-            prefixIcon: Icon(Icons.search, color: Colors.grey[600], size: 20),
+            hintStyle: TextStyle(color: AppColors.grey500),
+            prefixIcon: Icon(Icons.search, color: AppColors.grey600, size: 20),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 8),
           ),
@@ -411,10 +412,10 @@ class _FollowersScreenState extends State<FollowersScreen>
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: AppColors.grey200,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: Colors.grey[700]),
+        child: Icon(icon, color: AppColors.grey700),
       ),
       title: Text(
         title,
@@ -422,11 +423,11 @@ class _FollowersScreenState extends State<FollowersScreen>
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+        style: TextStyle(color: AppColors.grey600, fontSize: 13),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      trailing: Icon(Icons.chevron_right, color: Colors.grey[400]),
+      trailing: Icon(Icons.chevron_right, color: AppColors.grey400),
     );
   }
 
@@ -453,11 +454,11 @@ class _FollowersScreenState extends State<FollowersScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.people_outline, size: 80, color: Colors.grey[300]),
+            Icon(Icons.people_outline, size: 80, color: AppColors.grey300),
             const SizedBox(height: 16),
             Text(
               'No users found',
-              style: TextStyle(color: Colors.grey[600], fontSize: 16),
+              style: TextStyle(color: AppColors.grey600, fontSize: 16),
             ),
           ],
         ),
@@ -502,13 +503,13 @@ class _FollowersScreenState extends State<FollowersScreen>
           ),
           if (user.isVerified) ...[
             const SizedBox(width: 4),
-            const Icon(Icons.verified, color: Colors.blue, size: 14),
+            const Icon(Icons.verified, color: AppColors.blue, size: 14),
           ],
         ],
       ),
       subtitle: Text(
         user.name,
-        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+        style: TextStyle(color: AppColors.grey600, fontSize: 13),
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -519,8 +520,12 @@ class _FollowersScreenState extends State<FollowersScreen>
               child: ElevatedButton(
                 onPressed: () => _toggleFollow(user),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isFollowing ? Colors.grey[200] : Colors.blue,
-                  foregroundColor: isFollowing ? Colors.black : Colors.white,
+                  backgroundColor: isFollowing
+                      ? AppColors.grey200
+                      : AppColors.blue,
+                  foregroundColor: isFollowing
+                      ? AppColors.black
+                      : AppColors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   shape: RoundedRectangleBorder(
@@ -540,8 +545,8 @@ class _FollowersScreenState extends State<FollowersScreen>
             TextButton(
               onPressed: () => _openChat(user),
               style: TextButton.styleFrom(
-                backgroundColor: Colors.grey[200],
-                foregroundColor: Colors.black,
+                backgroundColor: AppColors.grey200,
+                foregroundColor: AppColors.black,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -556,7 +561,11 @@ class _FollowersScreenState extends State<FollowersScreen>
           const SizedBox(width: 8),
           GestureDetector(
             onTap: () => _showMoreOptions(user),
-            child: const Icon(Icons.more_vert, color: Colors.black, size: 20),
+            child: const Icon(
+              Icons.more_vert,
+              color: AppColors.black,
+              size: 20,
+            ),
           ),
         ],
       ),
@@ -580,7 +589,7 @@ class _FollowersScreenState extends State<FollowersScreen>
   void _showMoreOptions(UserModel user) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
@@ -594,7 +603,7 @@ class _FollowersScreenState extends State<FollowersScreen>
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -634,18 +643,18 @@ class CategoryListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppColors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           title,
           style: const TextStyle(
-            color: Colors.black,
+            color: AppColors.black,
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
@@ -676,15 +685,19 @@ class CategoryListScreen extends StatelessWidget {
             ),
             subtitle: Text(
               user.name,
-              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              style: TextStyle(color: AppColors.grey600, fontSize: 13),
             ),
             trailing: SizedBox(
               height: 32,
               child: ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isFollowing ? Colors.grey[200] : Colors.blue,
-                  foregroundColor: isFollowing ? Colors.black : Colors.white,
+                  backgroundColor: isFollowing
+                      ? AppColors.grey200
+                      : AppColors.blue,
+                  foregroundColor: isFollowing
+                      ? AppColors.black
+                      : AppColors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   shape: RoundedRectangleBorder(

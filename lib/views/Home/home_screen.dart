@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/core/constants/app_images.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
@@ -129,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => CommentsScreen(post: post),
     ).then((_) {
       setState(() {
@@ -149,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => ShareBottomSheet(post: post),
     );
   }
@@ -251,9 +252,9 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Flexible(
@@ -268,14 +269,18 @@ class _HomeScreenState extends State<HomeScreen>
 
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.add_outlined, color: Colors.black, size: 28),
+          icon: const Icon(
+            Icons.add_outlined,
+            color: AppColors.black,
+            size: 28,
+          ),
           onPressed: _openAddPost,
         ),
         actions: [
           IconButton(
             icon: const Icon(
               Icons.favorite_border,
-              color: Colors.black,
+              color: AppColors.black,
               size: 28,
             ),
             onPressed: () {
@@ -301,8 +306,8 @@ class _HomeScreenState extends State<HomeScreen>
           onRefresh: _refreshPosts,
           displacement: 60,
           edgeOffset: 10,
-          color: Colors.grey[700],
-          backgroundColor: Colors.white,
+          color: AppColors.grey700,
+          backgroundColor: AppColors.white,
           strokeWidth: 2.2,
           child: CustomScrollView(
             physics: const BouncingScrollPhysics(

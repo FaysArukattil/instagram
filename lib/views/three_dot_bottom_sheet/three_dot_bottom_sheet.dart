@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/models/reel_model.dart';
@@ -130,7 +131,7 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
         maxHeight: MediaQuery.of(context).size.height * 0.7,
       ),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SafeArea(
@@ -144,7 +145,7 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -162,7 +163,7 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
                 _buildOption(
                   icon: Icons.repeat,
                   text: isReposted ? 'Remove repost' : 'Repost',
-                  iconColor: isReposted ? Colors.green : null,
+                  iconColor: isReposted ? AppColors.green : null,
                   onTap: _toggleRepost,
                 ),
 
@@ -248,13 +249,13 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
     return ListTile(
       leading: Icon(
         icon,
-        color: iconColor ?? (isDestructive ? Colors.red : Colors.black),
+        color: iconColor ?? (isDestructive ? AppColors.red : AppColors.black),
         size: 24,
       ),
       title: Text(
         text,
         style: TextStyle(
-          color: isDestructive ? Colors.red : Colors.black,
+          color: isDestructive ? AppColors.red : AppColors.black,
           fontSize: 15,
           fontWeight: FontWeight.w500,
         ),

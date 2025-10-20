@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/story_model.dart';
 import 'package:instagram/models/user_model.dart';
@@ -197,7 +198,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.black,
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapUp: (details) => _onTapAtPosition(details.localPosition, context),
@@ -261,9 +262,9 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                   // Story image
                   if (imageUrl == null)
                     Container(
-                      color: Colors.black,
+                      color: AppColors.black,
                       child: const Center(
-                        child: Icon(Icons.broken_image, color: Colors.white),
+                        child: Icon(Icons.broken_image, color: AppColors.white),
                       ),
                     )
                   else if (imageUrl.startsWith('http'))
@@ -273,11 +274,13 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                       loadingBuilder: (ctx, child, prog) {
                         if (prog == null) return child;
                         return const Center(
-                          child: CircularProgressIndicator(color: Colors.white),
+                          child: CircularProgressIndicator(
+                            color: AppColors.white,
+                          ),
                         );
                       },
                       errorBuilder: (ctx, e, st) => const Center(
-                        child: Icon(Icons.broken_image, color: Colors.white),
+                        child: Icon(Icons.broken_image, color: AppColors.white),
                       ),
                     )
                   else
@@ -285,7 +288,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                       File(imageUrl),
                       fit: BoxFit.cover,
                       errorBuilder: (ctx, e, st) => const Center(
-                        child: Icon(Icons.broken_image, color: Colors.white),
+                        child: Icon(Icons.broken_image, color: AppColors.white),
                       ),
                     ),
 
@@ -316,11 +319,11 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                               child: LinearProgressIndicator(
                                 minHeight: 3,
                                 value: value,
-                                backgroundColor: Colors.white.withValues(
+                                backgroundColor: AppColors.white.withValues(
                                   alpha: 0.25,
                                 ),
                                 valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
+                                  AppColors.white,
                                 ),
                               ),
                             ),
@@ -356,7 +359,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                             Text(
                               user?.username ?? pageStory.username,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -364,7 +367,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                             Text(
                               pageStory.timeAgo,
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: .8),
+                                color: AppColors.white.withValues(alpha: .8),
                                 fontSize: 12,
                               ),
                             ),
@@ -374,7 +377,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                         IconButton(
                           icon: const Icon(
                             Icons.more_vert,
-                            color: Colors.white,
+                            color: AppColors.white,
                           ),
                           onPressed: () {},
                         ),

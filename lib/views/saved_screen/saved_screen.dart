@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/saved_item_model.dart';
 import 'package:instagram/widgets/universal_image.dart';
@@ -56,7 +57,10 @@ class _SavedScreenState extends State<SavedScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.grey),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -75,7 +79,7 @@ class _SavedScreenState extends State<SavedScreen>
                 ),
               );
             },
-            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+            child: const Text('Remove', style: TextStyle(color: AppColors.red)),
           ),
         ],
       ),
@@ -150,8 +154,8 @@ class _SavedScreenState extends State<SavedScreen>
             UniversalImage(imagePath: thumbnailPath, fit: BoxFit.cover)
           else
             Container(
-              color: Colors.grey[300],
-              child: const Icon(Icons.image, color: Colors.grey, size: 40),
+              color: AppColors.grey300,
+              child: const Icon(Icons.image, color: AppColors.grey, size: 40),
             ),
           if (isReel)
             Positioned(
@@ -160,12 +164,12 @@ class _SavedScreenState extends State<SavedScreen>
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: .6),
+                  color: AppColors.black.withValues(alpha: .6),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Icon(
                   Icons.play_arrow,
-                  color: Colors.white,
+                  color: AppColors.white,
                   size: 16,
                 ),
               ),
@@ -186,25 +190,25 @@ class _SavedScreenState extends State<SavedScreen>
         .toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppColors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Saved',
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.black,
             fontWeight: FontWeight.w600,
             fontSize: 20,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add, color: Colors.black, size: 28),
+            icon: const Icon(Icons.add, color: AppColors.black, size: 28),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -320,7 +324,7 @@ class _SavedScreenState extends State<SavedScreen>
                           Icon(
                             Icons.bookmark_border,
                             size: 80,
-                            color: Colors.grey[400],
+                            color: AppColors.grey400,
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -328,7 +332,7 @@ class _SavedScreenState extends State<SavedScreen>
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey[700],
+                              color: AppColors.grey700,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -336,7 +340,7 @@ class _SavedScreenState extends State<SavedScreen>
                             'Save posts and reels to view them here',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[600],
+                              color: AppColors.grey600,
                             ),
                           ),
                         ],
@@ -372,16 +376,16 @@ class _SavedScreenState extends State<SavedScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.black : Colors.grey[200],
+          color: isSelected ? AppColors.black : AppColors.grey200,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? Colors.black : Colors.grey[300]!,
+            color: isSelected ? AppColors.black : AppColors.grey300!,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black,
+            color: isSelected ? AppColors.white : AppColors.black,
             fontWeight: FontWeight.w600,
             fontSize: 13,
           ),

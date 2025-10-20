@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -40,18 +41,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppColors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Notifications',
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.black,
             fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
@@ -62,7 +63,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           // Ads notification
           _buildNotificationItem(
             icon: Icons.trending_up,
-            iconBackgroundColor: Colors.grey[200]!,
+            iconBackgroundColor: AppColors.grey200!,
             title: 'Ads',
             subtitle: 'Recent activity from your ads.',
             timeAgo: null,
@@ -108,7 +109,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             imageUrl:
                 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=150',
             badge: Icons.favorite,
-            badgeColor: Colors.red,
+            badgeColor: AppColors.red,
           ),
 
           _buildFollowSuggestion(
@@ -132,7 +133,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             imageUrl:
                 'https://images.unsplash.com/photo-1519741497674-611481863552?w=150',
             badge: Icons.favorite,
-            badgeColor: Colors.red,
+            badgeColor: AppColors.red,
             showMore: true,
           ),
 
@@ -213,7 +214,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   color: iconBackgroundColor,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: Colors.black, size: 28),
+                child: Icon(icon, color: AppColors.black, size: 28),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -230,7 +231,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                      style: TextStyle(color: AppColors.grey600, fontSize: 14),
                     ),
                   ],
                 ),
@@ -238,7 +239,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               if (timeAgo != null)
                 Text(
                   timeAgo,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(color: AppColors.grey600, fontSize: 13),
                 ),
             ],
           ),
@@ -257,10 +258,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: AppColors.black, width: 2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check, color: Colors.black, size: 28),
+            child: const Icon(Icons.check, color: AppColors.black, size: 28),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -274,12 +275,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 const SizedBox(height: 2),
                 RichText(
                   text: TextSpan(
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    style: TextStyle(color: AppColors.grey600, fontSize: 14),
                     children: const [
                       TextSpan(text: 'See new activity for '),
                       TextSpan(
                         text: 'no_immune_',
-                        style: TextStyle(color: Colors.blue),
+                        style: TextStyle(color: AppColors.blue),
                       ),
                     ],
                   ),
@@ -332,11 +333,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: badgeColor ?? Colors.blue,
+                      color: badgeColor ?? AppColors.blue,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: AppColors.white, width: 2),
                     ),
-                    child: Icon(badge, size: 12, color: Colors.white),
+                    child: Icon(badge, size: 12, color: AppColors.white),
                   ),
                 ),
             ],
@@ -348,7 +349,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               children: [
                 RichText(
                   text: TextSpan(
-                    style: const TextStyle(color: Colors.black, fontSize: 14),
+                    style: const TextStyle(
+                      color: AppColors.black,
+                      fontSize: 14,
+                    ),
                     children: [
                       TextSpan(
                         text: user.username,
@@ -357,7 +361,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       TextSpan(text: ' $text '),
                       TextSpan(
                         text: timeAgo,
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: TextStyle(color: AppColors.grey600),
                       ),
                     ],
                   ),
@@ -369,13 +373,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       Icon(
                         Icons.favorite_border,
                         size: 16,
-                        color: Colors.grey[600],
+                        color: AppColors.grey600,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         'View Reply',
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: AppColors.grey600,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -387,7 +391,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   const SizedBox(height: 4),
                   Text(
                     'more',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    style: TextStyle(color: AppColors.grey600, fontSize: 13),
                   ),
                 ],
               ],
@@ -435,7 +439,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           Expanded(
             child: RichText(
               text: TextSpan(
-                style: const TextStyle(color: Colors.black, fontSize: 14),
+                style: const TextStyle(color: AppColors.black, fontSize: 14),
                 children: [
                   if (customText != null)
                     TextSpan(
@@ -449,7 +453,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   TextSpan(text: subtitle),
                   TextSpan(
                     text: ' $timeAgo',
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: AppColors.grey600),
                   ),
                 ],
               ),
@@ -459,8 +463,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ElevatedButton(
             onPressed: () => _toggleFollow(user.id),
             style: ElevatedButton.styleFrom(
-              backgroundColor: isFollowing ? Colors.grey[200] : Colors.blue,
-              foregroundColor: isFollowing ? Colors.black : Colors.white,
+              backgroundColor: isFollowing ? AppColors.grey200 : AppColors.blue,
+              foregroundColor: isFollowing ? AppColors.black : AppColors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -496,7 +500,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   child: CircleAvatar(
                     radius: 20,
                     backgroundImage: NetworkImage(users[0].profileImage),
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.white,
                   ),
                 ),
                 Positioned(
@@ -504,7 +508,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   child: CircleAvatar(
                     radius: 20,
                     backgroundImage: NetworkImage(users[1].profileImage),
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.white,
                   ),
                 ),
               ],
@@ -514,7 +518,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           Expanded(
             child: RichText(
               text: TextSpan(
-                style: const TextStyle(color: Colors.black, fontSize: 14),
+                style: const TextStyle(color: AppColors.black, fontSize: 14),
                 children: [
                   TextSpan(
                     text: users[0].username,
@@ -531,7 +535,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ),
                   TextSpan(
                     text: timeAgo,
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: AppColors.grey600),
                   ),
                 ],
               ),
@@ -547,14 +551,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       width: 56,
       height: 56,
       decoration: const BoxDecoration(
-        color: Colors.red,
+        color: AppColors.red,
         shape: BoxShape.circle,
       ),
       child: Center(
         child: Text(
           text,
           style: const TextStyle(
-            color: Colors.white,
+            color: AppColors.white,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -589,7 +593,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 if (user.name != null)
                   Text(
                     user.name!,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    style: TextStyle(color: AppColors.grey600, fontSize: 13),
                   ),
               ],
             ),
@@ -597,8 +601,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ElevatedButton(
             onPressed: () => _toggleFollow(user.id),
             style: ElevatedButton.styleFrom(
-              backgroundColor: isFollowing ? Colors.grey[200] : Colors.blue,
-              foregroundColor: isFollowing ? Colors.black : Colors.white,
+              backgroundColor: isFollowing ? AppColors.grey200 : AppColors.blue,
+              foregroundColor: isFollowing ? AppColors.black : AppColors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
               elevation: 0,
               shape: RoundedRectangleBorder(

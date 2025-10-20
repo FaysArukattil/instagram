@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/models/post_model.dart';
@@ -204,7 +205,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: RefreshIndicator(
         onRefresh: _refreshProfile,
         child: SafeArea(
@@ -215,7 +216,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
             slivers: [
               // App Bar
               SliverAppBar(
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.white,
                 elevation: 0,
                 pinned: true,
                 automaticallyImplyLeading: false,
@@ -223,7 +224,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                 title: Text(
                   currentUser.username,
                   style: const TextStyle(
-                    color: Colors.black,
+                    color: AppColors.black,
                     fontWeight: FontWeight.w600,
                     fontSize: 18,
                   ),
@@ -231,14 +232,18 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                 leading: IconButton(
                   icon: const Icon(
                     Icons.add_outlined,
-                    color: Colors.black,
+                    color: AppColors.black,
                     size: 28,
                   ),
                   onPressed: _navigateToAddPost,
                 ),
                 actions: [
                   IconButton(
-                    icon: const Icon(Icons.menu, color: Colors.black, size: 28),
+                    icon: const Icon(
+                      Icons.menu,
+                      color: AppColors.black,
+                      size: 28,
+                    ),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -293,7 +298,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                                       height: 84,
                                       decoration: const BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: Colors.white,
+                                        color: AppColors.white,
                                       ),
                                     ),
                                     Hero(
@@ -357,7 +362,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                                 '@ ',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.black87,
+                                  color: AppColors.black87,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -365,7 +370,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                                 currentUser.username,
                                 style: const TextStyle(
                                   fontSize: 14,
-                                  color: Colors.black87,
+                                  color: AppColors.black87,
                                 ),
                               ),
                             ],
@@ -465,7 +470,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: AppColors.grey200,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
@@ -495,12 +500,15 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isSelected ? Colors.black : Colors.transparent,
+                color: isSelected ? AppColors.black : AppColors.transparent,
                 width: 1,
               ),
             ),
           ),
-          child: Icon(icon, color: isSelected ? Colors.black : Colors.grey),
+          child: Icon(
+            icon,
+            color: isSelected ? AppColors.black : AppColors.grey,
+          ),
         ),
       ),
     );
@@ -520,7 +528,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                 height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black, width: 2),
+                  border: Border.all(color: AppColors.black, width: 2),
                 ),
                 child: const Icon(Icons.camera_alt_outlined, size: 40),
               ),
@@ -533,7 +541,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
               const SizedBox(height: 8),
               const Text(
                 'Give this space some love.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(fontSize: 16, color: AppColors.grey),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -585,12 +593,12 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: .6),
+                      color: AppColors.black.withValues(alpha: .6),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Icon(
                       Icons.collections,
-                      color: Colors.white,
+                      color: AppColors.white,
                       size: 16,
                     ),
                   ),
@@ -648,12 +656,16 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                 left: 8,
                 child: Row(
                   children: [
-                    const Icon(Icons.play_arrow, color: Colors.white, size: 16),
+                    const Icon(
+                      Icons.play_arrow,
+                      color: AppColors.white,
+                      size: 16,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       _formatCount(reel.likes),
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -682,7 +694,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                 height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black, width: 2),
+                  border: Border.all(color: AppColors.black, width: 2),
                 ),
                 child: const Icon(Icons.repeat, size: 40),
               ),
@@ -695,7 +707,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
               const SizedBox(height: 8),
               const Text(
                 'Share reels to your profile so you can easily find them later.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(fontSize: 16, color: AppColors.grey),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 60),
@@ -747,12 +759,12 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.9),
+                    color: AppColors.green.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Icon(
                     Icons.repeat,
-                    color: Colors.white,
+                    color: AppColors.white,
                     size: 16,
                   ),
                 ),
@@ -762,12 +774,16 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                 left: 8,
                 child: Row(
                   children: [
-                    const Icon(Icons.play_arrow, color: Colors.white, size: 16),
+                    const Icon(
+                      Icons.play_arrow,
+                      color: AppColors.white,
+                      size: 16,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       _formatCount(reel.likes),
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -790,11 +806,11 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(height: 60),
-            Icon(Icons.camera_alt_outlined, size: 60, color: Colors.grey[400]),
+            Icon(Icons.camera_alt_outlined, size: 60, color: AppColors.grey400),
             const SizedBox(height: 16),
             Text(
               message,
-              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 18, color: AppColors.grey600),
             ),
           ],
         ),

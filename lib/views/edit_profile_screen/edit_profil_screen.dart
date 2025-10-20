@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/widgets/universal_image.dart';
@@ -62,12 +63,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               ListTile(
-                leading: const Icon(Icons.photo_camera, color: Colors.black),
+                leading: const Icon(Icons.photo_camera, color: AppColors.black),
                 title: const Text('Take a photo'),
                 onTap: () async {
                   final pickedFile = await picker.pickImage(
@@ -83,7 +84,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: Colors.black),
+                leading: const Icon(
+                  Icons.photo_library,
+                  color: AppColors.black,
+                ),
                 title: const Text('Choose from gallery'),
                 onTap: () async {
                   final pickedFile = await picker.pickImage(
@@ -120,7 +124,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.grey300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -135,7 +139,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ListTile(
               title: const Text('Male'),
               trailing: _gender == 'Male'
-                  ? const Icon(Icons.check, color: Colors.blue)
+                  ? const Icon(Icons.check, color: AppColors.blue)
                   : null,
               onTap: () {
                 setState(() => _gender = 'Male');
@@ -145,7 +149,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ListTile(
               title: const Text('Female'),
               trailing: _gender == 'Female'
-                  ? const Icon(Icons.check, color: Colors.blue)
+                  ? const Icon(Icons.check, color: AppColors.blue)
                   : null,
               onTap: () {
                 setState(() => _gender = 'Female');
@@ -155,7 +159,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ListTile(
               title: const Text('Other'),
               trailing: _gender == 'Other'
-                  ? const Icon(Icons.check, color: Colors.blue)
+                  ? const Icon(Icons.check, color: AppColors.blue)
                   : null,
               onTap: () {
                 setState(() => _gender = 'Other');
@@ -165,7 +169,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ListTile(
               title: const Text('Not specified'),
               trailing: _gender == 'Not specified'
-                  ? const Icon(Icons.check, color: Colors.blue)
+                  ? const Icon(Icons.check, color: AppColors.blue)
                   : null,
               onTap: () {
                 setState(() => _gender = 'Not specified');
@@ -211,12 +215,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.white,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            icon: const Icon(Icons.arrow_back, color: AppColors.black),
             onPressed: () {
               _saveProfile();
             },
@@ -224,7 +228,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           title: const Text(
             'Edit profile',
             style: TextStyle(
-              color: Colors.black,
+              color: AppColors.black,
               fontWeight: FontWeight.w600,
               fontSize: 18,
             ),
@@ -247,13 +251,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         imagePath: imageToShow,
                         fit: BoxFit.cover,
                         placeholder: Container(
-                          color: Colors.grey[300],
+                          color: AppColors.grey300,
                           child: const Center(
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         ),
                         errorWidget: Container(
-                          color: Colors.grey[200],
+                          color: AppColors.grey200,
                           child: const Icon(Icons.person, size: 40),
                         ),
                       ),
@@ -264,11 +268,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Container(
                       width: 80,
                       height: 80,
-                      color: Colors.grey[200],
+                      color: AppColors.grey200,
                       child: Icon(
                         Icons.person,
                         size: 40,
-                        color: Colors.grey[400],
+                        color: AppColors.grey400,
                       ),
                     ),
                   ),
@@ -282,7 +286,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: const Text(
                   'Change profile picture',
                   style: TextStyle(
-                    color: Colors.blue,
+                    color: AppColors.blue,
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
@@ -368,7 +372,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: const Text(
                       'Personal information settings',
                       style: TextStyle(
-                        color: Colors.blue,
+                        color: AppColors.blue,
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
                       ),
@@ -384,7 +388,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: const Text(
                       'Show that your profile is verified',
                       style: TextStyle(
-                        color: Colors.blue,
+                        color: AppColors.blue,
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
                       ),
@@ -408,7 +412,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.grey50,
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
@@ -417,19 +421,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         style: const TextStyle(fontSize: 15),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
+          labelStyle: TextStyle(color: AppColors.grey600, fontSize: 14),
           floatingLabelBehavior: FloatingLabelBehavior.auto,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[300]!),
+            borderSide: BorderSide(color: AppColors.grey300!),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[300]!),
+            borderSide: BorderSide(color: AppColors.grey300!),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.grey),
+            borderSide: const BorderSide(color: AppColors.grey),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -446,16 +450,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.grey[50],
+          color: AppColors.grey50,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: AppColors.grey300!),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Gender',
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              style: TextStyle(color: AppColors.grey600, fontSize: 14),
             ),
             const SizedBox(height: 4),
             Row(
@@ -465,7 +469,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   _gender,
                   style: const TextStyle(fontSize: 15, color: Colors.black),
                 ),
-                Icon(Icons.keyboard_arrow_down, color: Colors.grey[400]),
+                Icon(Icons.keyboard_arrow_down, color: AppColors.grey400),
               ],
             ),
           ],
@@ -478,7 +482,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.grey50,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -494,7 +498,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'When turned off, the Instagram badge on your Threads profile will also disappear.',
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 13, color: AppColors.grey600),
                 ),
               ],
             ),
@@ -507,7 +511,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 _showThreadsBanner = value;
               });
             },
-            activeThumbColor: Colors.blue,
+            activeThumbColor: AppColors.blue,
           ),
         ],
       ),
@@ -540,7 +544,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: AppColors.grey200,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -551,10 +555,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 if (trailingText != null)
                   Text(
                     trailingText,
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 16, color: AppColors.grey600),
                   ),
                 const SizedBox(width: 8),
-                Icon(Icons.chevron_right, color: Colors.grey[400]),
+                Icon(Icons.chevron_right, color: AppColors.grey400),
               ],
             ),
           ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/story_model.dart';
 import 'package:instagram/views/story_editing_screen/story_editor_screen.dart';
@@ -81,17 +82,17 @@ class _MyStoryScreenState extends State<MyStoryScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: Colors.white, // ✅ white background
+      backgroundColor: AppColors.white, // ✅ white background
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black),
+          icon: const Icon(Icons.close, color: AppColors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Add to story",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(color: AppColors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -104,8 +105,8 @@ class _MyStoryScreenState extends State<MyStoryScreen> {
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.blue,
+                      foregroundColor: AppColors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -120,8 +121,8 @@ class _MyStoryScreenState extends State<MyStoryScreen> {
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.green,
+                      foregroundColor: AppColors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -143,7 +144,7 @@ class _MyStoryScreenState extends State<MyStoryScreen> {
                 "Suggestions",
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: AppColors.black,
                 ),
               ),
             ),

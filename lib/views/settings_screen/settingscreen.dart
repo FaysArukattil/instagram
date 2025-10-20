@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/core/constants/app_images.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/views/auth/login/login_screen.dart';
@@ -16,18 +17,18 @@ class _SettingscreenState extends State<Settingscreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppColors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Settings and activity',
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.black,
             fontWeight: FontWeight.w600,
             fontSize: 18,
           ),
@@ -40,15 +41,15 @@ class _SettingscreenState extends State<Settingscreen> {
             padding: const EdgeInsets.all(16.0),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: AppColors.grey200,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Search',
-                  hintStyle: TextStyle(color: Colors.grey[600]),
+                  hintStyle: TextStyle(color: AppColors.grey600),
                   border: InputBorder.none,
-                  prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                  prefixIcon: Icon(Icons.search, color: AppColors.grey600),
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -381,7 +382,7 @@ class _SettingscreenState extends State<Settingscreen> {
               child: const Text(
                 'Add account',
                 style: TextStyle(
-                  color: Colors.blue,
+                  color: AppColors.blue,
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                 ),
@@ -401,7 +402,7 @@ class _SettingscreenState extends State<Settingscreen> {
               child: const Text(
                 'Log out',
                 style: TextStyle(
-                  color: Colors.red,
+                  color: AppColors.red,
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                 ),
@@ -420,7 +421,7 @@ class _SettingscreenState extends State<Settingscreen> {
               child: const Text(
                 'Log out of all accounts',
                 style: TextStyle(
-                  color: Colors.red,
+                  color: AppColors.red,
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                 ),
@@ -442,7 +443,7 @@ class _SettingscreenState extends State<Settingscreen> {
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: Colors.grey[600],
+          color: AppColors.grey600,
         ),
       ),
     );
@@ -465,7 +466,7 @@ class _SettingscreenState extends State<Settingscreen> {
           children: [
             Stack(
               children: [
-                Icon(icon, color: Colors.black87, size: 26),
+                Icon(icon, color: AppColors.black87, size: 26),
                 if (hasNotificationDot)
                   Positioned(
                     right: 0,
@@ -474,7 +475,7 @@ class _SettingscreenState extends State<Settingscreen> {
                       width: 8,
                       height: 8,
                       decoration: const BoxDecoration(
-                        color: Colors.blue,
+                        color: AppColors.blue,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -491,7 +492,7 @@ class _SettingscreenState extends State<Settingscreen> {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
-                      color: Colors.black87,
+                      color: AppColors.black87,
                     ),
                   ),
                   if (subtitle != null)
@@ -499,7 +500,10 @@ class _SettingscreenState extends State<Settingscreen> {
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
                         subtitle,
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.grey600,
+                        ),
                       ),
                     ),
                 ],
@@ -513,7 +517,7 @@ class _SettingscreenState extends State<Settingscreen> {
                     width: 16,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.white,
                       borderRadius: BorderRadius.circular(3),
                     ),
                     padding: const EdgeInsets.all(2),
@@ -528,7 +532,7 @@ class _SettingscreenState extends State<Settingscreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Colors.blue,
+                      color: AppColors.blue,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -539,10 +543,10 @@ class _SettingscreenState extends State<Settingscreen> {
                 padding: const EdgeInsets.only(right: 8),
                 child: Text(
                   trailing,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 14, color: AppColors.grey600),
                 ),
               ),
-            Icon(Icons.chevron_right, color: Colors.grey[400], size: 24),
+            Icon(Icons.chevron_right, color: AppColors.grey400, size: 24),
           ],
         ),
       ),
@@ -552,7 +556,7 @@ class _SettingscreenState extends State<Settingscreen> {
   void _showAccountsCentreSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -593,7 +597,7 @@ class _SettingscreenState extends State<Settingscreen> {
                 child: const Text(
                   'Log Out',
                   style: TextStyle(
-                    color: Colors.red,
+                    color: AppColors.red,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -605,7 +609,7 @@ class _SettingscreenState extends State<Settingscreen> {
                 child: const Text(
                   'Cancel',
                   style: TextStyle(
-                    color: Colors.black,
+                    color: AppColors.black,
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                   ),
@@ -645,7 +649,7 @@ class AccountsCentreSheet extends StatelessWidget {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         padding: const EdgeInsets.all(4),
@@ -688,7 +692,7 @@ class AccountsCentreSheet extends StatelessWidget {
                     'Manage your connected experiences and account settings across Meta technologies such as Facebook, Instagram and Meta Horizon.',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[700],
+                      color: AppColors.grey700,
                       height: 1.4,
                     ),
                   ),
@@ -702,7 +706,7 @@ class AccountsCentreSheet extends StatelessWidget {
                     child: const Text(
                       'Learn more',
                       style: TextStyle(
-                        color: Colors.blue,
+                        color: AppColors.blue,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -712,14 +716,14 @@ class AccountsCentreSheet extends StatelessWidget {
                   // Profiles
                   Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
+                      border: Border.all(color: AppColors.grey300!),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(12),
                       leading: CircleAvatar(
                         radius: 24,
-                        backgroundColor: Colors.grey[300],
+                        backgroundColor: AppColors.grey300,
                         backgroundImage:
                             (DummyData.currentUser.profileImage
                                 .toString()
@@ -769,7 +773,7 @@ class AccountsCentreSheet extends StatelessWidget {
                     child: const Text(
                       'View all',
                       style: TextStyle(
-                        color: Colors.blue,
+                        color: AppColors.blue,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -820,7 +824,7 @@ class AccountsCentreSheet extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
+                      border: Border.all(color: AppColors.grey300!),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -830,7 +834,7 @@ class AccountsCentreSheet extends StatelessWidget {
                           children: [
                             Icon(
                               Icons.account_circle_outlined,
-                              color: Colors.grey[700],
+                              color: AppColors.grey700,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -847,7 +851,7 @@ class AccountsCentreSheet extends StatelessWidget {
                                     'Review the accounts that you have in this Accounts Centre.',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: Colors.grey[600],
+                                      color: AppColors.grey600,
                                     ),
                                   ),
                                 ],
@@ -863,7 +867,7 @@ class AccountsCentreSheet extends StatelessWidget {
                           child: const Text(
                             'Add more accounts',
                             style: TextStyle(
-                              color: Colors.blue,
+                              color: AppColors.blue,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -886,14 +890,14 @@ class AccountsCentreSheet extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey[300]!),
+                            border: Border.all(color: AppColors.grey300!),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Column(
                             children: [
                               Icon(
                                 Icons.verified,
-                                color: Colors.blue,
+                                color: AppColors.blue,
                                 size: 32,
                               ),
                               SizedBox(height: 8),
@@ -911,14 +915,14 @@ class AccountsCentreSheet extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey[300]!),
+                            border: Border.all(color: AppColors.grey300!),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Column(
                             children: [
                               Icon(
                                 Icons.visibility,
-                                color: Colors.blue,
+                                color: AppColors.blue,
                                 size: 32,
                               ),
                               SizedBox(height: 8),
@@ -953,12 +957,12 @@ class AccountsCentreSheet extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: AppColors.grey300!),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
-            Icon(icon, color: Colors.grey[700]),
+            Icon(icon, color: AppColors.grey700),
             const SizedBox(width: 12),
             Expanded(child: Text(title)),
             const Icon(Icons.chevron_right),
@@ -979,10 +983,10 @@ class AccountsCentreSheet extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
-            Icon(icon, color: Colors.grey[700], size: 22),
+            Icon(icon, color: AppColors.grey700, size: 22),
             const SizedBox(width: 12),
             Expanded(child: Text(title)),
-            Icon(Icons.chevron_right, color: Colors.grey[400]),
+            Icon(Icons.chevron_right, color: AppColors.grey400),
           ],
         ),
       ),
@@ -992,7 +996,7 @@ class AccountsCentreSheet extends StatelessWidget {
   void _showProfilesSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -1045,7 +1049,7 @@ class ProfilesSheet extends StatelessWidget {
                 text: TextSpan(
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[700],
+                    color: AppColors.grey700,
                     height: 1.4,
                   ),
                   children: const [
@@ -1056,7 +1060,7 @@ class ProfilesSheet extends StatelessWidget {
                     TextSpan(
                       text: 'Learn more',
                       style: TextStyle(
-                        color: Colors.blue,
+                        color: AppColors.blue,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1069,14 +1073,14 @@ class ProfilesSheet extends StatelessWidget {
               // Profile Card
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: AppColors.grey100,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(12),
                   leading: CircleAvatar(
                     radius: 28,
-                    backgroundColor: Colors.grey[300],
+                    backgroundColor: AppColors.grey300,
                     backgroundImage:
                         (DummyData.currentUser.profileImage
                             .toString()
@@ -1112,13 +1116,13 @@ class ProfilesSheet extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: AppColors.grey100,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Text(
                     'Add accounts',
                     style: TextStyle(
-                      color: Colors.blue,
+                      color: AppColors.blue,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),

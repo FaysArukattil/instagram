@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/views/three_dot_bottom_sheet/three_dot_bottom_sheet.dart';
@@ -114,7 +115,7 @@ class _PostWidgetState extends State<PostWidget>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => ThreeDotBottomSheet(post: widget.post),
     ).then((_) {
       setState(() {
@@ -144,7 +145,7 @@ class _PostWidgetState extends State<PostWidget>
                 onTap: () => widget.onProfileTap(widget.post.userId),
                 child: CircleAvatar(
                   radius: 16,
-                  backgroundColor: Colors.grey[300],
+                  backgroundColor: AppColors.grey300,
                   child: ClipOval(
                     child: UniversalImage(
                       imagePath: user.profileImage,
@@ -176,7 +177,10 @@ class _PostWidgetState extends State<PostWidget>
                           const SizedBox(width: 4),
                           const Text(
                             '• Sponsored',
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                            style: TextStyle(
+                              color: AppColors.grey,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ],
@@ -186,7 +190,7 @@ class _PostWidgetState extends State<PostWidget>
                         widget.post.location!,
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Colors.grey,
+                          color: AppColors.grey,
                         ),
                       ),
                   ],
@@ -232,13 +236,13 @@ class _PostWidgetState extends State<PostWidget>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black54,
+                        color: AppColors.black54,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         '${_currentPage + 1}/${widget.post.images.length}',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -260,7 +264,10 @@ class _PostWidgetState extends State<PostWidget>
                               color: Colors.white,
                               size: 100,
                               shadows: [
-                                Shadow(blurRadius: 20, color: Colors.black54),
+                                Shadow(
+                                  blurRadius: 20,
+                                  color: AppColors.black54,
+                                ),
                               ],
                             ),
                           ),
@@ -288,8 +295,8 @@ class _PostWidgetState extends State<PostWidget>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _currentPage == index
-                        ? Colors.blue
-                        : Colors.grey[300],
+                        ? AppColors.blue
+                        : AppColors.grey300,
                   ),
                 ),
               ),
@@ -304,7 +311,7 @@ class _PostWidgetState extends State<PostWidget>
               IconButton(
                 icon: Icon(
                   widget.post.isLiked ? Icons.favorite : Icons.favorite_border,
-                  color: widget.post.isLiked ? Colors.red : Colors.black,
+                  color: widget.post.isLiked ? AppColors.red : AppColors.black,
                   size: 28,
                 ),
                 onPressed: () => widget.onLike(widget.post.id),
@@ -315,7 +322,7 @@ class _PostWidgetState extends State<PostWidget>
                   width: 26,
                   height: 26,
                   colorFilter: const ColorFilter.mode(
-                    Colors.black,
+                    AppColors.black,
                     BlendMode.srcIn,
                   ),
                 ),
@@ -346,7 +353,7 @@ class _PostWidgetState extends State<PostWidget>
                 icon: Icon(
                   _isSaved ? Icons.bookmark : Icons.bookmark_border,
                   size: 26,
-                  color: Colors.black,
+                  color: AppColors.black,
                 ),
                 onPressed: _toggleSave,
               ),
@@ -368,7 +375,10 @@ class _PostWidgetState extends State<PostWidget>
               if (widget.post.caption.isNotEmpty)
                 RichText(
                   text: TextSpan(
-                    style: const TextStyle(color: Colors.black, fontSize: 14),
+                    style: const TextStyle(
+                      color: AppColors.black,
+                      fontSize: 14,
+                    ),
                     children: [
                       TextSpan(
                         text: '${user.username} ',
@@ -388,13 +398,13 @@ class _PostWidgetState extends State<PostWidget>
                   },
                   child: Text(
                     'View all ${widget.post.comments} comments',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    style: TextStyle(color: AppColors.grey600, fontSize: 13),
                   ),
                 ),
               const SizedBox(height: 4),
               Text(
                 widget.post.timeAgo,
-                style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                style: TextStyle(color: AppColors.grey600, fontSize: 11),
               ),
             ],
           ),

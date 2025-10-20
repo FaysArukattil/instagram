@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 
 /// Universal Image Widget that handles network, asset, and local file images
 class UniversalImage extends StatelessWidget {
@@ -82,7 +83,7 @@ class UniversalImage extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      color: Colors.grey[300],
+      color: AppColors.grey300,
       child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
     );
   }
@@ -91,7 +92,7 @@ class UniversalImage extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      color: Colors.grey[300],
+      color: AppColors.grey300,
       child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
     );
   }
@@ -125,11 +126,11 @@ class GridThumbnail extends StatelessWidget {
             imagePath: imagePath,
             fit: BoxFit.cover,
             errorWidget: Container(
-              color: isVideo ? Colors.grey[800] : Colors.grey[300],
+              color: isVideo ? AppColors.grey800 : AppColors.grey300,
               child: Icon(
                 isVideo ? Icons.play_circle_outline : Icons.image,
                 size: 50,
-                color: isVideo ? Colors.white : Colors.grey,
+                color: isVideo ? AppColors.white : AppColors.grey,
               ),
             ),
           ),
@@ -139,9 +140,9 @@ class GridThumbnail extends StatelessWidget {
             const Center(
               child: Icon(
                 Icons.play_arrow,
-                color: Colors.white,
+                color: AppColors.white,
                 size: 40,
-                shadows: [Shadow(blurRadius: 8, color: Colors.black54)],
+                shadows: [Shadow(blurRadius: 8, color: AppColors.black54)],
               ),
             ),
 
@@ -152,9 +153,9 @@ class GridThumbnail extends StatelessWidget {
               right: 8,
               child: Icon(
                 Icons.collections,
-                color: Colors.white,
+                color: AppColors.white,
                 size: 20,
-                shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
+                shadows: [Shadow(blurRadius: 4, color: AppColors.black54)],
               ),
             ),
 
@@ -165,15 +166,21 @@ class GridThumbnail extends StatelessWidget {
               left: 8,
               child: Row(
                 children: [
-                  const Icon(Icons.play_arrow, color: Colors.white, size: 16),
+                  const Icon(
+                    Icons.play_arrow,
+                    color: AppColors.white,
+                    size: 16,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     _formatCount(playCount!),
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
-                      shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
+                      shadows: [
+                        Shadow(blurRadius: 4, color: AppColors.black54),
+                      ],
                     ),
                   ),
                 ],

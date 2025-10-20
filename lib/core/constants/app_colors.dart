@@ -11,16 +11,28 @@ class AppColors {
 
   //Advance Colors
   static const Color black54 = Colors.black54;
+  static const Color black26 = Colors.black26;
+
   static const Color black87 = Colors.black87;
   static const Color white54 = Colors.white54;
   static const Color white38 = Colors.white38;
+  static const Color white24 = Colors.white24;
 
   static const Color transparent = Colors.transparent;
 
   static Color? blue200 = Colors.blue[200];
+  static Color? blue50 = Colors.blue[50];
+
+  static Color? grey50 = Colors.grey[50];
   static Color? grey300 = Colors.grey[300];
+  static Color? grey400 = Colors.grey[400];
   static Color? grey500 = Colors.grey[500];
   static Color? grey600 = Colors.grey[600];
+  static Color? grey700 = Colors.grey[700];
+  static Color? grey800 = Colors.grey[800];
+
+  static Color? grey900 = Colors.grey[900];
+
   static Color? grey200 = Colors.grey.shade200;
   static Color? grey100 = Colors.grey.shade100;
 

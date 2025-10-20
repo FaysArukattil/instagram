@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/views/reels_screen/reelscommentscreen.dart';
 import 'package:instagram/views/reels_screen/reelssharebottomsheet.dart';
@@ -163,10 +164,10 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.black,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Row(
@@ -181,7 +182,7 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
               child: Text(
                 'Reels',
                 style: TextStyle(
-                  color: !_showFriendsOnly ? Colors.white : Colors.grey,
+                  color: !_showFriendsOnly ? AppColors.white : AppColors.grey,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -197,7 +198,7 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
               child: Text(
                 'Friends',
                 style: TextStyle(
-                  color: _showFriendsOnly ? Colors.white : Colors.grey,
+                  color: _showFriendsOnly ? AppColors.white : AppColors.grey,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -207,7 +208,11 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.add_outlined, color: Colors.white, size: 28),
+          icon: const Icon(
+            Icons.add_outlined,
+            color: AppColors.white,
+            size: 28,
+          ),
           onPressed: _openAddPost,
         ),
       ),
@@ -478,7 +483,7 @@ class _ReelItemState extends State<ReelItem>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => ReelCommentsScreen(reel: widget.reel),
     ).then((_) {
       _isPausedByUser = false;
@@ -514,7 +519,7 @@ class _ReelItemState extends State<ReelItem>
           const SnackBar(
             content: Text('Reposted to your profile'),
             duration: Duration(seconds: 2),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.green,
           ),
         );
       }
@@ -531,7 +536,7 @@ class _ReelItemState extends State<ReelItem>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => ReelShareBottomSheet(reel: widget.reel),
     ).then((_) {
       _isPausedByUser = false;
@@ -738,7 +743,7 @@ class _ReelItemState extends State<ReelItem>
                   child: _isInitialized
                       ? VideoPlayer(_controller)
                       : const SizedBox.expand(
-                          child: ColoredBox(color: Colors.black),
+                          child: ColoredBox(color: AppColors.black),
                         ),
                 ),
               ),
@@ -754,8 +759,8 @@ class _ReelItemState extends State<ReelItem>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withValues(alpha: 0.4),
-                      Colors.transparent,
+                      AppColors.black.withValues(alpha: 0.4),
+                      AppColors.transparent,
                     ],
                   ),
                 ),
@@ -772,8 +777,8 @@ class _ReelItemState extends State<ReelItem>
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [
-                      Colors.black.withValues(alpha: 0.7),
-                      Colors.transparent,
+                      AppColors.black.withValues(alpha: 0.7),
+                      AppColors.transparent,
                     ],
                   ),
                 ),
@@ -788,7 +793,7 @@ class _ReelItemState extends State<ReelItem>
                       scale: _likeAnimation.value,
                       child: const Icon(
                         Icons.favorite,
-                        color: Colors.white,
+                        color: AppColors.white,
                         size: 100,
                       ),
                     );
@@ -800,12 +805,12 @@ class _ReelItemState extends State<ReelItem>
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
+                    color: AppColors.black.withValues(alpha: 0.6),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     widget.reel.isMuted ? Icons.volume_off : Icons.volume_up,
-                    color: Colors.white,
+                    color: AppColors.white,
                     size: 40,
                   ),
                 ),
@@ -815,10 +820,14 @@ class _ReelItemState extends State<ReelItem>
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
+                    color: AppColors.black.withValues(alpha: 0.6),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.pause, color: Colors.white, size: 40),
+                  child: const Icon(
+                    Icons.pause,
+                    color: AppColors.white,
+                    size: 40,
+                  ),
                 ),
               ),
             if (_playbackSpeed != 1.0)
@@ -826,13 +835,13 @@ class _ReelItemState extends State<ReelItem>
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
+                    color: AppColors.black.withValues(alpha: 0.6),
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     '${_playbackSpeed}x',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.white,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
@@ -851,13 +860,13 @@ class _ReelItemState extends State<ReelItem>
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.7),
+                      color: AppColors.black.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       _formatDuration(_seekPreviewPosition!),
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -877,7 +886,7 @@ class _ReelItemState extends State<ReelItem>
                     _handleHorizontalDrag(details, screenWidth, screenHeight),
                 onHorizontalDragEnd: (_) => _handleHorizontalDragEnd(),
                 onTap: () {},
-                child: Container(color: Colors.transparent),
+                child: Container(color: AppColors.transparent),
               ),
             ),
             Positioned(
@@ -898,12 +907,12 @@ class _ReelItemState extends State<ReelItem>
                           backgroundImage: user?.profileImage != null
                               ? NetworkImage(user!.profileImage)
                               : null,
-                          backgroundColor: Colors.grey[300],
+                          backgroundColor: AppColors.grey300,
                           child: user?.profileImage == null
                               ? const Icon(
                                   Icons.person,
                                   size: 18,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                 )
                               : null,
                         ),
@@ -912,7 +921,7 @@ class _ReelItemState extends State<ReelItem>
                           child: Text(
                             user?.username ?? 'Unknown',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                             ),
@@ -929,7 +938,7 @@ class _ReelItemState extends State<ReelItem>
                             ),
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 width: 1.5,
                               ),
                               borderRadius: BorderRadius.circular(6),
@@ -939,7 +948,7 @@ class _ReelItemState extends State<ReelItem>
                                   ? 'Following'
                                   : 'Follow',
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
                               ),
@@ -951,7 +960,10 @@ class _ReelItemState extends State<ReelItem>
                   const SizedBox(height: 8),
                   Text(
                     widget.reel.caption,
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 14,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -961,7 +973,7 @@ class _ReelItemState extends State<ReelItem>
                       children: [
                         const Icon(
                           Icons.location_on,
-                          color: Colors.white,
+                          color: AppColors.white,
                           size: 12,
                         ),
                         const SizedBox(width: 4),
@@ -969,7 +981,7 @@ class _ReelItemState extends State<ReelItem>
                           child: Text(
                             widget.reel.location!,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.white,
                               fontSize: 12,
                             ),
                             maxLines: 1,
@@ -996,15 +1008,15 @@ class _ReelItemState extends State<ReelItem>
                               ? Icons.favorite
                               : Icons.favorite_border,
                           color: widget.reel.isLiked
-                              ? Colors.red
-                              : Colors.white,
+                              ? AppColors.red
+                              : AppColors.white,
                           size: 32,
                         ),
                         const SizedBox(height: 4),
                         Text(
                           _formatCount(widget.reel.likes),
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1023,7 +1035,7 @@ class _ReelItemState extends State<ReelItem>
                           child: SvgPicture.asset(
                             'assets/Icons/comment_icon_outline.svg',
                             colorFilter: const ColorFilter.mode(
-                              Colors.white,
+                              AppColors.white,
                               BlendMode.srcIn,
                             ),
                           ),
@@ -1032,7 +1044,7 @@ class _ReelItemState extends State<ReelItem>
                         Text(
                           _formatCount(widget.reel.comments),
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1048,8 +1060,8 @@ class _ReelItemState extends State<ReelItem>
                         Icon(
                           Icons.repeat,
                           color: widget.reel.isReposted
-                              ? Colors.green
-                              : Colors.white,
+                              ? AppColors.green
+                              : AppColors.white,
                           size: 30,
                         ),
                         const SizedBox(height: 4),
@@ -1057,8 +1069,8 @@ class _ReelItemState extends State<ReelItem>
                           _formatCount(widget.reel.shares),
                           style: TextStyle(
                             color: widget.reel.isReposted
-                                ? Colors.green
-                                : Colors.white,
+                                ? AppColors.green
+                                : AppColors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1077,7 +1089,7 @@ class _ReelItemState extends State<ReelItem>
                           child: SvgPicture.asset(
                             'assets/Icons/share_icon_outline.svg',
                             colorFilter: const ColorFilter.mode(
-                              Colors.white,
+                              AppColors.white,
                               BlendMode.srcIn,
                             ),
                           ),
@@ -1096,7 +1108,7 @@ class _ReelItemState extends State<ReelItem>
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
+                        backgroundColor: AppColors.transparent,
                         builder: (context) =>
                             ThreeDotBottomSheet(reel: widget.reel),
                       ).then((_) {
@@ -1108,7 +1120,7 @@ class _ReelItemState extends State<ReelItem>
                     },
                     child: const Icon(
                       Icons.more_vert,
-                      color: Colors.white,
+                      color: AppColors.white,
                       size: 28,
                     ),
                   ),
@@ -1197,7 +1209,7 @@ class _CustomVideoProgressIndicatorState
       child: Container(
         height: 20,
         margin: const EdgeInsets.only(bottom: 2),
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: Align(
           alignment: Alignment.bottomCenter,
           child: SizedBox(
@@ -1207,13 +1219,13 @@ class _CustomVideoProgressIndicatorState
                 Container(
                   width: double.infinity,
                   height: 2,
-                  color: Colors.white.withValues(alpha: 0.3),
+                  color: AppColors.white.withValues(alpha: 0.3),
                 ),
                 FractionallySizedBox(
                   widthFactor: progress.clamp(0.0, 1.0),
                   child: Container(
                     height: 2,
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: AppColors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ],

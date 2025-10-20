@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/comment_model.dart';
 import 'package:instagram/models/reel_model.dart';
@@ -145,7 +146,10 @@ class _ReelCommentsScreenState extends State<ReelCommentsScreen> {
                     const SizedBox(width: 8),
                     Text(
                       comment.timeAgo,
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      style: const TextStyle(
+                        color: AppColors.grey,
+                        fontSize: 12,
+                      ),
                     ),
                     if (comment.isAuthor) ...[
                       const SizedBox(width: 8),
@@ -155,12 +159,12 @@ class _ReelCommentsScreenState extends State<ReelCommentsScreen> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
+                          border: Border.all(color: AppColors.grey),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
                           'Author',
-                          style: TextStyle(fontSize: 10, color: Colors.grey),
+                          style: TextStyle(fontSize: 10, color: AppColors.grey),
                         ),
                       ),
                     ],
@@ -176,7 +180,7 @@ class _ReelCommentsScreenState extends State<ReelCommentsScreen> {
                       child: Text(
                         'Reply',
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: AppColors.grey600,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -187,7 +191,7 @@ class _ReelCommentsScreenState extends State<ReelCommentsScreen> {
                       Text(
                         '${comment.likes} ${comment.likes == 1 ? 'like' : 'likes'}',
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: AppColors.grey600,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -212,7 +216,7 @@ class _ReelCommentsScreenState extends State<ReelCommentsScreen> {
             child: Icon(
               comment.isLiked ? Icons.favorite : Icons.favorite_border,
               size: 16,
-              color: comment.isLiked ? Colors.red : Colors.grey,
+              color: comment.isLiked ? AppColors.red : AppColors.grey,
             ),
           ),
         ],
@@ -232,7 +236,7 @@ class _ReelCommentsScreenState extends State<ReelCommentsScreen> {
 
         return Container(
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
@@ -243,7 +247,7 @@ class _ReelCommentsScreenState extends State<ReelCommentsScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -264,7 +268,7 @@ class _ReelCommentsScreenState extends State<ReelCommentsScreen> {
                       '${widget.reel.comments}',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.grey[600],
+                        color: AppColors.grey600,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -282,14 +286,14 @@ class _ReelCommentsScreenState extends State<ReelCommentsScreen> {
                             Icon(
                               Icons.chat_bubble_outline,
                               size: 64,
-                              color: Colors.grey[300],
+                              color: AppColors.grey300,
                             ),
                             const SizedBox(height: 16),
                             Text(
                               'No comments yet',
                               style: TextStyle(
                                 fontSize: 18,
-                                color: Colors.grey[600],
+                                color: AppColors.grey600,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -298,7 +302,7 @@ class _ReelCommentsScreenState extends State<ReelCommentsScreen> {
                               'Start the conversation.',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey[500],
+                                color: AppColors.grey500,
                               ),
                             ),
                           ],
@@ -341,8 +345,8 @@ class _ReelCommentsScreenState extends State<ReelCommentsScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: Colors.grey[200]!)),
+                  color: AppColors.white,
+                  border: Border(top: BorderSide(color: AppColors.grey200!)),
                 ),
                 child: SafeArea(
                   child: Row(
@@ -364,7 +368,7 @@ class _ReelCommentsScreenState extends State<ReelCommentsScreen> {
                               borderSide: BorderSide.none,
                             ),
                             filled: true,
-                            fillColor: Colors.grey[100],
+                            fillColor: AppColors.grey100,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 10,
@@ -395,7 +399,9 @@ class _ReelCommentsScreenState extends State<ReelCommentsScreen> {
                               child: Text(
                                 'Post',
                                 style: TextStyle(
-                                  color: hasText ? Colors.blue : Colors.grey,
+                                  color: hasText
+                                      ? AppColors.blue
+                                      : AppColors.grey,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),

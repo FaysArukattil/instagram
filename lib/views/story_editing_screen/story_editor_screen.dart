@@ -1,6 +1,7 @@
 // lib/views/story_editing_screen/story_editor_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/story_model.dart';
 import 'package:instagram/views/bottomnavbarscreens/bottomnavbarscreen.dart';
@@ -24,7 +25,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
   bool _showTextField = false;
   String _textContent = '';
   Offset _textPosition = const Offset(0.5, 0.5);
-  Color _textColor = Colors.white;
+  Color _textColor = AppColors.white;
   double _textSize = 24;
 
   final List<Color> _colors = [
@@ -113,7 +114,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Story posted successfully!'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.green,
           duration: Duration(seconds: 2),
         ),
       );
@@ -131,7 +132,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.black,
       body: Stack(
         children: [
           // Image Preview
@@ -141,9 +142,9 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                     widget.imagePath,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.black,
+                      color: AppColors.black,
                       child: const Center(
-                        child: Icon(Icons.broken_image, color: Colors.white),
+                        child: Icon(Icons.broken_image, color: AppColors.white),
                       ),
                     ),
                   )
@@ -151,9 +152,9 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                     File(widget.imagePath),
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.black,
+                      color: AppColors.black,
                       child: const Center(
-                        child: Icon(Icons.broken_image, color: Colors.white),
+                        child: Icon(Icons.broken_image, color: AppColors.white),
                       ),
                     ),
                   ),
@@ -181,7 +182,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: .5),
+                    color: AppColors.black.withValues(alpha: .5),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -208,24 +209,24 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.5),
-                    Colors.transparent,
+                    AppColors.black.withValues(alpha: 0.5),
+                    AppColors.transparent,
                   ],
                 ),
               ),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
+                    icon: const Icon(Icons.close, color: AppColors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.text_fields, color: Colors.white),
+                    icon: const Icon(Icons.text_fields, color: AppColors.white),
                     onPressed: _toggleTextField,
                   ),
                   IconButton(
-                    icon: const Icon(Icons.draw, color: Colors.white),
+                    icon: const Icon(Icons.draw, color: AppColors.white),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -236,7 +237,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.music_note, color: Colors.white),
+                    icon: const Icon(Icons.music_note, color: AppColors.white),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -289,7 +290,10 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                                 color: _colors[index],
                                 shape: BoxShape.circle,
                                 border: _textColor == _colors[index]
-                                    ? Border.all(color: Colors.blue, width: 3)
+                                    ? Border.all(
+                                        color: AppColors.blue,
+                                        width: 3,
+                                      )
                                     : null,
                               ),
                             ),
@@ -311,24 +315,24 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                             decoration: InputDecoration(
                               hintText: 'Type something...',
                               hintStyle: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.5),
+                                color: AppColors.white.withValues(alpha: 0.5),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(25),
                                 borderSide: const BorderSide(
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(25),
                                 borderSide: const BorderSide(
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(25),
                                 borderSide: const BorderSide(
-                                  color: Colors.blue,
+                                  color: AppColors.blue,
                                   width: 2,
                                 ),
                               ),
@@ -336,7 +340,7 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.check, color: Colors.white),
+                          icon: const Icon(Icons.check, color: AppColors.white),
                           onPressed: _addText,
                         ),
                       ],
@@ -347,14 +351,17 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                       children: [
                         const Text(
                           'A',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
+                          style: TextStyle(
+                            color: AppColors.white,
+                            fontSize: 14,
+                          ),
                         ),
                         Expanded(
                           child: Slider(
                             value: _textSize,
                             min: 16,
                             max: 40,
-                            activeColor: Colors.white,
+                            activeColor: AppColors.white,
                             onChanged: (value) {
                               setState(() {
                                 _textSize = value;
@@ -364,7 +371,10 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                         ),
                         const Text(
                           'A',
-                          style: TextStyle(color: Colors.white, fontSize: 24),
+                          style: TextStyle(
+                            color: AppColors.white,
+                            fontSize: 24,
+                          ),
                         ),
                       ],
                     ),
@@ -391,8 +401,8 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [
-                      Colors.black.withValues(alpha: 0.5),
-                      Colors.transparent,
+                      AppColors.black.withValues(alpha: 0.5),
+                      AppColors.transparent,
                     ],
                   ),
                 ),
@@ -405,17 +415,17 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: AppColors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(25),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.download, color: Colors.white),
+                          Icon(Icons.download, color: AppColors.white),
                           SizedBox(width: 8),
                           Text(
                             'Save',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: AppColors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -447,13 +457,13 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                             Text(
                               'Your story',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppColors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             SizedBox(width: 8),
-                            Icon(Icons.send, color: Colors.white),
+                            Icon(Icons.send, color: AppColors.white),
                           ],
                         ),
                       ),

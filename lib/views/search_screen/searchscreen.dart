@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/models/post_model.dart';
@@ -129,14 +130,14 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         body: RefreshIndicator(
           key: _refreshKey,
           onRefresh: _refreshContent,
           displacement: 60,
           edgeOffset: 10,
-          color: Colors.grey[700],
-          backgroundColor: Colors.white,
+          color: AppColors.grey700,
+          backgroundColor: AppColors.white,
           strokeWidth: 2.2,
           child: CustomScrollView(
             physics: const BouncingScrollPhysics(
@@ -154,16 +155,16 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
                         controller: _searchController,
                         decoration: InputDecoration(
                           hintText: 'Search',
-                          hintStyle: TextStyle(color: Colors.grey[600]),
+                          hintStyle: TextStyle(color: AppColors.grey600),
                           prefixIcon: Icon(
                             Icons.search,
-                            color: Colors.grey[600],
+                            color: AppColors.grey600,
                           ),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
                                   icon: Icon(
                                     Icons.clear,
-                                    color: Colors.grey[600],
+                                    color: AppColors.grey600,
                                   ),
                                   onPressed: () {
                                     _searchController.clear();
@@ -172,7 +173,7 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
                                 )
                               : null,
                           filled: true,
-                          fillColor: Colors.grey[200],
+                          fillColor: AppColors.grey200,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -207,12 +208,12 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+              Icon(Icons.search_off, size: 64, color: AppColors.grey400),
               const SizedBox(height: 16),
               Text(
                 'No users found',
                 style: TextStyle(
-                  color: Colors.grey[600],
+                  color: AppColors.grey600,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
@@ -331,7 +332,7 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
                     width: user.hasStory ? 48 : 54,
                     height: user.hasStory ? 48 : 54,
                     decoration: const BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.white,
                       shape: BoxShape.circle,
                     ),
                     padding: const EdgeInsets.all(2),
@@ -357,20 +358,23 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
-                      color: Colors.black,
+                      color: AppColors.black,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     user.name,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    style: TextStyle(color: AppColors.grey600, fontSize: 13),
                   ),
                   if (user.bio.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
                         user.bio,
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        style: TextStyle(
+                          color: AppColors.grey500,
+                          fontSize: 12,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -383,9 +387,9 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
                 width: 12,
                 height: 12,
                 decoration: BoxDecoration(
-                  color: Colors.green,
+                  color: AppColors.green,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(color: AppColors.white, width: 2),
                 ),
               ),
           ],
@@ -442,9 +446,9 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
                 right: 8,
                 child: Icon(
                   Icons.collections,
-                  color: Colors.white,
+                  color: AppColors.white,
                   size: 20,
-                  shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
+                  shadows: [Shadow(blurRadius: 4, color: AppColors.black54)],
                 ),
               ),
           ],
@@ -490,9 +494,9 @@ class _SearchScreenState extends State<SearchScreen> with RouteAware {
               right: 8,
               child: Icon(
                 Icons.play_arrow,
-                color: Colors.white,
+                color: AppColors.white,
                 size: 24,
-                shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
+                shadows: [Shadow(blurRadius: 4, color: AppColors.black54)],
               ),
             ),
           ],
