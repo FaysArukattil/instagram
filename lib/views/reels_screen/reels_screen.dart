@@ -4,7 +4,7 @@ import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/models/reel_model.dart';
-import 'package:instagram/views/reels_screen/reelscommentscreen.dart';
+import 'package:instagram/views/commentscreen/commentscreen.dart';
 import 'package:instagram/views/reels_screen/reelssharebottomsheet.dart';
 import 'package:instagram/views/three_dot_bottom_sheet/three_dot_bottom_sheet.dart';
 import 'package:video_player/video_player.dart';
@@ -576,7 +576,7 @@ class _ReelItemState extends State<ReelItem>
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.transparent,
-      builder: (context) => ReelCommentsScreen(reel: widget.reel),
+      builder: (context) => CommentsScreen(reel: widget.reel),
     ).then((_) {
       _isPausedByUser = false;
       if (widget.isActive && mounted) {

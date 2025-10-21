@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:instagram/models/saved_item_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_model.dart';
 import '../models/post_model.dart';
@@ -9,13 +12,66 @@ import '../models/reel_model.dart';
 import '../services/data_persistence.dart';
 
 class DummyData {
-  // Add import at the top
+  // ===================== COMMENTS MANAGEMENT =====================
+  static Map<String, List<CommentModel>> _commentsByPost = {};
 
-  // Add these methods in your DummyData class
+  /// Get comments for a specific post
+  static List<CommentModel> getCommentsForPost(String itemId) {
+    return _commentsByPost[itemId] ?? [];
+  }
 
-  /// Initialize data from SharedPreferences on app start
+  /// Save all comments persistently
+  static Future<void> _saveComments() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = _commentsByPost.map(
+      (key, value) => MapEntry(key, value.map((c) => c.toJson()).toList()),
+    );
+    await prefs.setString('comments', jsonEncode(data));
+  }
+
+  /// Load all comments from SharedPreferences
+  static Future<void> _loadComments() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString('comments');
+    if (jsonString == null) return;
+
+    try {
+      final Map<String, dynamic> decoded = jsonDecode(jsonString);
+      _commentsByPost = decoded.map((key, value) {
+        final list = (value as List)
+            .map((e) => CommentModel.fromJson(e))
+            .toList();
+        return MapEntry(key, list);
+      });
+      debugPrint('✅ Loaded ${_commentsByPost.length} comment sets');
+    } catch (e) {
+      debugPrint('❌ Failed to load comments: $e');
+    }
+  }
+
+  /// Add a comment and persist it
+  static Future<void> addComment(String itemId, CommentModel comment) async {
+    _commentsByPost.putIfAbsent(itemId, () => []);
+    _commentsByPost[itemId]!.add(comment);
+    await _saveComments();
+    debugPrint('💬 Comment added to $itemId');
+  }
+
+  /// Permanently delete a comment and persist change
+  static Future<void> deleteComment(String postId, String commentId) async {
+    if (_commentsByPost.containsKey(postId)) {
+      _commentsByPost[postId]!.removeWhere((c) => c.id == commentId);
+      await _saveComments();
+      debugPrint('🗑️ Comment deleted permanently: $commentId');
+    }
+  }
+
+  // ===================== DATA INITIALIZATION =====================
   static Future<void> initializeData() async {
     debugPrint('🔄 Loading saved data...');
+
+    // Load comments first
+    await _loadComments();
 
     // Load posts
     final savedPosts = await DataPersistence.loadPosts();
@@ -67,7 +123,7 @@ class DummyData {
     debugPrint('✅ Data initialization complete');
   }
 
-  /// Save all user-created content
+  // ===================== OTHER EXISTING METHODS =====================
   static Future<void> saveAllUserContent() async {
     try {
       final userPosts = posts.where((p) => p.userId == currentUser.id).toList();
@@ -90,14 +146,12 @@ class DummyData {
     }
   }
 
-  /// Save posts specifically
   static Future<void> saveUserPosts() async {
     final userPosts = posts.where((p) => p.userId == currentUser.id).toList();
     await DataPersistence.savePosts(userPosts);
     await DataPersistence.saveUserPostCount(currentUser.posts);
   }
 
-  /// Save stories specifically
   static Future<void> saveUserStories() async {
     final userStories = stories
         .where((s) => s.userId == currentUser.id)
@@ -105,51 +159,40 @@ class DummyData {
     await DataPersistence.saveStories(userStories);
   }
 
-  /// Save reels specifically
   static Future<void> saveUserReels() async {
     final userReels = reels.where((r) => r.userId == currentUser.id).toList();
     await DataPersistence.saveReels(userReels);
   }
 
-  /// Save reposts specifically
   static Future<void> saveUserReposts() async {
     await DataPersistence.saveReposts(userReposts);
   }
 
-  /// Delete a post permanently and update SharedPreferences
   static Future<void> deletePost(String postId) async {
     posts.removeWhere((p) => p.id == postId);
-    // Save all posts after deletion
     await DataPersistence.savePosts(posts);
     debugPrint('🗑️ Post deleted: $postId');
   }
 
-  /// Delete a reel permanently and update SharedPreferences
   static Future<void> deleteReel(String reelId) async {
     reels.removeWhere((r) => r.id == reelId);
-    // Save all reels after deletion
     await DataPersistence.saveReels(reels);
     debugPrint('🗑️ Reel deleted: $reelId');
   }
 
-  /// Delete a story permanently and save
   static Future<void> deleteStory(String storyId) async {
     stories.removeWhere((s) => s.id == storyId);
     await DataPersistence.saveStories(stories);
     debugPrint('🗑️ Story deleted: $storyId');
   }
 
-  /// List to store all saved items
-  // Saved items storage
   static final List<SavedItem> _savedItems = [];
 
-  /// Save a post or reel
   static void saveItem({
-    required String itemType, // 'post' or 'reel'
+    required String itemType,
     required String itemId,
     required String userId,
   }) {
-    // Check if already saved
     if (!_savedItems.any(
       (item) => item.itemType == itemType && item.itemId == itemId,
     )) {
@@ -166,7 +209,6 @@ class DummyData {
     }
   }
 
-  /// Remove a saved post or reel
   static void removeSavedItem({
     required String itemType,
     required String itemId,
@@ -177,32 +219,25 @@ class DummyData {
     debugPrint('❌ Removed: $itemType - $itemId');
   }
 
-  /// Check if a post or reel is saved
   static bool isItemSaved({required String itemType, required String itemId}) {
     return _savedItems.any(
       (item) => item.itemType == itemType && item.itemId == itemId,
     );
   }
 
-  /// Get all saved items
   static List<SavedItem> getSavedItems() => List<SavedItem>.from(_savedItems);
 
-  /// Get saved items filtered by type
-
-  /// Get saved items sorted by newest first
   static List<SavedItem> getSavedItemsSorted() {
     final sorted = List<SavedItem>.from(_savedItems);
     sorted.sort((a, b) => b.savedAt.compareTo(a.savedAt));
     return sorted;
   }
 
-  /// Clear all saved items
   static void clearAllSavedItems() {
     _savedItems.clear();
     debugPrint('🗑️ Cleared all saved items');
   }
 
-  /// Get a Post by ID
   static PostModel? getPostById(String postId) {
     return posts.firstWhere(
       (p) => p.id == postId,
@@ -218,7 +253,6 @@ class DummyData {
     );
   }
 
-  /// Get a Reel by ID
   static ReelModel? getReelById(String reelId) {
     return reels.firstWhere(
       (r) => r.id == reelId,
@@ -236,12 +270,10 @@ class DummyData {
     );
   }
 
-  /// Get saved items filtered by type
   static List<SavedItem> getSavedItemsByType(String itemType) {
     return _savedItems.where((item) => item.itemType == itemType).toList();
   }
 
-  /// Get saved items count
   static int getSavedItemsCount({String? itemType}) {
     if (itemType == null) {
       return _savedItems.length;
@@ -249,32 +281,17 @@ class DummyData {
     return _savedItems.where((item) => item.itemType == itemType).length;
   }
 
-  /// Get saved items sorted by save date (newest first)
-
   static Map<String, List<String>> userReposts = {};
 
-  // ✅ Get all reposted reels for a specific user
   static List<ReelModel> getRepostsForUser(String userId) {
     final repostedReelIds = userReposts[userId] ?? [];
-
-    final repostedReels = reels
-        .where((reel) => repostedReelIds.contains(reel.id))
-        .toList();
-
-    return repostedReels;
+    return reels.where((reel) => repostedReelIds.contains(reel.id)).toList();
   }
 
-  // Add a repost - UPDATED VERSION (REPLACE THE OLD ONE)
-
-  // Remove a repost
   static void removeRepost(String reelId, String currentUserId) {
-    // Find the reel in the main reels list
     final reelIndex = reels.indexWhere((r) => r.id == reelId);
     if (reelIndex != -1) {
-      // Unmark as reposted in the main list
       reels[reelIndex].isReposted = false;
-
-      // Remove from user's reposts list
       if (userReposts.containsKey(currentUserId)) {
         userReposts[currentUserId]!.remove(reelId);
       }
@@ -282,8 +299,7 @@ class DummyData {
   }
 
   static bool hasUserReposted(String reelId, String userId) {
-    final hasReposted = userReposts[userId]?.contains(reelId) ?? false;
-    return hasReposted;
+    return userReposts[userId]?.contains(reelId) ?? false;
   }
 
   static final List<ReelModel> reels = [
@@ -2198,25 +2214,6 @@ I hope more platforms continue to recognize the creators that make them great! #
       return users.firstWhere((user) => user.id == userId);
     } catch (e) {
       return null;
-    }
-  }
-
-  static List<CommentModel> getCommentsForPost(String postId) {
-    return postComments[postId] ?? [];
-  }
-
-  // Add a new comment to a post
-  static void addComment(String postId, CommentModel comment) {
-    if (postComments.containsKey(postId)) {
-      postComments[postId]!.add(comment);
-    } else {
-      postComments[postId] = [comment];
-    }
-
-    // Update the post's comment count
-    final postIndex = posts.indexWhere((post) => post.id == postId);
-    if (postIndex != -1) {
-      posts[postIndex].comments++;
     }
   }
 }
