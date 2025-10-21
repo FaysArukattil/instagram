@@ -20,7 +20,7 @@ class _ReelEditorScreenState extends State<ReelEditorScreen> {
     super.dispose();
   }
 
-  void _shareReel() {
+  void _shareReel() async {
     final newReel = ReelModel(
       id: 'reel_${DateTime.now().millisecondsSinceEpoch}',
       userId: DummyData.currentUser.id,
@@ -35,15 +35,20 @@ class _ReelEditorScreenState extends State<ReelEditorScreen> {
 
     DummyData.reels.insert(0, newReel);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Reel posted successfully!'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
+    // 💾 SAVE TO SHARED PREFERENCES
+    await DummyData.saveUserReels();
 
-    Navigator.pop(context);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Reel posted successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -62,37 +67,40 @@ class _ReelEditorScreenState extends State<ReelEditorScreen> {
             onPressed: _shareReel,
             child: const Text(
               'Share',
-              style: TextStyle(color: AppColors.blue, fontSize: 16),
+              style: TextStyle(
+                color: AppColors.blue,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.videocam, size: 100, color: AppColors.black),
-                  const SizedBox(height: 16),
-                  Text('Video: ${widget.videoPath.split('/').last}'),
-                ],
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Container(
+              height: 400,
+              color: AppColors.black12,
+              child: const Center(
+                child: Icon(
+                  Icons.play_arrow,
+                  size: 100,
+                  color: AppColors.black54,
+                ),
               ),
             ),
-          ),
-          Container(
-            color: AppColors.grey200,
-            padding: const EdgeInsets.all(16),
-            child: TextField(
+            const SizedBox(height: 16),
+            TextField(
               controller: _captionController,
+              maxLines: 5,
               decoration: const InputDecoration(
-                hintText: 'Add a caption...',
-                border: InputBorder.none,
+                hintText: 'Write a caption...',
+                border: OutlineInputBorder(),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

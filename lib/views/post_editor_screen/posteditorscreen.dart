@@ -23,7 +23,7 @@ class _PostEditorScreenState extends State<PostEditorScreen> {
     super.dispose();
   }
 
-  void _sharePost() {
+  void _sharePost() async {
     final newPost = PostModel(
       id: 'post_${DateTime.now().millisecondsSinceEpoch}',
       userId: DummyData.currentUser.id,
@@ -39,15 +39,20 @@ class _PostEditorScreenState extends State<PostEditorScreen> {
     DummyData.posts.insert(0, newPost);
     DummyData.currentUser.posts++;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Post shared successfully!'),
-        backgroundColor: AppColors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
+    // 💾 SAVE TO SHARED PREFERENCES
+    await DummyData.saveUserPosts();
 
-    Navigator.pop(context);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Post shared successfully!'),
+          backgroundColor: AppColors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -82,7 +87,6 @@ class _PostEditorScreenState extends State<PostEditorScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Image carousel
             SizedBox(
               height: 400,
               child: Stack(

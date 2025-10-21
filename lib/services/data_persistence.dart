@@ -1,24 +1,28 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/post_model.dart';
+import '../models/story_model.dart';
+import '../models/reel_model.dart';
 import '../models/comment_model.dart';
 
-/// Service to persist data locally using SharedPreferences
+/// Service to persist all user-created content locally
 class DataPersistence {
   static const String _postsKey = 'posts_data';
+  static const String _storiesKey = 'stories_data';
+  static const String _reelsKey = 'reels_data';
+  static const String _repostsKey = 'reposts_data';
+  static const String _savedItemsKey = 'saved_items_data';
   static const String _commentsKey = 'comments_data';
   static const String _userPostCountKey = 'user_post_count';
-  static const String _userFollowersKey = 'user_followers';
-  static const String _userFollowingKey = 'user_following';
 
-  // Save posts to local storage
+  // ===================== POSTS =====================
+
   static Future<void> savePosts(List<PostModel> posts) async {
     final prefs = await SharedPreferences.getInstance();
     final postsJson = posts.map((post) => post.toJson()).toList();
     await prefs.setString(_postsKey, jsonEncode(postsJson));
   }
 
-  // Load posts from local storage
   static Future<List<PostModel>?> loadPosts() async {
     final prefs = await SharedPreferences.getInstance();
     final postsString = prefs.getString(_postsKey);
@@ -28,7 +32,70 @@ class DataPersistence {
     return postsJson.map((json) => PostModel.fromJson(json)).toList();
   }
 
-  // Save comments to local storage
+  // ===================== STORIES =====================
+
+  static Future<void> saveStories(List<StoryModel> stories) async {
+    final prefs = await SharedPreferences.getInstance();
+    final storiesJson = stories.map((story) => story.toJson()).toList();
+    await prefs.setString(_storiesKey, jsonEncode(storiesJson));
+  }
+
+  static Future<List<StoryModel>?> loadStories() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storiesString = prefs.getString(_storiesKey);
+    if (storiesString == null) return null;
+
+    final List<dynamic> storiesJson = jsonDecode(storiesString);
+    return storiesJson.map((json) => StoryModel.fromJson(json)).toList();
+  }
+
+  // ===================== REELS =====================
+
+  static Future<void> saveReels(List<ReelModel> reels) async {
+    final prefs = await SharedPreferences.getInstance();
+    final reelsJson = reels.map((reel) => reel.toJson()).toList();
+    await prefs.setString(_reelsKey, jsonEncode(reelsJson));
+  }
+
+  static Future<List<ReelModel>?> loadReels() async {
+    final prefs = await SharedPreferences.getInstance();
+    final reelsString = prefs.getString(_reelsKey);
+    if (reelsString == null) return null;
+
+    final List<dynamic> reelsJson = jsonDecode(reelsString);
+    return reelsJson.map((json) => ReelModel.fromJson(json)).toList();
+  }
+
+  // ===================== REPOSTS =====================
+
+  static Future<void> saveReposts(Map<String, List<String>> reposts) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_repostsKey, jsonEncode(reposts));
+  }
+
+  static Future<Map<String, List<String>>?> loadReposts() async {
+    final prefs = await SharedPreferences.getInstance();
+    final repostsString = prefs.getString(_repostsKey);
+    if (repostsString == null) return null;
+
+    final Map<String, dynamic> decoded = jsonDecode(repostsString);
+    return decoded.map((key, value) => MapEntry(key, List<String>.from(value)));
+  }
+
+  // ===================== SAVED ITEMS =====================
+
+  static Future<void> saveSavedItems(List<String> savedItemIds) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_savedItemsKey, savedItemIds);
+  }
+
+  static Future<List<String>?> loadSavedItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_savedItemsKey);
+  }
+
+  // ===================== COMMENTS =====================
+
   static Future<void> saveComments(
     Map<String, List<CommentModel>> comments,
   ) async {
@@ -42,7 +109,6 @@ class DataPersistence {
     await prefs.setString(_commentsKey, jsonEncode(commentsJson));
   }
 
-  // Load comments from local storage
   static Future<Map<String, List<CommentModel>>?> loadComments() async {
     final prefs = await SharedPreferences.getInstance();
     final commentsString = prefs.getString(_commentsKey);
@@ -60,33 +126,22 @@ class DataPersistence {
     return result;
   }
 
-  // Save user post count
+  // ===================== USER STATS =====================
+
   static Future<void> saveUserPostCount(int count) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_userPostCountKey, count);
   }
 
-  // Load user post count
   static Future<int?> loadUserPostCount() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_userPostCountKey);
   }
 
-  // Save user stats
-  static Future<void> saveUserStats(int followers, int following) async {
+  // ===================== CLEAR ALL DATA =====================
+
+  static Future<void> clearAllData() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_userFollowersKey, followers);
-    await prefs.setInt(_userFollowingKey, following);
-  }
-
-  // Load user stats
-  static Future<Map<String, int>?> loadUserStats() async {
-    final prefs = await SharedPreferences.getInstance();
-    final followers = prefs.getInt(_userFollowersKey);
-    final following = prefs.getInt(_userFollowingKey);
-
-    if (followers == null || following == null) return null;
-
-    return {'followers': followers, 'following': following};
+    await prefs.clear();
   }
 }

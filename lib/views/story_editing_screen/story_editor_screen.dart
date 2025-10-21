@@ -1,4 +1,3 @@
-// lib/views/story_editing_screen/story_editor_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:instagram/core/constants/app_colors.dart';
@@ -68,18 +67,14 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
     }
   }
 
-  void _postStory() {
-    // Find or create user's story
+  void _postStory() async {
     final userStoryIndex = DummyData.stories.indexWhere(
       (s) => s.userId == DummyData.currentUser.id,
     );
 
     if (userStoryIndex != -1) {
-      // User already has stories, add to existing at the END
-      // This ensures new stories appear after viewing old ones
       DummyData.stories[userStoryIndex].images.add(widget.imagePath);
 
-      // Update timeAgo to "Just now" for the story collection
       final existingStory = DummyData.stories[userStoryIndex];
       final updatedStory = StoryModel(
         id: existingStory.id,
@@ -91,7 +86,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
       );
       DummyData.stories[userStoryIndex] = updatedStory;
     } else {
-      // Create new story for user and insert at the BEGINNING (after current user position)
       final newStory = StoryModel(
         id: 'story_${DateTime.now().millisecondsSinceEpoch}',
         userId: DummyData.currentUser.id,
@@ -101,7 +95,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
         timeAgo: 'Just now',
       );
 
-      // Insert at position 0 or 1 depending on if there are other stories
       if (DummyData.stories.isEmpty) {
         DummyData.stories.add(newStory);
       } else {
@@ -109,7 +102,9 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
       }
     }
 
-    // Show success message
+    // 💾 SAVE TO SHARED PREFERENCES
+    await DummyData.saveUserStories();
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -119,7 +114,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
         ),
       );
 
-      // Go back to home screen (pop twice: editor + my_story_screen)
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const BottomNavBarScreen()),
@@ -135,7 +129,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
       backgroundColor: AppColors.black,
       body: Stack(
         children: [
-          // Image Preview
           Positioned.fill(
             child: widget.isNetwork
                 ? Image.network(
@@ -159,8 +152,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                     ),
                   ),
           ),
-
-          // Text overlay (draggable)
           if (_textContent.isNotEmpty)
             Positioned(
               left: _textPosition.dx * size.width - 100,
@@ -196,8 +187,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                 ),
               ),
             ),
-
-          // Top Bar
           Positioned(
             top: 0,
             left: 0,
@@ -251,8 +240,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
               ),
             ),
           ),
-
-          // Text Input Field
           if (_showTextField)
             Positioned(
               bottom: 0,
@@ -269,7 +256,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Color picker
                     SizedBox(
                       height: 40,
                       child: ListView.builder(
@@ -302,7 +288,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Text input
                     Row(
                       children: [
                         Expanded(
@@ -346,7 +331,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // Size slider
                     Row(
                       children: [
                         const Text(
@@ -382,8 +366,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                 ),
               ),
             ),
-
-          // Bottom Bar
           if (!_showTextField)
             Positioned(
               bottom: 0,
@@ -408,7 +390,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                 ),
                 child: Row(
                   children: [
-                    // Save to device button
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
@@ -434,7 +415,6 @@ class _StoryEditorScreenState extends State<StoryEditorScreen> {
                       ),
                     ),
                     const Spacer(),
-                    // Post button
                     GestureDetector(
                       onTap: _postStory,
                       child: Container(

@@ -11,6 +11,8 @@ class AppColors {
 
   //Advance Colors
   static const Color black54 = Colors.black54;
+  static const Color black12 = Colors.black12;
+
   static const Color black26 = Colors.black26;
 
   static const Color black87 = Colors.black87;

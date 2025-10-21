@@ -33,13 +33,34 @@ class CommentModel {
   // Create CommentModel from JSON
   factory CommentModel.fromJson(Map<String, dynamic> json) {
     return CommentModel(
-      id: json['id'],
-      userId: json['userId'],
-      text: json['text'],
-      timeAgo: json['timeAgo'],
-      likes: json['likes'] ?? 0,
-      isLiked: json['isLiked'] ?? false,
-      isAuthor: json['isAuthor'] ?? false,
+      id: json['id'] as String,
+      userId: json['userId'] as String,
+      text: json['text'] as String,
+      timeAgo: json['timeAgo'] as String,
+      likes: json['likes'] as int? ?? 0,
+      isLiked: json['isLiked'] as bool? ?? false,
+      isAuthor: json['isAuthor'] as bool? ?? false,
+    );
+  }
+
+  // Create a copy with updated fields
+  CommentModel copyWith({
+    String? id,
+    String? userId,
+    String? text,
+    String? timeAgo,
+    int? likes,
+    bool? isLiked,
+    bool? isAuthor,
+  }) {
+    return CommentModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      text: text ?? this.text,
+      timeAgo: timeAgo ?? this.timeAgo,
+      likes: likes ?? this.likes,
+      isLiked: isLiked ?? this.isLiked,
+      isAuthor: isAuthor ?? this.isAuthor,
     );
   }
 }

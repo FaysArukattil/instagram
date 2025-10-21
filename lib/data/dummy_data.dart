@@ -6,8 +6,116 @@ import '../models/post_model.dart';
 import '../models/story_model.dart';
 import '../models/comment_model.dart';
 import '../models/reel_model.dart';
+import '../services/data_persistence.dart';
 
 class DummyData {
+  // Add import at the top
+
+  // Add these methods in your DummyData class
+
+  /// Initialize data from SharedPreferences on app start
+  static Future<void> initializeData() async {
+    debugPrint('🔄 Loading saved data...');
+
+    // Load posts
+    final savedPosts = await DataPersistence.loadPosts();
+    if (savedPosts != null && savedPosts.isNotEmpty) {
+      final existingPostIds = posts.map((p) => p.id).toSet();
+      final newPosts = savedPosts
+          .where((p) => !existingPostIds.contains(p.id))
+          .toList();
+      posts.insertAll(0, newPosts);
+      debugPrint('✅ Loaded ${newPosts.length} saved posts');
+    }
+
+    // Load stories
+    final savedStories = await DataPersistence.loadStories();
+    if (savedStories != null && savedStories.isNotEmpty) {
+      final existingStoryIds = stories.map((s) => s.id).toSet();
+      final newStories = savedStories
+          .where((s) => !existingStoryIds.contains(s.id))
+          .toList();
+      stories.insertAll(0, newStories);
+      debugPrint('✅ Loaded ${newStories.length} saved stories');
+    }
+
+    // Load reels
+    final savedReels = await DataPersistence.loadReels();
+    if (savedReels != null && savedReels.isNotEmpty) {
+      final existingReelIds = reels.map((r) => r.id).toSet();
+      final newReels = savedReels
+          .where((r) => !existingReelIds.contains(r.id))
+          .toList();
+      reels.insertAll(0, newReels);
+      debugPrint('✅ Loaded ${newReels.length} saved reels');
+    }
+
+    // Load reposts
+    final savedReposts = await DataPersistence.loadReposts();
+    if (savedReposts != null) {
+      userReposts.addAll(savedReposts);
+      debugPrint('✅ Loaded reposts for ${savedReposts.length} users');
+    }
+
+    // Load user post count
+    final savedPostCount = await DataPersistence.loadUserPostCount();
+    if (savedPostCount != null) {
+      currentUser.posts = savedPostCount;
+      debugPrint('✅ Loaded user post count: $savedPostCount');
+    }
+
+    debugPrint('✅ Data initialization complete');
+  }
+
+  /// Save all user-created content
+  static Future<void> saveAllUserContent() async {
+    try {
+      final userPosts = posts.where((p) => p.userId == currentUser.id).toList();
+      await DataPersistence.savePosts(userPosts);
+
+      final userStories = stories
+          .where((s) => s.userId == currentUser.id)
+          .toList();
+      await DataPersistence.saveStories(userStories);
+
+      final userReels = reels.where((r) => r.userId == currentUser.id).toList();
+      await DataPersistence.saveReels(userReels);
+
+      await DataPersistence.saveReposts(userReposts);
+      await DataPersistence.saveUserPostCount(currentUser.posts);
+
+      debugPrint('💾 All user content saved successfully');
+    } catch (e) {
+      debugPrint('❌ Error saving data: $e');
+    }
+  }
+
+  /// Save posts specifically
+  static Future<void> saveUserPosts() async {
+    final userPosts = posts.where((p) => p.userId == currentUser.id).toList();
+    await DataPersistence.savePosts(userPosts);
+    await DataPersistence.saveUserPostCount(currentUser.posts);
+  }
+
+  /// Save stories specifically
+  static Future<void> saveUserStories() async {
+    final userStories = stories
+        .where((s) => s.userId == currentUser.id)
+        .toList();
+    await DataPersistence.saveStories(userStories);
+  }
+
+  /// Save reels specifically
+  static Future<void> saveUserReels() async {
+    final userReels = reels.where((r) => r.userId == currentUser.id).toList();
+    await DataPersistence.saveReels(userReels);
+  }
+
+  /// Save reposts specifically
+  static Future<void> saveUserReposts() async {
+    await DataPersistence.saveReposts(userReposts);
+  }
+
   /// List to store all saved items
   // Saved items storage
   static final List<SavedItem> _savedItems = [];
@@ -575,31 +683,11 @@ class DummyData {
     return reels.where((reel) => reel.userId == userId).toList();
   }
 
-  // static void addRepost(String reelId, String currentUserId) {
-  //   // Find the reel in the main reels list
-  //   final reelIndex = reels.indexWhere((r) => r.id == reelId);
-  //   if (reelIndex != -1) {
-  //     // Mark as reposted in the main list
-  //     reels[reelIndex].isReposted = true;
-
-  //     // Add to user's reposts list
-  //     if (userReposts.containsKey(currentUserId)) {
-  //       if (!userReposts[currentUserId]!.contains(reelId)) {
-  //         userReposts[currentUserId]!.add(reelId);
-  //       }
-  //     } else {
-  //       userReposts[currentUserId] = [reelId];
-  //     }
-  //   }
-  // }
-  static void addRepost(String reelId, String currentUserId) {
-    // Find the reel in the main reels list
+  static void addRepost(String reelId, String currentUserId) async {
     final reelIndex = reels.indexWhere((r) => r.id == reelId);
     if (reelIndex != -1) {
-      // Mark as reposted in the main list
       reels[reelIndex].isReposted = true;
 
-      // Add to user's reposts list
       if (userReposts.containsKey(currentUserId)) {
         if (!userReposts[currentUserId]!.contains(reelId)) {
           userReposts[currentUserId]!.add(reelId);
@@ -607,7 +695,10 @@ class DummyData {
       } else {
         userReposts[currentUserId] = [reelId];
       }
-    } else {}
+
+      // 💾 SAVE TO SHARED PREFERENCES
+      await saveUserReposts();
+    }
   }
 
   static final Map<String, List<Map<String, dynamic>>> chats = {

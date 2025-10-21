@@ -42,16 +42,43 @@ class PostModel {
   // Create PostModel from JSON
   factory PostModel.fromJson(Map<String, dynamic> json) {
     return PostModel(
-      id: json['id'],
-      userId: json['userId'],
+      id: json['id'] as String,
+      userId: json['userId'] as String,
       images: List<String>.from(json['images']),
-      caption: json['caption'],
-      likes: json['likes'],
-      comments: json['comments'],
-      timeAgo: json['timeAgo'],
-      location: json['location'],
-      isLiked: json['isLiked'] ?? false,
-      isSponsored: json['isSponsored'] ?? false,
+      caption: json['caption'] as String,
+      likes: json['likes'] as int,
+      comments: json['comments'] as int,
+      timeAgo: json['timeAgo'] as String,
+      location: json['location'] as String?,
+      isLiked: json['isLiked'] as bool? ?? false,
+      isSponsored: json['isSponsored'] as bool? ?? false,
+    );
+  }
+
+  // Create a copy with updated fields
+  PostModel copyWith({
+    String? id,
+    String? userId,
+    List<String>? images,
+    String? caption,
+    int? likes,
+    int? comments,
+    String? timeAgo,
+    String? location,
+    bool? isLiked,
+    bool? isSponsored,
+  }) {
+    return PostModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      images: images ?? this.images,
+      caption: caption ?? this.caption,
+      likes: likes ?? this.likes,
+      comments: comments ?? this.comments,
+      timeAgo: timeAgo ?? this.timeAgo,
+      location: location ?? this.location,
+      isLiked: isLiked ?? this.isLiked,
+      isSponsored: isSponsored ?? this.isSponsored,
     );
   }
 }
