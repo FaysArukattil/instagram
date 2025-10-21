@@ -102,16 +102,20 @@ class _PostScreenState extends State<PostScreen>
     _tapPosition = tapPosition;
     _showHeartAnimation();
 
-    setState(() {
+    setState(() async {
       final index = userPosts.indexWhere((p) => p.id == postId);
-      if (index != -1 && !userPosts[index].isLiked) {
-        userPosts[index].isLiked = true;
-        userPosts[index].likes += 1;
-
-        final mainIndex = DummyData.posts.indexWhere((p) => p.id == postId);
-        if (mainIndex != -1) {
-          DummyData.posts[mainIndex].isLiked = true;
-          DummyData.posts[mainIndex].likes = userPosts[index].likes;
+      if (index != -1) {
+        final post = userPosts[index];
+        if (!post.isLiked) {
+          await DummyData.likeItem(
+            itemType: 'post',
+            itemId: post.id,
+            userId: post.userId,
+          );
+          setState(() {
+            post.isLiked = true;
+            post.likes = DummyData.getPostById(post.id)?.likes ?? post.likes;
+          });
         }
       }
     });
@@ -419,13 +423,30 @@ class _PostScreenState extends State<PostScreen>
                                 : AppColors.black,
                             size: 28,
                           ),
-                          onPressed: () {
+                          onPressed: () async {
+                            if (post.isLiked) {
+                              await DummyData.unlikeItem(
+                                itemType: 'post',
+                                itemId: post.id,
+                              );
+                            } else {
+                              await DummyData.likeItem(
+                                itemType: 'post',
+                                itemId: post.id,
+                                userId: post.userId,
+                              );
+                            }
                             setState(() {
-                              post.isLiked = !post.isLiked;
-                              post.likes += post.isLiked ? 1 : -1;
+                              post.isLiked =
+                                  DummyData.getPostById(post.id)?.isLiked ??
+                                  false;
+                              post.likes =
+                                  DummyData.getPostById(post.id)?.likes ??
+                                  post.likes;
                             });
                           },
                         ),
+
                         GestureDetector(
                           onTap: () => _openComments(post),
                           child: Padding(

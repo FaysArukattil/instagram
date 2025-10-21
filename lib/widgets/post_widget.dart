@@ -107,11 +107,24 @@ class _PostWidgetState extends State<PostWidget>
     super.dispose();
   }
 
-  void _handleDoubleTapLike(String postId, Offset position) {
+  void _handleDoubleTapLike(String postId, Offset position) async {
     if (_isZooming) return;
     _tapPosition = position;
     _startHeartAnimation();
-    if (!widget.post.isLiked) widget.onLike(widget.post.id);
+
+    final post = widget.post;
+    if (!post.isLiked) {
+      await DummyData.likeItem(
+        itemType: 'post',
+        itemId: post.id,
+        userId: post.userId,
+      );
+      setState(() {
+        post.isLiked = DummyData.getPostById(post.id)?.isLiked ?? true;
+        post.likes = DummyData.getPostById(post.id)?.likes ?? post.likes;
+      });
+      widget.onPostUpdated?.call();
+    }
   }
 
   void _startHeartAnimation() {
@@ -343,7 +356,28 @@ class _PostWidgetState extends State<PostWidget>
                         : AppColors.black,
                     size: 28,
                   ),
-                  onPressed: () => widget.onLike(widget.post.id),
+                  onPressed: () async {
+                    final post = widget.post;
+                    if (post.isLiked) {
+                      await DummyData.unlikeItem(
+                        itemType: 'post',
+                        itemId: post.id,
+                      );
+                    } else {
+                      await DummyData.likeItem(
+                        itemType: 'post',
+                        itemId: post.id,
+                        userId: post.userId,
+                      );
+                    }
+                    setState(() {
+                      post.isLiked =
+                          DummyData.getPostById(post.id)?.isLiked ?? false;
+                      post.likes =
+                          DummyData.getPostById(post.id)?.likes ?? post.likes;
+                    });
+                    widget.onPostUpdated?.call();
+                  },
                 ),
                 IconButton(
                   icon: SvgPicture.asset(

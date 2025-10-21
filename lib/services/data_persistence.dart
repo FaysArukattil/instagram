@@ -143,6 +143,20 @@ class DataPersistence {
     return result;
   }
 
+  //======================= Likes ==================
+
+  static Future<void> saveLikedItems(List<SavedItem> items) async {
+    final prefs = await SharedPreferences.getInstance();
+    final stringList = items.map((e) => jsonEncode(e.toJson())).toList();
+    await prefs.setStringList('liked_items', stringList);
+  }
+
+  static Future<List<SavedItem>> loadLikedItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stringList = prefs.getStringList('liked_items') ?? [];
+    return stringList.map((e) => SavedItem.fromJson(jsonDecode(e))).toList();
+  }
+
   // ===================== USER STATS =====================
 
   static Future<void> saveUserPostCount(int count) async {

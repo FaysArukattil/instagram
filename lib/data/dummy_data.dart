@@ -37,7 +37,6 @@ class DummyData {
     if (jsonString == null) {
       // First launch → use preloaded comments
       _commentsByPost = {...postComments};
-      debugPrint('ℹ️ Using preloaded comments');
       return;
     }
 
@@ -49,9 +48,7 @@ class DummyData {
             .toList();
         return MapEntry(key, list);
       });
-      debugPrint('✅ Loaded ${_commentsByPost.length} comment sets');
     } catch (e) {
-      debugPrint('❌ Failed to load comments: $e');
       _commentsByPost = {...postComments}; // fallback
     }
   }
@@ -61,7 +58,6 @@ class DummyData {
     _commentsByPost.putIfAbsent(itemId, () => []);
     _commentsByPost[itemId]!.add(comment);
     await _saveComments();
-    debugPrint('💬 Comment added to $itemId');
   }
 
   /// Permanently delete a comment and persist change
@@ -69,14 +65,11 @@ class DummyData {
     if (_commentsByPost.containsKey(postId)) {
       _commentsByPost[postId]!.removeWhere((c) => c.id == commentId);
       await _saveComments();
-      debugPrint('🗑️ Comment deleted permanently: $commentId');
     }
   }
 
   // ===================== DATA INITIALIZATION =====================
   static Future<void> initializeData() async {
-    debugPrint('🔄 Loading saved data...');
-
     // Load comments first
     await _loadComments();
 
@@ -88,8 +81,24 @@ class DummyData {
           .where((p) => !existingPostIds.contains(p.id))
           .toList();
       posts.insertAll(0, newPosts);
-      debugPrint('✅ Loaded ${newPosts.length} saved posts');
     }
+
+    // Load liked items
+    final loadedLikedItems = await DataPersistence.loadLikedItems();
+    _likedItems.clear();
+    _likedItems.addAll(loadedLikedItems);
+
+    // Update isLiked flag for posts and reels
+    for (var item in _likedItems) {
+      if (item.itemType == 'post') {
+        final post = getPostById(item.itemId);
+        if (post != null) post.isLiked = true;
+      } else if (item.itemType == 'reel') {
+        final reel = getReelById(item.itemId);
+        if (reel != null) reel.isLiked = true;
+      }
+    }
+
     // Load saved items
     final loadedSavedItems = await DataPersistence.loadSavedItems();
     _savedItems.clear();
@@ -103,7 +112,6 @@ class DummyData {
           .where((s) => !existingStoryIds.contains(s.id))
           .toList();
       stories.insertAll(0, newStories);
-      debugPrint('✅ Loaded ${newStories.length} saved stories');
     }
 
     // Load reels
@@ -114,24 +122,19 @@ class DummyData {
           .where((r) => !existingReelIds.contains(r.id))
           .toList();
       reels.insertAll(0, newReels);
-      debugPrint('✅ Loaded ${newReels.length} saved reels');
     }
 
     // Load reposts
     final savedReposts = await DataPersistence.loadReposts();
     if (savedReposts != null) {
       userReposts.addAll(savedReposts);
-      debugPrint('✅ Loaded reposts for ${savedReposts.length} users');
     }
 
     // Load user post count
     final savedPostCount = await DataPersistence.loadUserPostCount();
     if (savedPostCount != null) {
       currentUser.posts = savedPostCount;
-      debugPrint('✅ Loaded user post count: $savedPostCount');
     }
-
-    debugPrint('✅ Data initialization complete');
   }
 
   // ===================== OTHER EXISTING METHODS =====================
@@ -198,6 +201,71 @@ class DummyData {
   }
 
   static final List<SavedItem> _savedItems = [];
+  static final List<SavedItem> _likedItems = [];
+  static Future<void> likeItem({
+    required String itemType,
+    required String itemId,
+    required String userId,
+  }) async {
+    if (!_likedItems.any(
+      (item) => item.itemType == itemType && item.itemId == itemId,
+    )) {
+      _likedItems.add(
+        SavedItem(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          itemType: itemType,
+          itemId: itemId,
+          userId: userId,
+          savedAt: DateTime.now(),
+        ),
+      );
+      await DataPersistence.saveLikedItems(_likedItems);
+
+      if (itemType == 'post') {
+        final post = getPostById(itemId);
+        if (post != null) {
+          post.isLiked = true;
+          post.likes += 1;
+        }
+      } else if (itemType == 'reel') {
+        final reel = getReelById(itemId);
+        if (reel != null) {
+          reel.isLiked = true;
+          reel.likes += 1;
+        }
+      }
+    }
+  }
+
+  static Future<void> unlikeItem({
+    required String itemType,
+    required String itemId,
+  }) async {
+    _likedItems.removeWhere(
+      (item) => item.itemType == itemType && item.itemId == itemId,
+    );
+    await DataPersistence.saveLikedItems(_likedItems);
+
+    if (itemType == 'post') {
+      final post = getPostById(itemId);
+      if (post != null) {
+        post.isLiked = false;
+        if (post.likes > 0) post.likes -= 1;
+      }
+    } else if (itemType == 'reel') {
+      final reel = getReelById(itemId);
+      if (reel != null) {
+        reel.isLiked = false;
+        if (reel.likes > 0) reel.likes -= 1;
+      }
+    }
+  }
+
+  static bool isItemLiked({required String itemType, required String itemId}) {
+    return _likedItems.any(
+      (item) => item.itemType == itemType && item.itemId == itemId,
+    );
+  }
 
   // Save an item permanently
   static Future<void> saveItem({
@@ -218,7 +286,6 @@ class DummyData {
         ),
       );
       await DataPersistence.saveSavedItems(_savedItems);
-      debugPrint('✅ Saved: $itemType - $itemId');
     }
   }
 
