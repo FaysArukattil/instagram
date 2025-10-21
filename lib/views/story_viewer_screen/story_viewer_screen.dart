@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -6,6 +8,7 @@ import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/story_model.dart';
 import 'package:instagram/models/user_model.dart';
 import 'package:instagram/views/profile_screen/profile_screen.dart';
+import 'package:instagram/views/three_dot_bottom_sheet/three_dot_bottom_sheet.dart';
 
 class StoryViewerScreen extends StatefulWidget {
   final List<StoryModel> stories;
@@ -54,17 +57,14 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
           });
 
     _startProgress();
-    _markStoryAsViewed(); // Mark initial story as viewed
+    _markStoryAsViewed();
   }
 
-  // Mark the current story as viewed
   void _markStoryAsViewed() {
     if (_currentUserIndex >= 0 && _currentUserIndex < widget.stories.length) {
       final currentStory = widget.stories[_currentUserIndex];
-      // Mark as viewed
       currentStory.markAsViewed(DummyData.currentUser.id);
 
-      // Also update in DummyData to persist
       final mainStoryIndex = DummyData.stories.indexWhere(
         (s) => s.id == currentStory.id,
       );
@@ -136,7 +136,6 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
 
     try {
       if (localPosition.dx < width / 2) {
-        // Tap on left side - go to previous
         if (images != null && _currentImageIndex > 0) {
           setState(() {
             _currentImageIndex = (_currentImageIndex - 1).clamp(
@@ -149,7 +148,6 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
           _goToPreviousUserOrClose();
         }
       } else {
-        // Tap on right side - go to next
         if (images != null && _currentImageIndex < images.length - 1) {
           setState(() {
             _currentImageIndex = (_currentImageIndex + 1).clamp(
@@ -200,22 +198,37 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   }
 
   void _openUserProfile(String userId) {
-    // Don't open current user's profile
     if (userId == DummyData.currentUser.id) return;
-
     final user = DummyData.getUserById(userId);
     if (user != null) {
-      _pauseProgress(); // Pause story progress
+      _pauseProgress();
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
       ).then((_) {
-        // Resume progress when returning from profile
-        if (mounted) {
-          _resumeProgress();
-        }
+        if (mounted) _resumeProgress();
       });
     }
+  }
+
+  Future<void> _openThreeDotMenu(StoryModel story) async {
+    _pauseProgress();
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => ThreeDotBottomSheet(
+        story: story,
+        onDelete: () {
+          setState(() {
+            DummyData.stories.removeWhere((s) => s.id == story.id);
+            widget.stories.removeWhere((s) => s.id == story.id);
+            if (widget.stories.isEmpty) Navigator.pop(context);
+          });
+        },
+      ),
+    );
+    _resumeProgress();
   }
 
   @override
@@ -282,27 +295,22 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
               });
               _progressController.reset();
               _startProgress();
-              _markStoryAsViewed(); // Mark new story as viewed when page changes
+              _markStoryAsViewed();
             },
             itemBuilder: (context, pageIndex) {
               final StoryModel pageStory = widget.stories[pageIndex];
               final images = pageStory.images;
               final int displayImageIndex = (pageIndex == _currentUserIndex)
-                  ? _currentImageIndex.clamp(
-                      0,
-                      (images.isEmpty ? 0 : images.length - 1),
-                    )
+                  ? _currentImageIndex.clamp(0, images.length - 1)
                   : 0;
               final String? imageUrl = images.isEmpty
                   ? null
                   : images[displayImageIndex];
-
               final UserModel? user = DummyData.getUserById(pageStory.userId);
 
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Story image
                   if (imageUrl == null)
                     Container(
                       color: AppColors.black,
@@ -335,7 +343,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                       ),
                     ),
 
-                  // Progress bars
+                  // Progress bar
                   Positioned(
                     top: 40,
                     left: 8,
@@ -345,18 +353,18 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                         double value;
                         if (pageIndex != _currentUserIndex) {
                           value = 0.0;
+                        } else if (i < _currentImageIndex) {
+                          value = 1.0;
+                        } else if (i == _currentImageIndex) {
+                          value = _progressController.value;
                         } else {
-                          if (i < _currentImageIndex) {
-                            value = 1.0;
-                          } else if (i == _currentImageIndex) {
-                            value = _progressController.value;
-                          } else {
-                            value = 0.0;
-                          }
+                          value = 0.0;
                         }
                         return Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 2.0,
+                            ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
@@ -376,7 +384,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                     ),
                   ),
 
-                  // User info (avatar, name, time) - TAPPABLE
+                  // User header
                   Positioned(
                     top: 52,
                     left: 16,
@@ -385,9 +393,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                       children: [
                         GestureDetector(
                           onTap: () {
-                            if (user != null) {
-                              _openUserProfile(user.id);
-                            }
+                            if (user != null) _openUserProfile(user.id);
                           },
                           child: Row(
                             children: [
@@ -437,7 +443,9 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                             Icons.more_vert,
                             color: AppColors.white,
                           ),
-                          onPressed: () {},
+                          onPressed: () => _openThreeDotMenu(
+                            pageStory,
+                          ), // ✅ Here’s the 3-dot
                         ),
                       ],
                     ),

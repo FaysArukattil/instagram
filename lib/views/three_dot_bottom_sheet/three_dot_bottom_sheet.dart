@@ -5,19 +5,26 @@ import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
 import 'package:instagram/models/post_model.dart';
 import 'package:instagram/models/reel_model.dart';
+import 'package:instagram/models/story_model.dart';
 import 'package:instagram/views/profile_screen/profile_screen.dart';
 import 'package:instagram/views/share_profile_screen/share_profile_screen.dart';
 
 class ThreeDotBottomSheet extends StatefulWidget {
   final PostModel? post;
   final ReelModel? reel;
-  final VoidCallback? onDelete; // Optional callback to refresh feed
+  final StoryModel? story;
+  final VoidCallback? onDelete;
 
-  const ThreeDotBottomSheet({super.key, this.post, this.reel, this.onDelete})
-    : assert(
-        post != null || reel != null,
-        'Either post or reel must be provided',
-      );
+  const ThreeDotBottomSheet({
+    super.key,
+    this.post,
+    this.reel,
+    this.story,
+    this.onDelete,
+  }) : assert(
+         post != null || reel != null || story != null,
+         'Either post, reel, or story must be provided',
+       );
 
   @override
   State<ThreeDotBottomSheet> createState() => _ThreeDotBottomSheetState();
@@ -39,16 +46,20 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
       itemType = 'post';
       itemId = widget.post!.id;
       userId = widget.post!.userId;
-      isReposted = false; // Posts don't have repost
-    } else {
+      isReposted = false;
+    } else if (widget.reel != null) {
       itemType = 'reel';
       itemId = widget.reel!.id;
       userId = widget.reel!.userId;
       isReposted = widget.reel!.isReposted;
+    } else {
+      itemType = 'story';
+      itemId = widget.story!.id;
+      userId = widget.story!.userId;
+      isReposted = false;
     }
 
     isSaved = DummyData.isItemSaved(itemType: itemType, itemId: itemId);
-
     final user = DummyData.getUserById(userId);
     isFollowing = user?.isFollowing ?? false;
   }
@@ -56,6 +67,12 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
   bool get isCurrentUser => userId == DummyData.currentUser.id;
 
   void _toggleSave() {
+    if (itemType == 'story') {
+      _showSnackBar('Stories can’t be saved');
+      Navigator.pop(context);
+      return;
+    }
+
     setState(() {
       if (isSaved) {
         DummyData.removeSavedItem(itemType: itemType, itemId: itemId);
@@ -131,11 +148,15 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
     if (confirm == true) {
       if (itemType == 'post') {
         await DummyData.deletePost(itemId);
-      } else {
+      } else if (itemType == 'reel') {
         await DummyData.deleteReel(itemId);
+      } else if (itemType == 'story') {
+        await DummyData.deleteStory(itemId);
       }
+
       Navigator.pop(context);
       _showSnackBar('$itemType deleted');
+
       if (widget.onDelete != null) widget.onDelete!();
     }
   }
@@ -197,7 +218,7 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
               ),
               const SizedBox(height: 20),
 
-              // Delete option (only current user)
+              // Delete (only current user)
               if (isCurrentUser)
                 _buildOption(
                   icon: Icons.delete,
@@ -206,14 +227,15 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
                   onTap: _deleteItem,
                 ),
 
-              // Save option
-              _buildOption(
-                icon: isSaved ? Icons.bookmark : Icons.bookmark_border,
-                text: isSaved ? 'Remove from saved' : 'Save',
-                onTap: _toggleSave,
-              ),
+              // Save (not for story)
+              if (itemType != 'story')
+                _buildOption(
+                  icon: isSaved ? Icons.bookmark : Icons.bookmark_border,
+                  text: isSaved ? 'Remove from saved' : 'Save',
+                  onTap: _toggleSave,
+                ),
 
-              // Repost option (only for reels)
+              // Repost (only reels)
               if (widget.reel != null)
                 _buildOption(
                   icon: Icons.repeat,
@@ -222,7 +244,7 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
                   onTap: _toggleRepost,
                 ),
 
-              // QR code option
+              // QR Code
               _buildOption(
                 icon: Icons.qr_code,
                 text: 'QR code',
@@ -231,7 +253,7 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
 
               const Divider(height: 16),
 
-              // Follow/Unfollow (only show if not current user)
+              // Follow/Unfollow (not current user)
               if (!isCurrentUser)
                 _buildOption(
                   icon: isFollowing
@@ -248,7 +270,7 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
                 onTap: _openProfileScreen,
               ),
 
-              // AI info
+              // Info
               _buildOption(
                 icon: Icons.info_outline,
                 text: 'Info',

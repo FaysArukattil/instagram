@@ -132,6 +132,13 @@ class DummyData {
     debugPrint('🗑️ Reel deleted: $reelId');
   }
 
+  /// Delete a story permanently and save
+  static Future<void> deleteStory(String storyId) async {
+    stories.removeWhere((s) => s.id == storyId);
+    await DataPersistence.saveStories(stories);
+    debugPrint('🗑️ Story deleted: $storyId');
+  }
+
   /// List to store all saved items
   // Saved items storage
   static final List<SavedItem> _savedItems = [];
