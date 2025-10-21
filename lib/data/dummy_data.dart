@@ -33,7 +33,13 @@ class DummyData {
   static Future<void> _loadComments() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString('comments');
-    if (jsonString == null) return;
+
+    if (jsonString == null) {
+      // First launch → use preloaded comments
+      _commentsByPost = {...postComments};
+      debugPrint('ℹ️ Using preloaded comments');
+      return;
+    }
 
     try {
       final Map<String, dynamic> decoded = jsonDecode(jsonString);
@@ -46,6 +52,7 @@ class DummyData {
       debugPrint('✅ Loaded ${_commentsByPost.length} comment sets');
     } catch (e) {
       debugPrint('❌ Failed to load comments: $e');
+      _commentsByPost = {...postComments}; // fallback
     }
   }
 
