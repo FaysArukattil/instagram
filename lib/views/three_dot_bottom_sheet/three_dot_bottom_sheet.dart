@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
@@ -9,8 +11,9 @@ import 'package:instagram/views/share_profile_screen/share_profile_screen.dart';
 class ThreeDotBottomSheet extends StatefulWidget {
   final PostModel? post;
   final ReelModel? reel;
+  final VoidCallback? onDelete; // Optional callback to refresh feed
 
-  const ThreeDotBottomSheet({super.key, this.post, this.reel})
+  const ThreeDotBottomSheet({super.key, this.post, this.reel, this.onDelete})
     : assert(
         post != null || reel != null,
         'Either post or reel must be provided',
@@ -36,7 +39,7 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
       itemType = 'post';
       itemId = widget.post!.id;
       userId = widget.post!.userId;
-      isReposted = false; // Posts don't have repost in your model
+      isReposted = false; // Posts don't have repost
     } else {
       itemType = 'reel';
       itemId = widget.reel!.id;
@@ -89,30 +92,6 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
     Navigator.pop(context);
   }
 
-  void _openQRCode() {
-    Navigator.pop(context);
-    final user = DummyData.getUserById(userId);
-    if (user != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ShareProfileScreen(username: user.name),
-        ),
-      );
-    }
-  }
-
-  void _openprofilescreen() {
-    Navigator.pop(context);
-    final user = DummyData.getUserById(userId);
-    if (user != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
-      );
-    }
-  }
-
   void _toggleFollow() {
     setState(() {
       final user = DummyData.getUserById(userId);
@@ -128,6 +107,61 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
       }
     });
     Navigator.pop(context);
+  }
+
+  void _deleteItem() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete'),
+        content: const Text('Are you sure you want to delete this?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      if (itemType == 'post') {
+        await DummyData.deletePost(itemId);
+      } else {
+        await DummyData.deleteReel(itemId);
+      }
+      Navigator.pop(context);
+      _showSnackBar('$itemType deleted');
+      if (widget.onDelete != null) widget.onDelete!();
+    }
+  }
+
+  void _openQRCode() {
+    Navigator.pop(context);
+    final user = DummyData.getUserById(userId);
+    if (user != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ShareProfileScreen(username: user.name),
+        ),
+      );
+    }
+  }
+
+  void _openProfileScreen() {
+    Navigator.pop(context);
+    final user = DummyData.getUserById(userId);
+    if (user != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
+      );
+    }
   }
 
   void _showSnackBar(String message) {
@@ -162,6 +196,15 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
                 ),
               ),
               const SizedBox(height: 20),
+
+              // Delete option (only current user)
+              if (isCurrentUser)
+                _buildOption(
+                  icon: Icons.delete,
+                  text: 'Delete',
+                  isDestructive: true,
+                  onTap: _deleteItem,
+                ),
 
               // Save option
               _buildOption(
@@ -202,18 +245,16 @@ class _ThreeDotBottomSheetState extends State<ThreeDotBottomSheet> {
               _buildOption(
                 icon: Icons.person_outline,
                 text: 'About this account',
-                onTap: () {
-                  _openprofilescreen();
-                },
+                onTap: _openProfileScreen,
               ),
 
               // AI info
               _buildOption(
                 icon: Icons.info_outline,
-                text: 'info',
+                text: 'Info',
                 onTap: () {
                   Navigator.pop(context);
-                  _showSnackBar('info feature coming soon');
+                  _showSnackBar('Info feature coming soon');
                 },
               ),
 

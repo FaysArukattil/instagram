@@ -116,6 +116,22 @@ class DummyData {
     await DataPersistence.saveReposts(userReposts);
   }
 
+  /// Delete a post permanently and update SharedPreferences
+  static Future<void> deletePost(String postId) async {
+    posts.removeWhere((p) => p.id == postId);
+    // Save all posts after deletion
+    await DataPersistence.savePosts(posts);
+    debugPrint('🗑️ Post deleted: $postId');
+  }
+
+  /// Delete a reel permanently and update SharedPreferences
+  static Future<void> deleteReel(String reelId) async {
+    reels.removeWhere((r) => r.id == reelId);
+    // Save all reels after deletion
+    await DataPersistence.saveReels(reels);
+    debugPrint('🗑️ Reel deleted: $reelId');
+  }
+
   /// List to store all saved items
   // Saved items storage
   static final List<SavedItem> _savedItems = [];
