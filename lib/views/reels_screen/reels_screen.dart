@@ -96,12 +96,14 @@ class _ReelsScreenState extends State<ReelsScreen> with WidgetsBindingObserver {
           }).toList();
         }
       }
-
       for (var reel in reels) {
         reel.isReposted = DummyData.hasUserReposted(
           reel.id,
           DummyData.currentUser.id,
         );
+
+        // Load persisted like state
+        reel.isLiked = DummyData.isItemLiked(itemType: 'reel', itemId: reel.id);
       }
 
       if (shuffle) {
@@ -519,12 +521,9 @@ class _ReelItemState extends State<ReelItem>
     _startHeartAnimation();
 
     if (!widget.reel.isLiked) {
-      setState(() {
-        widget.reel.isLiked = true;
-        widget.reel.likes++;
-      });
-      widget.onReelUpdated();
+      _toggleLike(); // use persistent toggle
     }
+    widget.onReelUpdated();
   }
 
   void _handleSingleTap() {
@@ -558,11 +557,18 @@ class _ReelItemState extends State<ReelItem>
     }
   }
 
-  void _toggleLike() {
-    setState(() {
-      widget.reel.isLiked = !widget.reel.isLiked;
-      widget.reel.likes += widget.reel.isLiked ? 1 : -1;
-    });
+  void _toggleLike() async {
+    if (widget.reel.isLiked) {
+      await DummyData.unlikeItem(itemType: 'reel', itemId: widget.reel.id);
+    } else {
+      await DummyData.likeItem(
+        itemType: 'reel',
+        itemId: widget.reel.id,
+        userId: DummyData.currentUser.id,
+      );
+    }
+
+    setState(() {}); // update UI
     widget.onReelUpdated();
   }
 

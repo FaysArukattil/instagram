@@ -295,7 +295,17 @@ class _ReelWidgetState extends State<ReelWidget>
       widget.reel.likes += widget.reel.isLiked ? 1 : -1;
     });
 
-    // Use a microtask to avoid calling during build
+    // Persist like/unlike in DummyData
+    if (widget.reel.isLiked) {
+      DummyData.likeItem(
+        itemType: 'reel',
+        itemId: widget.reel.id,
+        userId: widget.reel.userId,
+      );
+    } else {
+      DummyData.unlikeItem(itemType: 'reel', itemId: widget.reel.id);
+    }
+
     Future.microtask(() {
       if (mounted && !_isDisposing) {
         widget.onReelUpdated?.call();
