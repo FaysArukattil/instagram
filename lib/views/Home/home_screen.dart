@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/core/constants/app_images.dart';
 import 'package:instagram/data/dummy_data.dart';
@@ -232,13 +231,9 @@ class _HomeScreenState extends State<HomeScreen>
     _loadData(shuffle: true);
   }
 
-  // Updated method that only triggers minimal setState
   void _handleReelUpdate() {
-    // Don't reload entire feed, just let ReelWidget manage its own state
     if (mounted) {
-      setState(() {
-        // Minimal update - this will just refresh the UI without rebuilding everything
-      });
+      setState(() {});
     }
   }
 
@@ -249,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen>
       return ReelWidget(
         key: ValueKey('reel_${item.id}'),
         reel: item,
-        onReelUpdated: _handleReelUpdate, // Use the new minimal update method
+        onReelUpdated: _handleReelUpdate,
         onNavigateToReels: widget.onNavigateToReels,
       );
     } else if (item is PostModel) {
@@ -269,7 +264,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Important for AutomaticKeepAliveClientMixin
+    super.build(context);
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -310,78 +305,40 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ],
       ),
-      body: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) return;
-          SystemNavigator.pop();
-        },
-        child: RefreshIndicator(
-          key: _refreshKey,
-          onRefresh: _refreshPosts,
-          displacement: 60,
-          edgeOffset: 10,
-          color: AppColors.grey700,
-          backgroundColor: AppColors.white,
-          strokeWidth: 2.2,
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Container(
-                  height: 110,
-                  margin: const EdgeInsets.only(bottom: 2),
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
-                    ),
-                    itemCount:
-                        1 + DummyData.users.where((u) => u.hasStory).length,
-                    itemBuilder: (context, storyIndex) {
-                      if (storyIndex == 0) {
-                        final userStory = DummyData.stories.firstWhere(
-                          (s) => s.userId == DummyData.currentUser.id,
-                          orElse: () => StoryModel(
-                            id: '',
-                            userId: DummyData.currentUser.id,
-                            username: DummyData.currentUser.username,
-                            profileImageUrl: DummyData.currentUser.profileImage,
-                            images: [],
-                            timeAgo: '',
-                          ),
-                        );
-
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: StoryAvatar(
-                            user: DummyData.currentUser,
-                            story: userStory.id.isNotEmpty ? userStory : null,
-                            hasStory: DummyData.stories.any(
-                              (s) => s.userId == DummyData.currentUser.id,
-                            ),
-                            isCurrentUser: true,
-                            onTap: _openMyStory,
-                            onAddStory: _addToStory,
-                          ),
-                        );
-                      }
-
-                      final storiesUsers = DummyData.users
-                          .where((u) => u.hasStory)
-                          .toList();
-                      final user = storiesUsers[storyIndex - 1];
-
+      body: RefreshIndicator(
+        key: _refreshKey,
+        onRefresh: _refreshPosts,
+        displacement: 60,
+        edgeOffset: 10,
+        color: AppColors.grey700,
+        backgroundColor: AppColors.white,
+        strokeWidth: 2.2,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Container(
+                height: 110,
+                margin: const EdgeInsets.only(bottom: 2),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 8,
+                  ),
+                  itemCount:
+                      1 + DummyData.users.where((u) => u.hasStory).length,
+                  itemBuilder: (context, storyIndex) {
+                    if (storyIndex == 0) {
                       final userStory = DummyData.stories.firstWhere(
-                        (s) => s.userId == user.id,
+                        (s) => s.userId == DummyData.currentUser.id,
                         orElse: () => StoryModel(
                           id: '',
-                          userId: user.id,
-                          username: user.username,
-                          profileImageUrl: user.profileImage,
+                          userId: DummyData.currentUser.id,
+                          username: DummyData.currentUser.username,
+                          profileImageUrl: DummyData.currentUser.profileImage,
                           images: [],
                           timeAgo: '',
                         ),
@@ -390,27 +347,56 @@ class _HomeScreenState extends State<HomeScreen>
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: StoryAvatar(
-                          user: user,
+                          user: DummyData.currentUser,
                           story: userStory.id.isNotEmpty ? userStory : null,
-                          hasStory: true,
-                          onTap: () => _openStory(user.id),
+                          hasStory: DummyData.stories.any(
+                            (s) => s.userId == DummyData.currentUser.id,
+                          ),
+                          isCurrentUser: true,
+                          onTap: _openMyStory,
+                          onAddStory: _addToStory,
                         ),
                       );
-                    },
-                  ),
+                    }
+
+                    final storiesUsers = DummyData.users
+                        .where((u) => u.hasStory)
+                        .toList();
+                    final user = storiesUsers[storyIndex - 1];
+
+                    final userStory = DummyData.stories.firstWhere(
+                      (s) => s.userId == user.id,
+                      orElse: () => StoryModel(
+                        id: '',
+                        userId: user.id,
+                        username: user.username,
+                        profileImageUrl: user.profileImage,
+                        images: [],
+                        timeAgo: '',
+                      ),
+                    );
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: StoryAvatar(
+                        user: user,
+                        story: userStory.id.isNotEmpty ? userStory : null,
+                        hasStory: true,
+                        onTap: () => _openStory(user.id),
+                      ),
+                    );
+                  },
                 ),
               ),
-              const SliverToBoxAdapter(
-                child: Divider(height: 1, thickness: 0.5),
+            ),
+            const SliverToBoxAdapter(child: Divider(height: 1, thickness: 0.5)),
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildFeedItem(context, index),
+                childCount: feedItems.length,
               ),
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildFeedItem(context, index),
-                  childCount: feedItems.length,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

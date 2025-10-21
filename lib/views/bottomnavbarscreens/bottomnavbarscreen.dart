@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/data/dummy_data.dart';
@@ -25,7 +26,7 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   Duration _reelsStartPosition = Duration.zero;
   bool _showFriendsReelsOnly = false;
   String? _specificReelId;
-  bool _isNavigating = false; // Add flag to prevent multiple navigations
+  bool _isNavigating = false;
 
   late PageController _pageController;
 
@@ -42,22 +43,10 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
   }
 
   void _navigateToTab(int tabIndex, int reelIndex, Duration startPosition) {
-    // Prevent multiple simultaneous navigations
-    if (_isNavigating) {
-      debugPrint('⚠️ Navigation already in progress, ignoring request');
-      return;
-    }
-
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    debugPrint('📱 BOTTOM NAV - Received navigation request');
-    debugPrint('Tab Index: $tabIndex');
-    debugPrint('Reel Index from Home: $reelIndex');
-    debugPrint('Start Position: ${startPosition.inSeconds}s');
+    if (_isNavigating) return;
 
     if (tabIndex == 1 && reelIndex >= 0 && reelIndex < DummyData.reels.length) {
       final targetReelId = DummyData.reels[reelIndex].id;
-      debugPrint('🎯 Target Reel ID: $targetReelId');
-      debugPrint('🔢 Target Reel Index: $reelIndex');
 
       setState(() {
         _isNavigating = true;
@@ -68,10 +57,6 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
         _currentIndex = tabIndex;
       });
 
-      debugPrint('✅ Navigation prepared - animating to page $tabIndex');
-      debugPrint('🚫 Shuffle disabled: ${_specificReelId != null}');
-      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
       _pageController
           .animateToPage(
             tabIndex,
@@ -79,23 +64,18 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
             curve: Curves.easeInOutCubic,
           )
           .then((_) {
-            // Reset navigation flag after animation completes
             if (mounted) {
               setState(() {
                 _isNavigating = false;
               });
             }
           });
-    } else {
-      debugPrint('⚠️ Invalid navigation parameters');
-      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
   }
 
   void _onPageChanged(int index) {
     setState(() {
       _currentIndex = index;
-      // Clear specific reel ID when leaving reels tab
       if (index != 1) {
         _specificReelId = null;
         _reelsInitialIndex = 0;
@@ -207,48 +187,71 @@ class _BottomNavBarScreenState extends State<BottomNavBarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        physics: const ClampingScrollPhysics(),
-        children: _getScreens(),
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          border: Border(
-            top: BorderSide(color: AppColors.grey200!, width: 0.5),
-          ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+
+        // Handle back button based on current tab
+        if (_currentIndex != 0) {
+          // Navigate to home tab
+          setState(() {
+            _currentIndex = 0;
+          });
+          _pageController.animateToPage(
+            0,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOutCubic,
+          );
+        } else {
+          // Exit app only from home screen
+          SystemNavigator.pop();
+        }
+      },
+
+      child: Scaffold(
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          physics: const ClampingScrollPhysics(),
+          children: _getScreens(),
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(
-                  index: 0,
-                  iconPath: 'assets/Icons/home_outline.svg',
-                  activeIconPath: 'assets/Icons/home_filled.svg',
-                ),
-                _buildNavItem(
-                  index: 1,
-                  iconPath: 'assets/Icons/reel_outline.svg',
-                  activeIconPath: 'assets/Icons/reel_filled.svg',
-                ),
-                _buildNavItem(
-                  index: 2,
-                  iconPath: 'assets/Icons/message_outline.svg',
-                  activeIconPath: 'assets/Icons/message_filled.svg',
-                ),
-                _buildNavItem(
-                  index: 3,
-                  iconPath: 'assets/Icons/search_outline.svg',
-                  activeIconPath: 'assets/Icons/search_filled.svg',
-                ),
-                _buildProfileNavItem(index: 4),
-              ],
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            border: Border(
+              top: BorderSide(color: AppColors.grey200!, width: 0.5),
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(
+                    index: 0,
+                    iconPath: 'assets/Icons/home_outline.svg',
+                    activeIconPath: 'assets/Icons/home_filled.svg',
+                  ),
+                  _buildNavItem(
+                    index: 1,
+                    iconPath: 'assets/Icons/reel_outline.svg',
+                    activeIconPath: 'assets/Icons/reel_filled.svg',
+                  ),
+                  _buildNavItem(
+                    index: 2,
+                    iconPath: 'assets/Icons/message_outline.svg',
+                    activeIconPath: 'assets/Icons/message_filled.svg',
+                  ),
+                  _buildNavItem(
+                    index: 3,
+                    iconPath: 'assets/Icons/search_outline.svg',
+                    activeIconPath: 'assets/Icons/search_filled.svg',
+                  ),
+                  _buildProfileNavItem(index: 4),
+                ],
+              ),
             ),
           ),
         ),
