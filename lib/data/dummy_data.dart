@@ -90,6 +90,10 @@ class DummyData {
       posts.insertAll(0, newPosts);
       debugPrint('✅ Loaded ${newPosts.length} saved posts');
     }
+    // Load saved items
+    final loadedSavedItems = await DataPersistence.loadSavedItems();
+    _savedItems.clear();
+    _savedItems.addAll(loadedSavedItems);
 
     // Load stories
     final savedStories = await DataPersistence.loadStories();
@@ -195,11 +199,12 @@ class DummyData {
 
   static final List<SavedItem> _savedItems = [];
 
-  static void saveItem({
+  // Save an item permanently
+  static Future<void> saveItem({
     required String itemType,
     required String itemId,
     required String userId,
-  }) {
+  }) async {
     if (!_savedItems.any(
       (item) => item.itemType == itemType && item.itemId == itemId,
     )) {
@@ -212,17 +217,20 @@ class DummyData {
           savedAt: DateTime.now(),
         ),
       );
+      await DataPersistence.saveSavedItems(_savedItems);
       debugPrint('✅ Saved: $itemType - $itemId');
     }
   }
 
-  static void removeSavedItem({
+  // Remove an item permanently
+  static Future<void> removeSavedItem({
     required String itemType,
     required String itemId,
-  }) {
+  }) async {
     _savedItems.removeWhere(
       (item) => item.itemType == itemType && item.itemId == itemId,
     );
+    await DataPersistence.saveSavedItems(_savedItems);
     debugPrint('❌ Removed: $itemType - $itemId');
   }
 

@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:instagram/models/saved_item_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/post_model.dart';
 import '../models/story_model.dart';
@@ -84,14 +86,29 @@ class DataPersistence {
 
   // ===================== SAVED ITEMS =====================
 
-  static Future<void> saveSavedItems(List<String> savedItemIds) async {
+  // Save list of SavedItem
+  static Future<void> saveSavedItems(List<SavedItem> items) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_savedItemsKey, savedItemIds);
+
+    // Convert each SavedItem to JSON string
+    final stringList = items.map((e) => jsonEncode(e.toJson())).toList();
+
+    await prefs.setStringList(_savedItemsKey, stringList);
+    debugPrint('💾 Saved items persisted: ${items.length}');
   }
 
-  static Future<List<String>?> loadSavedItems() async {
+  // Load list of SavedItem
+  static Future<List<SavedItem>> loadSavedItems() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(_savedItemsKey);
+    final stringList = prefs.getStringList(_savedItemsKey);
+    if (stringList == null) return [];
+
+    try {
+      return stringList.map((e) => SavedItem.fromJson(jsonDecode(e))).toList();
+    } catch (e) {
+      debugPrint('❌ Failed to load saved items: $e');
+      return [];
+    }
   }
 
   // ===================== COMMENTS =====================
