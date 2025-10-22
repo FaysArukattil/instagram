@@ -272,8 +272,6 @@ class _ReelItemState extends State<ReelItem>
   int _tapCount = 0;
   bool _isProcessingTap = false;
   bool _showMuteIndicator = false;
-  double? _dragStartY;
-  bool _isInSeekingArea = false;
 
   // Double tap heart animation variables
   bool _showHeart = false;
@@ -692,63 +690,6 @@ class _ReelItemState extends State<ReelItem>
     }
   }
 
-  void _handleHorizontalDragStart(DragStartDetails details) {
-    _dragStartY = details.globalPosition.dy;
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    _isInSeekingArea = _dragStartY! >= screenHeight - 250;
-
-    if (_isInSeekingArea) {
-      setState(() {
-        _isSeeking = true;
-        _seekPreviewPosition = _controller.value.position;
-      });
-    }
-  }
-
-  void _handleHorizontalDrag(
-    DragUpdateDetails details,
-    double screenWidth,
-    double screenHeight,
-  ) {
-    if (!_isInSeekingArea || !_isSeeking) {
-      return;
-    }
-
-    if (_isLeftEdgePressed || _isRightEdgePressed) {
-      return;
-    }
-
-    final delta = details.delta.dx;
-    final totalDuration = _controller.value.duration.inMilliseconds;
-    final currentPosition =
-        _seekPreviewPosition?.inMilliseconds ??
-        _controller.value.position.inMilliseconds;
-
-    final seekDelta = (delta / screenWidth) * totalDuration * 1.5;
-    final newPosition = (currentPosition + seekDelta.toInt()).clamp(
-      0,
-      totalDuration,
-    );
-
-    setState(() {
-      _seekPreviewPosition = Duration(milliseconds: newPosition.toInt());
-    });
-  }
-
-  void _handleHorizontalDragEnd() {
-    if (_seekPreviewPosition != null && _isInSeekingArea) {
-      _controller.seekTo(_seekPreviewPosition!);
-    }
-
-    setState(() {
-      _isSeeking = false;
-      _seekPreviewPosition = null;
-      _dragStartY = null;
-      _isInSeekingArea = false;
-    });
-  }
-
   void _handleEdgePress(String edge) {
     setState(() {
       if (edge == 'left') {
@@ -800,6 +741,7 @@ class _ReelItemState extends State<ReelItem>
   Widget build(BuildContext context) {
     final user = _cachedUser ?? DummyData.getUserById(widget.reel.userId);
     final screenWidth = MediaQuery.of(context).size.width;
+    // ignore: unused_local_variable
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Listener(
@@ -1005,16 +947,52 @@ class _ReelItemState extends State<ReelItem>
             Positioned(
               bottom: 0,
               left: 0,
-              right: 80,
-              height: 250,
+              right: 0,
+              height: 300, // bottom area for seeking
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onHorizontalDragStart: _handleHorizontalDragStart,
-                onHorizontalDragUpdate: (details) =>
-                    _handleHorizontalDrag(details, screenWidth, screenHeight),
-                onHorizontalDragEnd: (_) => _handleHorizontalDragEnd(),
-                onTap: () {},
-                child: Container(color: AppColors.transparent),
+                onHorizontalDragStart: (details) {
+                  final screenHeight = MediaQuery.of(context).size.height;
+                  final dy = details.globalPosition.dy;
+
+                  // Only if in bottom 300px
+                  if (dy >= screenHeight - 300) {
+                    setState(() {
+                      _isSeeking = true;
+                      _seekPreviewPosition = _controller.value.position;
+                    });
+                  }
+                },
+                onHorizontalDragUpdate: (details) {
+                  if (!_isSeeking) return;
+
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  final totalDuration =
+                      _controller.value.duration.inMilliseconds;
+                  final currentPosition =
+                      _seekPreviewPosition?.inMilliseconds ??
+                      _controller.value.position.inMilliseconds;
+                  final seekDelta =
+                      (details.delta.dx / screenWidth) * totalDuration * 1.5;
+                  final newPosition = (currentPosition + seekDelta.toInt())
+                      .clamp(0, totalDuration);
+
+                  setState(() {
+                    _seekPreviewPosition = Duration(
+                      milliseconds: newPosition.toInt(),
+                    );
+                  });
+                },
+                onHorizontalDragEnd: (_) {
+                  if (_isSeeking && _seekPreviewPosition != null) {
+                    _controller.seekTo(_seekPreviewPosition!);
+                  }
+                  setState(() {
+                    _isSeeking = false;
+                    _seekPreviewPosition = null;
+                  });
+                },
+                child: Container(color: Colors.transparent),
               ),
             ),
             Positioned(
