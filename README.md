@@ -41,6 +41,60 @@ An Instagram-style Flutter application featuring feed, reels, chat, search, and 
   - Media: `image_picker`, `camera`, `video_player`, `photo_manager`, `gal`
   - Utilities: `path_provider`, `permission_handler`, `shared_preferences`, `share_plus`, `qr_flutter`
 
+## Packages and Installation
+
+Listed from `pubspec.yaml`. Install individually or run the combined command.
+
+- **Dependencies**
+  - `cupertino_icons:^1.0.8`
+  - `video_player:^2.10.0`
+  - `flutter_staggered_grid_view:^0.7.0`
+  - `image_picker:^1.2.0`
+  - `photo_manager:^3.7.1`
+  - `shared_preferences:^2.5.3`
+  - `qr_flutter:^4.1.0`
+  - `share_plus:^12.0.0`
+  - `path_provider:^2.1.5`
+  - `permission_handler:^12.0.1`
+  - `gal:^2.3.2`
+  - `visibility_detector:^0.4.0+2`
+  - `google_fonts:^6.3.2`
+  - `flutter_svg:^2.2.1`
+  - `camera:^0.11.2`
+  - `vector_math:^2.2.0`
+
+```bash
+# Add runtime dependencies
+flutter pub add \
+  cupertino_icons:^1.0.8 \
+  video_player:^2.10.0 \
+  flutter_staggered_grid_view:^0.7.0 \
+  image_picker:^1.2.0 \
+  photo_manager:^3.7.1 \
+  shared_preferences:^2.5.3 \
+  qr_flutter:^4.1.0 \
+  share_plus:^12.0.0 \
+  path_provider:^2.1.5 \
+  permission_handler:^12.0.1 \
+  gal:^2.3.2 \
+  visibility_detector:^0.4.0+2 \
+  google_fonts:^6.3.2 \
+  flutter_svg:^2.2.1 \
+  camera:^0.11.2 \
+  vector_math:^2.2.0
+
+# Add dev dependencies
+flutter pub add --dev \
+  flutter_launcher_icons:^0.14.4 \
+  flutter_lints:^5.0.0
+
+# Then fetch all packages
+flutter pub get
+```
+
+Notes:
+- `flutter_test` is included via the Flutter SDK and typically not added manually.
+
 ## Project Structure
 ```
 lib/
