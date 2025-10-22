@@ -5,11 +5,21 @@ class AuthTextField extends StatefulWidget {
   final String label;
   final bool isPassword;
   final TextEditingController? controller;
+  final String? Function(String?)? validator;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final void Function(String)? onFieldSubmitted;
+  final AutovalidateMode? autovalidateMode;
 
   const AuthTextField({
     required this.label,
     this.isPassword = false,
     this.controller,
+    this.validator,
+    this.keyboardType,
+    this.textInputAction,
+    this.onFieldSubmitted,
+    this.autovalidateMode,
     super.key,
   });
 
@@ -28,11 +38,17 @@ class AuthTextFieldState extends State<AuthTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
       controller: widget.controller,
       obscureText: obscureText,
       autocorrect: false,
       enableSuggestions: !widget.isPassword,
+      validator: widget.validator,
+      keyboardType: widget.keyboardType,
+      textInputAction: widget.textInputAction,
+      onFieldSubmitted: widget.onFieldSubmitted,
+      autovalidateMode:
+          widget.autovalidateMode ?? AutovalidateMode.onUserInteraction,
       style: const TextStyle(
         color: AppColors.black,
         fontSize: 14,
@@ -66,6 +82,15 @@ class AuthTextFieldState extends State<AuthTextField> {
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.red, width: 1.5),
+        ),
+        errorStyle: const TextStyle(
+          color: AppColors.red,
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
         ),
         suffixIcon: widget.isPassword
             ? IconButton(

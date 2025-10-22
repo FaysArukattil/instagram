@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram/core/constants/app_colors.dart';
-import 'package:instagram/views/Home/home_screen.dart';
+import 'package:instagram/views/bottomnavbarscreens/bottomnavbarscreen.dart';
 import 'package:instagram/widgets/primary_button.dart';
 
 class TermsPage extends StatelessWidget {
@@ -18,7 +18,7 @@ class TermsPage extends StatelessWidget {
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => HomeScreen()),
+      MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
       (route) => false,
     );
   }

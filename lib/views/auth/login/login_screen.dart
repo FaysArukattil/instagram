@@ -22,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final _formKey = GlobalKey<FormState>();
   String selectedLanguage = 'English (UK)';
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -37,88 +38,140 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> handleLogin() async {
-    if (usernameController.text.isEmpty) {
-      _showValidationDialog(
-        'Enter your username, email address or mobile number to log in',
-      );
-      return;
+  // Validation Methods
+  String? _validateUsername(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Username, email or mobile number is required';
     }
 
-    if (passwordController.text.isEmpty) {
-      _showValidationDialog('Please enter your password');
-      return;
+    final trimmedValue = value.trim();
+
+    if (trimmedValue.length < 3) {
+      return 'Must be at least 3 characters';
     }
 
-    final username = usernameController.text.trim();
-    final password = passwordController.text.trim();
-    final pref = await SharedPreferences.getInstance();
+    if (!_isValidEmail(trimmedValue) &&
+        !_isValidPhone(trimmedValue) &&
+        !_isValidUsername(trimmedValue)) {
+      return 'Invalid format. Use username, email or phone';
+    }
 
-    pref.setString("username", username);
-    pref.setString("password", password);
-
-    Navigator.push(
-      // ignore: use_build_context_synchronously
-      context,
-      MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
-    );
+    return null;
   }
 
-  void _showValidationDialog(String message) {
+  String? _validatePassword(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Password is required';
+    }
+
+    final password = value.trim();
+
+    // Check length
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters long';
+    }
+
+    // Must contain at least one uppercase letter
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      return 'Password must contain at least one uppercase letter';
+    }
+
+    // Must contain at least one number
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      return 'Password must contain at least one number';
+    }
+
+    // Must contain at least one special character
+    if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password)) {
+      return 'Password must contain at least one special character';
+    }
+
+    return null;
+  }
+
+  // Helper validation methods
+  bool _isValidEmail(String value) {
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    return emailRegex.hasMatch(value);
+  }
+
+  bool _isValidPhone(String value) {
+    final phoneRegex = RegExp(r'^\+?[\d\s-]{10,}$');
+    return phoneRegex.hasMatch(value);
+  }
+
+  bool _isValidUsername(String value) {
+    final usernameRegex = RegExp(r'^[a-zA-Z0-9._]{3,30}$');
+    return usernameRegex.hasMatch(value);
+  }
+
+  Future<void> handleLogin() async {
+    FocusScope.of(context).unfocus();
+
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final username = usernameController.text.trim();
+      final password = passwordController.text.trim();
+
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      final pref = await SharedPreferences.getInstance();
+      await pref.setString("username", username);
+      await pref.setString("password", password);
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      _showErrorDialog('An error occurred. Please try again.');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showErrorDialog(String message) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        content: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Text(
-            message,
-            style: const TextStyle(fontSize: 16, color: AppColors.black),
-            textAlign: TextAlign.center,
+        title: const Text(
+          'Login Error',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.black,
           ),
         ),
-        actionsPadding: EdgeInsets.zero,
-        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+        content: Text(
+          message,
+          style: const TextStyle(fontSize: 16, color: AppColors.black),
+        ),
         actions: [
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    // Navigate to create account page if needed
-                  },
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      'CREATE NEW ACCOUNT',
-                      style: const TextStyle(
-                        color: AppColors.red,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                color: AppColors.blue,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
-              Expanded(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: const Text(
-                      'OK',
-                      style: TextStyle(
-                        color: AppColors.blue,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -128,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showLanguageBottomSheet() {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // ensures no overflow
+      isScrollControlled: true,
       backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
@@ -241,117 +294,225 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                SizedBox(height: screenHeight * 0.02),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isTablet = constraints.maxWidth > 600;
+            final isLandscape = constraints.maxWidth > constraints.maxHeight;
 
-                // Language Selector
-                GestureDetector(
-                  onTap: _showLanguageBottomSheet,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        selectedLanguage,
-                        style: const TextStyle(
-                          color: AppColors.darkGrey,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+            // Responsive padding
+            final horizontalPadding = isTablet
+                ? constraints.maxWidth * 0.15
+                : constraints.maxWidth * 0.05;
+
+            // Responsive logo size
+            final logoSize = isTablet
+                ? constraints.maxWidth * 0.15
+                : constraints.maxWidth * 0.35;
+
+            // Responsive spacing
+            final topSpacing = isLandscape
+                ? constraints.maxHeight * 0.01
+                : constraints.maxHeight * 0.02;
+
+            final logoTopSpacing = isLandscape
+                ? constraints.maxHeight * 0.02
+                : constraints.maxHeight * 0.08;
+
+            final logoBottomSpacing = isLandscape
+                ? constraints.maxHeight * 0.02
+                : constraints.maxHeight * 0.08;
+
+            final fieldSpacing = isLandscape
+                ? constraints.maxHeight * 0.01
+                : constraints.maxHeight * 0.015;
+
+            final buttonSpacing = isLandscape
+                ? constraints.maxHeight * 0.015
+                : constraints.maxHeight * 0.025;
+
+            final bottomSpacing = isLandscape
+                ? constraints.maxHeight * 0.03
+                : constraints.maxHeight * 0.15;
+
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(height: topSpacing),
+
+                        // Language Selector
+                        GestureDetector(
+                          onTap: _showLanguageBottomSheet,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                selectedLanguage,
+                                style: TextStyle(
+                                  color: AppColors.darkGrey,
+                                  fontSize: isTablet ? 18 : 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.keyboard_arrow_down,
+                                color: AppColors.darkGrey,
+                                size: isTablet ? 24 : 20,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.keyboard_arrow_down,
-                        color: AppColors.darkGrey,
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.08),
+                        SizedBox(height: logoTopSpacing),
 
-                // Logo
-                Image.asset(
-                  'assets/images/icon.png',
-                  width: screenWidth * 0.35,
-                ),
-                SizedBox(height: screenHeight * 0.08),
+                        // Logo
+                        Image.asset('assets/images/icon.png', width: logoSize),
+                        SizedBox(height: logoBottomSpacing),
 
-                // Form
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      AuthTextField(
-                        label: 'Username, email address or mobile number',
-                        controller: usernameController,
-                      ),
-                      SizedBox(height: screenHeight * 0.015),
-                      AuthTextField(
-                        label: 'Password',
-                        isPassword: true,
-                        controller: passwordController,
-                      ),
-                      SizedBox(height: screenHeight * 0.025),
-                    ],
-                  ),
-                ),
+                        // Form - constrained width for tablets
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isTablet ? 500 : double.infinity,
+                          ),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              children: [
+                                AuthTextField(
+                                  label:
+                                      'Username, email address or mobile number',
+                                  controller: usernameController,
+                                  validator: _validateUsername,
+                                  keyboardType: TextInputType.emailAddress,
+                                  textInputAction: TextInputAction.next,
+                                ),
+                                SizedBox(height: fieldSpacing),
+                                AuthTextField(
+                                  label: 'Password',
+                                  isPassword: true,
+                                  controller: passwordController,
+                                  validator: _validatePassword,
+                                  textInputAction: TextInputAction.done,
+                                  onFieldSubmitted: (_) => handleLogin(),
+                                ),
+                                SizedBox(height: buttonSpacing),
+                              ],
+                            ),
+                          ),
+                        ),
 
-                // Primary login button
-                PrimaryButton(text: 'Log in', onPressed: handleLogin),
-                SizedBox(height: screenHeight * 0.025),
+                        // Buttons - constrained width for tablets
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isTablet ? 500 : double.infinity,
+                          ),
+                          child: Column(
+                            children: [
+                              // Primary login button with loading state
+                              _isLoading
+                                  ? SizedBox(
+                                      height: isTablet ? 52 : 48,
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          color: AppColors.blue,
+                                        ),
+                                      ),
+                                    )
+                                  : PrimaryButton(
+                                      text: 'Log in',
+                                      onPressed: handleLogin,
+                                      height: isTablet ? 52 : 48,
+                                    ),
+                              SizedBox(height: buttonSpacing),
 
-                // Forgot Password
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Forgotscreen(),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'Forgotten password?',
-                    style: TextStyle(
-                      color: AppColors.black,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                              // Forgot Password
+                              IgnorePointer(
+                                ignoring: _isLoading,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    if (!_isLoading) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const Forgotscreen(),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: Opacity(
+                                    opacity: _isLoading ? 0.5 : 1.0,
+                                    child: Text(
+                                      'Forgotten password?',
+                                      style: TextStyle(
+                                        color: AppColors.black,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: isTablet ? 16 : 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        SizedBox(height: bottomSpacing),
+
+                        // Secondary button - constrained width for tablets
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isTablet ? 500 : double.infinity,
+                          ),
+                          child: IgnorePointer(
+                            ignoring: _isLoading,
+                            child: Opacity(
+                              opacity: _isLoading ? 0.5 : 1.0,
+                              child: SecondaryButton(
+                                text: 'Create new account',
+                                height: isTablet ? 52 : 48,
+                                onPressed: () {
+                                  if (!_isLoading) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            EmailAddressPage(),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const Spacer(),
+
+                        // Meta logo
+                        Image.asset(
+                          AppImages.metalogo,
+                          width: isTablet ? 100 : 80,
+                          height: isTablet ? 100 : 80,
+                        ),
+                        SizedBox(height: topSpacing),
+                      ],
                     ),
                   ),
                 ),
-                SizedBox(height: screenHeight * 0.15),
-
-                // Secondary button
-                SecondaryButton(
-                  text: 'Create new account',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EmailAddressPage(),
-                      ),
-                    );
-                  },
-                ),
-
-                // Meta logo
-                Image.asset(AppImages.metalogo, width: 80, height: 80),
-                const SizedBox(width: 8),
-                SizedBox(height: screenHeight * 0.02),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

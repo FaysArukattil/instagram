@@ -5,11 +5,13 @@ class PrimaryButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
   final double? width;
+  final double? height;
 
   const PrimaryButton({
     required this.text,
     this.onPressed,
     this.width,
+    this.height,
     super.key,
   });
 
@@ -19,7 +21,7 @@ class PrimaryButton extends StatelessWidget {
 
     return SizedBox(
       width: width ?? double.infinity,
-      height: 48,
+      height: height ?? 48,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
