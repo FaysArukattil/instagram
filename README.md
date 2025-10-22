@@ -16,6 +16,9 @@ An Instagram-style Flutter application featuring feed, reels, chat, search, and 
 - [Development Tips](#development-tips)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
+ - [Screenshots](#screenshots)
+ - [Presentation Guide (PDF-Ready)](#presentation-guide-pdf-ready)
+ - [FAQ](#faq)
 
 ## Overview
 - **Entry point:** `lib/main.dart`
@@ -33,6 +36,16 @@ An Instagram-style Flutter application featuring feed, reels, chat, search, and 
 - **Create**: add post, story, and reels editors with media pickers.
 - **Local persistence** of user-created/liked/saved content using `SharedPreferences`.
 
+Quick file links (open to jump into code):
+
+- `lib/views/Home/home_screen.dart` (feed with `PostWidget`, `ReelWidget`, `StoryAvatar`)
+- `lib/widgets/post_widget.dart` (pinch-zoom, gradient heart like)
+- `lib/views/reels_screen/reels_screen.dart` and `lib/widgets/reel_widget.dart` (video + gestures)
+- `lib/views/search_screen/searchscreen.dart` (staggered grid explore)
+- `lib/views/add_post_screen/add_post_screen.dart` (camera/gallery + editors)
+- `lib/views/commentscreen/commentscreen.dart` (draggable sheet comments)
+- `lib/views/profile_screen/profile_screen.dart` and `lib/views/profile_tab_screen/profile_tab_screen.dart`
+
 ## Tech Stack
 - **Flutter**: Material 3 widgets and navigation.
 - **Dart**: SDK `^3.8.1` (see `pubspec.yaml`).
@@ -40,6 +53,15 @@ An Instagram-style Flutter application featuring feed, reels, chat, search, and 
   - UI/UX: `google_fonts`, `flutter_svg`, `flutter_staggered_grid_view`, `visibility_detector`
   - Media: `image_picker`, `camera`, `video_player`, `photo_manager`, `gal`
   - Utilities: `path_provider`, `permission_handler`, `shared_preferences`, `share_plus`, `qr_flutter`
+
+Why these packages (high level):
+
+- `video_player`: efficient video playback (reels) with precise control.
+- `visibility_detector`: auto play/pause in-feed reels by visibility.
+- `camera`/`image_picker`: capture and pick media for create flows.
+- `shared_preferences`: lightweight local persistence for content and flags.
+- `flutter_staggered_grid_view`: quilted explore layout.
+- `flutter_svg`: crisp scalable icons.
 
 ## Packages and Installation
 
@@ -156,6 +178,14 @@ flutter run -d <device_id>
 - On first launch, seed data is loaded by `DummyData.initializeData()`.
 - User-created posts/stories/reels and likes/saves persist locally with `SharedPreferences`.
 
+Useful commands:
+
+```bash
+flutter doctor
+flutter pub get
+flutter clean && flutter pub get   # if assets/packages change
+```
+
 ## Assets
 Declared in `pubspec.yaml`:
 - `assets/images/splashscreen_images/`
@@ -201,6 +231,8 @@ Refer to each package README for the exact, version-specific entries.
 - `lib/data/dummy_data.dart`: Seed data, chats, following map, helpers (e.g., `getPostById`, `getReelById`, like/save/repost helpers, comments load/save).
 - `lib/views/reels_screen/reels_screen.dart`: Reels playback with initial index, start position, and friends-only toggle.
 
+See also the full presentation guide for an element-by-element breakdown: `docs/Project_Presentation_Guide.html`.
+
 ## Development Tips
 - Use the provided editors in `views/*editor*` to create local content and verify persistence.
 - When switching tabs rapidly, `BottomNavBarScreen` manages refresh keys to reset Reels state; inspect `_reelsRefreshKey` and related fields for behavior changes.
@@ -212,7 +244,37 @@ Refer to each package README for the exact, version-specific entries.
 - **Assets not loading:** Run `flutter clean && flutter pub get` after changing `pubspec.yaml` assets.
 - **Launcher icons not updating:** Re-run `flutter pub run flutter_launcher_icons` and rebuild.
 
+If anchors don’t navigate in your IDE preview, open the HTML in a browser:
+
+```powershell
+start "" "c:\Users\faysa\OneDrive\Documents\Flutter\instagram\docs\Project_Presentation_Guide.html"
+```
+
 ## Contributing
 - Fork, create a feature branch, and open a PR.
 - Keep code style consistent with `analysis_options.yaml` and `flutter_lints`.
 - Add/adjust assets and update `pubspec.yaml` when necessary.
+
+## Screenshots
+
+Place screenshots in `docs/screenshots/` and reference them here (examples):
+
+![Home](docs/screenshots/home.png)
+![Reels](docs/screenshots/reels.png)
+![Search](docs/screenshots/search.png)
+![Profile](docs/screenshots/profile.png)
+
+## Presentation Guide (PDF-Ready)
+
+Open the HTML and Save as PDF from your browser. Background graphics recommended.
+
+- `docs/Project_Presentation_Guide.html`
+
+## FAQ
+
+- **Where is the per-screen, per-element description?**
+  - In `docs/Project_Presentation_Guide.html` under “Per‑Screen and Per‑Element Deep Dive”.
+- **How do I jump to the Reels screen at a specific item from feed?**
+  - `ReelWidget` calls `onNavigateToReels(1, index, position)` handled by `BottomNavBarScreen`.
+- **How are likes/saves persisted?**
+  - Via `DummyData.likeItem/unlikeItem/saveItem/removeSavedItem` and `DataPersistence` → `SharedPreferences`.
