@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:instagram/core/constants/app_colors.dart';
 import 'package:instagram/views/bottomnavbarscreens/bottomnavbarscreen.dart';
 import 'package:instagram/widgets/primary_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TermsPage extends StatelessWidget {
   const TermsPage({super.key});
 
-  void _handleAgree(BuildContext context) {
+  Future<void> _handleAgree(BuildContext context) async {
+    final pref = await SharedPreferences.getInstance();
+    await pref.setBool('is_logged_in', true);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Account created successfully!'),

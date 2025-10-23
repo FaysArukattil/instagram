@@ -22,17 +22,14 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> checklogin() async {
     final pref = await SharedPreferences.getInstance();
     Future.delayed(Duration(seconds: 2), () {
-      if (pref.getString("username") != null) {
-        if (pref.getString("password") != null) {
-          Navigator.pushReplacement(
-            // ignore: use_build_context_synchronously
-            context,
-            MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
-          );
-        }
+      final isLoggedIn = pref.getBool('is_logged_in') ?? false;
+      if (isLoggedIn) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => BottomNavBarScreen()),
+        );
       } else {
         Navigator.pushReplacement(
-          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(builder: (context) => LoginScreen()),
         );

@@ -66,22 +66,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final password = value.trim();
 
-    // Check length
     if (password.length < 8) {
       return 'Password must be at least 8 characters long';
     }
 
-    // Must contain at least one uppercase letter
     if (!RegExp(r'[A-Z]').hasMatch(password)) {
       return 'Password must contain at least one uppercase letter';
     }
 
-    // Must contain at least one number
     if (!RegExp(r'[0-9]').hasMatch(password)) {
       return 'Password must contain at least one number';
     }
 
-    // Must contain at least one special character
     if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password)) {
       return 'Password must contain at least one special character';
     }
@@ -125,6 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final pref = await SharedPreferences.getInstance();
       await pref.setString("username", username);
       await pref.setString("password", password);
+      await pref.setBool('is_logged_in', true);
 
       if (!mounted) return;
 
@@ -292,6 +289,142 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildLogoSection(bool isLandscape, bool isTablet, double logoSize) {
+    return Center(
+      child: Image.asset('assets/images/icon.png', width: logoSize),
+    );
+  }
+
+  Widget _buildFormSection(
+    bool isTablet,
+    double fieldSpacing,
+    double buttonSpacing,
+  ) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: isTablet ? 500 : double.infinity),
+      child: Column(
+        children: [
+          // Language Selector
+          GestureDetector(
+            onTap: _showLanguageBottomSheet,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  selectedLanguage,
+                  style: TextStyle(
+                    color: AppColors.darkGrey,
+                    fontSize: isTablet ? 15 : 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.keyboard_arrow_down,
+                  color: AppColors.darkGrey,
+                  size: isTablet ? 20 : 18,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: fieldSpacing * 1.5),
+
+          // Form
+          Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                AuthTextField(
+                  label: 'Username, email address or mobile number',
+                  controller: usernameController,
+                  validator: _validateUsername,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                ),
+                SizedBox(height: fieldSpacing),
+                AuthTextField(
+                  label: 'Password',
+                  isPassword: true,
+                  controller: passwordController,
+                  validator: _validatePassword,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => handleLogin(),
+                ),
+                SizedBox(height: buttonSpacing * 0.8),
+              ],
+            ),
+          ),
+
+          // Buttons
+          _isLoading
+              ? SizedBox(
+                  height: isTablet ? 48 : 44,
+                  child: const Center(
+                    child: CircularProgressIndicator(color: AppColors.blue),
+                  ),
+                )
+              : PrimaryButton(
+                  text: 'Log in',
+                  onPressed: handleLogin,
+                  height: isTablet ? 48 : 44,
+                ),
+          SizedBox(height: buttonSpacing * 0.8),
+
+          // Forgot Password
+          IgnorePointer(
+            ignoring: _isLoading,
+            child: GestureDetector(
+              onTap: () {
+                if (!_isLoading) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const Forgotscreen(),
+                    ),
+                  );
+                }
+              },
+              child: Opacity(
+                opacity: _isLoading ? 0.5 : 1.0,
+                child: Text(
+                  'Forgotten password?',
+                  style: TextStyle(
+                    color: AppColors.black,
+                    fontWeight: FontWeight.w600,
+                    fontSize: isTablet ? 14 : 12,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: buttonSpacing * 1.5),
+
+          // Create account button
+          IgnorePointer(
+            ignoring: _isLoading,
+            child: Opacity(
+              opacity: _isLoading ? 0.5 : 1.0,
+              child: SecondaryButton(
+                text: 'Create new account',
+                height: isTablet ? 48 : 44,
+                onPressed: () {
+                  if (!_isLoading) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EmailAddressPage(),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -301,90 +434,127 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (context, constraints) {
             final isTablet = constraints.maxWidth > 600;
             final isLandscape = constraints.maxWidth > constraints.maxHeight;
+            final useSplitLayout = isLandscape || isTablet;
 
-            // Responsive padding
-            final horizontalPadding = isTablet
-                ? constraints.maxWidth * 0.15
-                : constraints.maxWidth * 0.05;
-
-            // Responsive logo size
-            final logoSize = isTablet
-                ? constraints.maxWidth * 0.15
+            // Responsive sizing
+            final logoSize = useSplitLayout
+                ? (isTablet
+                      ? constraints.maxWidth * 0.18
+                      : constraints.maxWidth * 0.22)
                 : constraints.maxWidth * 0.35;
 
-            // Responsive spacing
-            final topSpacing = isLandscape
-                ? constraints.maxHeight * 0.01
-                : constraints.maxHeight * 0.02;
-
-            final logoTopSpacing = isLandscape
-                ? constraints.maxHeight * 0.02
-                : constraints.maxHeight * 0.08;
-
-            final logoBottomSpacing = isLandscape
-                ? constraints.maxHeight * 0.02
-                : constraints.maxHeight * 0.08;
-
             final fieldSpacing = isLandscape
-                ? constraints.maxHeight * 0.01
+                ? constraints.maxHeight * 0.012
                 : constraints.maxHeight * 0.015;
 
             final buttonSpacing = isLandscape
                 ? constraints.maxHeight * 0.015
                 : constraints.maxHeight * 0.025;
 
-            final bottomSpacing = isLandscape
-                ? constraints.maxHeight * 0.03
-                : constraints.maxHeight * 0.15;
-
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: horizontalPadding,
+            if (useSplitLayout) {
+              // Split layout for landscape/tablet
+              return Row(
+                children: [
+                  // Logo side
+                  Expanded(
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Spacer(),
+                          _buildLogoSection(isLandscape, isTablet, logoSize),
+                          const Spacer(),
+                          Image.asset(
+                            AppImages.metalogo,
+                            width: isTablet ? 65 : 50,
+                            height: isTablet ? 65 : 50,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(height: topSpacing),
+                  ),
 
-                        // Language Selector
-                        GestureDetector(
-                          onTap: _showLanguageBottomSheet,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                  // Form side
+                  Expanded(
+                    flex: 3,
+                    child: Center(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isTablet ? 40 : 20,
+                          vertical: 16,
+                        ),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isTablet ? 380 : 320,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                selectedLanguage,
-                                style: TextStyle(
-                                  color: AppColors.darkGrey,
-                                  fontSize: isTablet ? 18 : 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                Icons.keyboard_arrow_down,
-                                color: AppColors.darkGrey,
-                                size: isTablet ? 24 : 20,
+                              _buildFormSection(
+                                isTablet,
+                                fieldSpacing,
+                                buttonSpacing,
                               ),
                             ],
                           ),
                         ),
-                        SizedBox(height: logoTopSpacing),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            } else {
+              // Original vertical layout for portrait phones
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: constraints.maxWidth * 0.05,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(height: constraints.maxHeight * 0.015),
 
-                        // Logo
-                        Image.asset('assets/images/icon.png', width: logoSize),
-                        SizedBox(height: logoBottomSpacing),
-
-                        // Form - constrained width for tablets
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: isTablet ? 500 : double.infinity,
+                          // Language Selector
+                          GestureDetector(
+                            onTap: _showLanguageBottomSheet,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  selectedLanguage,
+                                  style: const TextStyle(
+                                    color: AppColors.darkGrey,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.keyboard_arrow_down,
+                                  color: AppColors.darkGrey,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
                           ),
-                          child: Form(
+                          SizedBox(height: constraints.maxHeight * 0.04),
+
+                          // Logo
+                          Image.asset(
+                            'assets/images/icon.png',
+                            width: logoSize,
+                          ),
+                          SizedBox(height: constraints.maxHeight * 0.04),
+
+                          // Form
+                          Form(
                             key: _formKey,
                             child: Column(
                               children: [
@@ -409,78 +579,63 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
                           ),
-                        ),
 
-                        // Buttons - constrained width for tablets
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: isTablet ? 500 : double.infinity,
-                          ),
-                          child: Column(
-                            children: [
-                              // Primary login button with loading state
-                              _isLoading
-                                  ? SizedBox(
-                                      height: isTablet ? 52 : 48,
-                                      child: const Center(
-                                        child: CircularProgressIndicator(
-                                          color: AppColors.blue,
-                                        ),
-                                      ),
-                                    )
-                                  : PrimaryButton(
-                                      text: 'Log in',
-                                      onPressed: handleLogin,
-                                      height: isTablet ? 52 : 48,
+                          // Buttons
+                          _isLoading
+                              ? const SizedBox(
+                                  height: 48,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.blue,
                                     ),
-                              SizedBox(height: buttonSpacing),
+                                  ),
+                                )
+                              : PrimaryButton(
+                                  text: 'Log in',
+                                  onPressed: handleLogin,
+                                  height: 48,
+                                ),
+                          SizedBox(height: buttonSpacing),
 
-                              // Forgot Password
-                              IgnorePointer(
-                                ignoring: _isLoading,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    if (!_isLoading) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const Forgotscreen(),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  child: Opacity(
-                                    opacity: _isLoading ? 0.5 : 1.0,
-                                    child: Text(
-                                      'Forgotten password?',
-                                      style: TextStyle(
-                                        color: AppColors.black,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: isTablet ? 16 : 14,
-                                      ),
+                          // Forgot Password
+                          IgnorePointer(
+                            ignoring: _isLoading,
+                            child: GestureDetector(
+                              onTap: () {
+                                if (!_isLoading) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const Forgotscreen(),
                                     ),
+                                  );
+                                }
+                              },
+                              child: Opacity(
+                                opacity: _isLoading ? 0.5 : 1.0,
+                                child: const Text(
+                                  'Forgotten password?',
+                                  style: TextStyle(
+                                    color: AppColors.black,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
                                   ),
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
 
-                        SizedBox(height: bottomSpacing),
+                          SizedBox(height: constraints.maxHeight * 0.05),
 
-                        // Secondary button - constrained width for tablets
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: isTablet ? 500 : double.infinity,
-                          ),
-                          child: IgnorePointer(
+                          // Create account button
+                          IgnorePointer(
                             ignoring: _isLoading,
                             child: Opacity(
                               opacity: _isLoading ? 0.5 : 1.0,
                               child: SecondaryButton(
                                 text: 'Create new account',
-                                height: isTablet ? 52 : 48,
+                                height: 48,
                                 onPressed: () {
                                   if (!_isLoading) {
                                     Navigator.push(
@@ -495,23 +650,23 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
-                        ),
 
-                        const Spacer(),
+                          const SizedBox(height: 24),
 
-                        // Meta logo
-                        Image.asset(
-                          AppImages.metalogo,
-                          width: isTablet ? 100 : 80,
-                          height: isTablet ? 100 : 80,
-                        ),
-                        SizedBox(height: topSpacing),
-                      ],
+                          // Meta logo
+                          Image.asset(
+                            AppImages.metalogo,
+                            width: 70,
+                            height: 70,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
+              );
+            }
           },
         ),
       ),
