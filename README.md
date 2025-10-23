@@ -16,9 +16,8 @@ An Instagram-style Flutter application featuring feed, reels, chat, search, and 
 - [Development Tips](#development-tips)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
- - [Screenshots](#screenshots)
- - [Presentation Guide (PDF-Ready)](#presentation-guide-pdf-ready)
- - [FAQ](#faq)
+- [Screenshots](#screenshots)
+- [FAQ](#faq)
 
 ## Overview
 - **Entry point:** `lib/main.dart`
@@ -39,19 +38,20 @@ An Instagram-style Flutter application featuring feed, reels, chat, search, and 
 Quick file links (open to jump into code):
 
 - `lib/views/Home/home_screen.dart` (feed with `PostWidget`, `ReelWidget`, `StoryAvatar`)
-- `lib/widgets/post_widget.dart` (pinch-zoom, gradient heart like)
+- `lib/widgets/post_widget.dart` (photo_view pinch-zoom with reset-on-release, double-tap gradient heart)
 - `lib/views/reels_screen/reels_screen.dart` and `lib/widgets/reel_widget.dart` (video + gestures)
 - `lib/views/search_screen/searchscreen.dart` (staggered grid explore)
 - `lib/views/add_post_screen/add_post_screen.dart` (camera/gallery + editors)
 - `lib/views/commentscreen/commentscreen.dart` (draggable sheet comments)
 - `lib/views/profile_screen/profile_screen.dart` and `lib/views/profile_tab_screen/profile_tab_screen.dart`
+ - `lib/views/post_screen/post_screen.dart` (photo_view pinch-zoom with reset-on-release, double-tap gradient heart)
 
 ## Tech Stack
 - **Flutter**: Material 3 widgets and navigation.
 - **Dart**: SDK `^3.8.1` (see `pubspec.yaml`).
 - **Packages:**
   - UI/UX: `google_fonts`, `flutter_svg`, `flutter_staggered_grid_view`, `visibility_detector`
-  - Media: `image_picker`, `camera`, `video_player`, `photo_manager`, `gal`
+  - Media: `image_picker`, `camera`, `video_player`, `photo_manager`, `gal`, `photo_view`
   - Utilities: `path_provider`, `permission_handler`, `shared_preferences`, `share_plus`, `qr_flutter`
 
 Why these packages (high level):
@@ -61,7 +61,8 @@ Why these packages (high level):
 - `camera`/`image_picker`: capture and pick media for create flows.
 - `shared_preferences`: lightweight local persistence for content and flags.
 - `flutter_staggered_grid_view`: quilted explore layout.
-- `flutter_svg`: crisp scalable icons.
+  - `flutter_svg`: crisp scalable icons.
+  - `photo_view`: robust pinch-to-zoom/pan with scale-state controls for posts.
 
 ## Packages and Installation
 
@@ -84,6 +85,7 @@ Listed from `pubspec.yaml`. Install individually or run the combined command.
   - `flutter_svg:^2.2.1`
   - `camera:^0.11.2`
   - `vector_math:^2.2.0`
+  - `photo_view:^0.14.0`
 
 ```bash
 # Add runtime dependencies
@@ -103,7 +105,8 @@ flutter pub add \
   google_fonts:^6.3.2 \
   flutter_svg:^2.2.1 \
   camera:^0.11.2 \
-  vector_math:^2.2.0
+  vector_math:^2.2.0 \
+  photo_view:^0.14.0
 
 # Add dev dependencies
 flutter pub add --dev \
@@ -231,7 +234,7 @@ Refer to each package README for the exact, version-specific entries.
 - `lib/data/dummy_data.dart`: Seed data, chats, following map, helpers (e.g., `getPostById`, `getReelById`, like/save/repost helpers, comments load/save).
 - `lib/views/reels_screen/reels_screen.dart`: Reels playback with initial index, start position, and friends-only toggle.
 
-See also the full presentation guide for an element-by-element breakdown: `docs/Project_Presentation_Guide.html`.
+ 
 
 ## Development Tips
 - Use the provided editors in `views/*editor*` to create local content and verify persistence.
@@ -264,16 +267,10 @@ Place screenshots in `docs/screenshots/` and reference them here (examples):
 ![Search](docs/screenshots/search.png)
 ![Profile](docs/screenshots/profile.png)
 
-## Presentation Guide (PDF-Ready)
-
-Open the HTML and Save as PDF from your browser. Background graphics recommended.
-
-- `docs/Project_Presentation_Guide.html`
+ 
 
 ## FAQ
 
-- **Where is the per-screen, per-element description?**
-  - In `docs/Project_Presentation_Guide.html` under “Per‑Screen and Per‑Element Deep Dive”.
 - **How do I jump to the Reels screen at a specific item from feed?**
   - `ReelWidget` calls `onNavigateToReels(1, index, position)` handled by `BottomNavBarScreen`.
 - **How are likes/saves persisted?**
