@@ -7,7 +7,8 @@ import 'package:instagram/views/share_bottom_sheet/share_bottom_sheet.dart';
 import 'package:instagram/widgets/universal_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:instagram/views/three_dot_bottom_sheet/three_dot_bottom_sheet.dart';
-import 'package:vector_math/vector_math_64.dart' show Vector3;
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 
 class PostScreen extends StatefulWidget {
   final String userId;
@@ -38,15 +39,9 @@ class _PostScreenState extends State<PostScreen>
 
   Offset _tapPosition = Offset.zero;
   bool _showHeart = false;
-  bool _isZooming = false;
-
   List<Color> _currentGradient = [Colors.red, Colors.pink];
-
-  // Zoom state
-  double _scale = 1.0;
-  double _previousScale = 1.0;
-  Offset _offset = Offset.zero;
-  Offset _normalizedOffset = Offset.zero;
+  final PhotoViewScaleStateController _scaleStateController =
+      PhotoViewScaleStateController();
 
   @override
   void initState() {
@@ -98,7 +93,6 @@ class _PostScreenState extends State<PostScreen>
 
   // --- LIKE HANDLING ---
   void _handleDoubleTapLike(String postId, Offset tapPosition) {
-    if (_isZooming) return;
     _tapPosition = tapPosition;
     _showHeartAnimation();
 
@@ -128,36 +122,6 @@ class _PostScreenState extends State<PostScreen>
     _animationController.forward();
   }
 
-  // --- ZOOM HANDLERS ---
-  void _onScaleStart(ScaleStartDetails details) {
-    _previousScale = _scale;
-    final RenderBox box = context.findRenderObject() as RenderBox;
-    final Offset focalPoint = box.globalToLocal(details.focalPoint);
-    _normalizedOffset = (focalPoint - _offset) / _scale;
-    setState(() => _isZooming = true);
-  }
-
-  void _onScaleUpdate(ScaleUpdateDetails details) {
-    setState(() {
-      _scale = (_previousScale * details.scale).clamp(1.0, 4.0);
-
-      final RenderBox box = context.findRenderObject() as RenderBox;
-      final Offset focalPoint = box.globalToLocal(details.focalPoint);
-
-      // Calculate new offset, and slightly bias downwards for a natural Instagram-like feel
-      final Offset newOffset = focalPoint - _normalizedOffset * _scale;
-      final double biasY = (_scale - 1) * 40; // adds slight downward bias
-      _offset = Offset(newOffset.dx, newOffset.dy + biasY);
-    });
-  }
-
-  void _onScaleEnd(ScaleEndDetails details) {
-    setState(() {
-      _scale = 1.0;
-      _offset = Offset.zero;
-      _isZooming = false;
-    });
-  }
 
   // --- OPENERS ---
   void _openComments(PostModel post) {
@@ -246,9 +210,7 @@ class _PostScreenState extends State<PostScreen>
       body: PageView.builder(
         controller: _pageController,
         scrollDirection: Axis.vertical,
-        physics: _isZooming
-            ? const NeverScrollableScrollPhysics()
-            : const BouncingScrollPhysics(),
+        physics: const BouncingScrollPhysics(),
         onPageChanged: (index) => setState(() => currentIndex = index),
         itemCount: userPosts.length,
         itemBuilder: (context, index) {
@@ -256,9 +218,7 @@ class _PostScreenState extends State<PostScreen>
           final user = DummyData.getUserById(post.userId);
 
           return SingleChildScrollView(
-            physics: _isZooming
-                ? const NeverScrollableScrollPhysics()
-                : const BouncingScrollPhysics(),
+            physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -321,94 +281,89 @@ class _PostScreenState extends State<PostScreen>
                   ),
                 ),
 
-                // --- ZOOMABLE IMAGE SECTION ---
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    return GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onDoubleTapDown: (details) =>
-                          _tapPosition = details.localPosition,
-                      onDoubleTap: () =>
-                          _handleDoubleTapLike(post.id, _tapPosition),
-                      onScaleStart: _onScaleStart,
-                      onScaleUpdate: _onScaleUpdate,
-                      onScaleEnd: _onScaleEnd,
-                      child: SizedBox(
-                        height: MediaQuery.of(context).size.width,
-                        width: double.infinity,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 80),
-                              transform: Matrix4.identity()
-                                ..translateByVector3(
-                                  Vector3(_offset.dx, _offset.dy, 0),
-                                )
-                                ..scaleByDouble(_scale, _scale, 1, 1),
-
-                              curve: Curves.easeOut,
-                              child: PageView.builder(
-                                physics: _isZooming
-                                    ? const NeverScrollableScrollPhysics()
-                                    : const BouncingScrollPhysics(),
-                                itemCount: post.images.length,
-                                itemBuilder: (context, imgIndex) {
-                                  return UniversalImage(
-                                    imagePath: post.images[imgIndex],
-                                    width: double.infinity,
-                                    height: constraints.maxHeight,
-                                    fit: BoxFit.cover,
-                                  );
-                                },
-                              ),
+                // --- ZOOMABLE IMAGE SECTION (photo_view) ---
+                AspectRatio(
+                  aspectRatio: 1,
+                  child: Listener(
+                    onPointerUp: (_) {
+                      _scaleStateController.scaleState =
+                          PhotoViewScaleState.initial;
+                    },
+                    child: Stack(
+                      children: [
+                        ClipRect(
+                          child: PhotoViewGallery.builder(
+                            itemCount: post.images.length,
+                            backgroundDecoration: const BoxDecoration(
+                              color: Colors.transparent,
                             ),
+                            builder: (context, imgIndex) {
+                              return PhotoViewGalleryPageOptions.customChild(
+                                child: UniversalImage(
+                                  imagePath: post.images[imgIndex],
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                                scaleStateController: _scaleStateController,
+                                minScale: PhotoViewComputedScale.contained,
+                                maxScale:
+                                    PhotoViewComputedScale.covered * 4.0,
+                              );
+                            },
+                          ),
+                        ),
 
-                            // Heart Animation
-                            if (_showHeart && !_isZooming)
-                              AnimatedBuilder(
-                                animation: _animationController,
-                                builder: (context, child) {
-                                  return Positioned(
-                                    left: _tapPosition.dx - 50,
-                                    top:
-                                        _tapPosition.dy -
-                                        50 +
-                                        _moveUpAnimation.value,
-                                    child: Transform.rotate(
-                                      angle: _wiggleAnimation.value,
-                                      child: Transform.scale(
-                                        scale: _scaleAnimation.value,
-                                        child: ShaderMask(
-                                          shaderCallback: (bounds) =>
-                                              LinearGradient(
-                                                colors: _currentGradient,
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                              ).createShader(bounds),
-                                          child: Opacity(
-                                            opacity: _opacityAnimation.value,
-                                            child: const Icon(
-                                              Icons.favorite,
-                                              size: 100,
-                                              color: Colors.white,
-                                            ),
-                                          ),
+                        // Double-tap like overlay
+                        Positioned.fill(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onDoubleTapDown: (details) =>
+                                _tapPosition = details.localPosition,
+                            onDoubleTap: () =>
+                                _handleDoubleTapLike(post.id, _tapPosition),
+                          ),
+                        ),
+
+                        // Heart animation
+                        if (_showHeart)
+                          Positioned(
+                            left: _tapPosition.dx - 50,
+                            top: _tapPosition.dy - 50 + _moveUpAnimation.value,
+                            child: AnimatedBuilder(
+                              animation: _animationController,
+                              builder: (context, child) {
+                                return Transform.rotate(
+                                  angle: _wiggleAnimation.value,
+                                  child: Transform.scale(
+                                    scale: _scaleAnimation.value,
+                                    child: ShaderMask(
+                                      shaderCallback: (bounds) =>
+                                          LinearGradient(
+                                            colors: _currentGradient,
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ).createShader(bounds),
+                                      child: Opacity(
+                                        opacity: _opacityAnimation.value,
+                                        child: const Icon(
+                                          Icons.favorite,
+                                          size: 100,
+                                          color: Colors.white,
                                         ),
                                       ),
                                     ),
-                                  );
-                                },
-                              ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
 
                 // --- Buttons + Captions ---
-                if (!_isZooming)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Row(
@@ -486,7 +441,7 @@ class _PostScreenState extends State<PostScreen>
                     ),
                   ),
 
-                if (!_isZooming)
+                
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
