@@ -517,38 +517,19 @@ class _ReelWidgetState extends State<ReelWidget>
 
     // Only navigate if callback exists
     if (widget.onNavigateToReels == null) {
-      debugPrint('⚠️ onNavigateToReels callback is null - cannot navigate');
       return;
     }
 
     // Find this exact reel's index in the main reels list
     final reelIndex = DummyData.reels.indexWhere((r) => r.id == widget.reel.id);
 
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    debugPrint('🎬 REEL WIDGET NAVIGATION');
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    debugPrint('🎯 Current Reel ID: ${widget.reel.id}');
-    debugPrint('📍 Found at index: $reelIndex in DummyData.reels');
-    debugPrint('📊 Total reels in DummyData: ${DummyData.reels.length}');
-
     if (reelIndex == -1) {
-      debugPrint('❌ ERROR: Reel not found in DummyData.reels!');
-      debugPrint(
-        'Available reel IDs: ${DummyData.reels.map((r) => r.id).take(5).toList()}...',
-      );
-      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       return;
     }
 
     final currentPosition = _isInitialized
         ? _controller.value.position
         : Duration.zero;
-
-    debugPrint('⏱️ Current Position: ${currentPosition.inSeconds}s');
-    debugPrint(
-      '🔄 Calling: onNavigateToReels(1, $reelIndex, $currentPosition)',
-    );
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     // Navigate to reels tab (index 1) with the specific reel index
     widget.onNavigateToReels!(1, reelIndex, currentPosition);
